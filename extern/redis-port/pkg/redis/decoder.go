@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/io/ioutils"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/io/ioutils"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
 )
 
 type decoder struct {

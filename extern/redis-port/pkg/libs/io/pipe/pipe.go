@@ -9,8 +9,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/bytesize"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/bytesize"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
 )
 
 type buffer interface {

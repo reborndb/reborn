@@ -10,8 +10,8 @@ import (
 	"syscall"
 
 	"github.com/c4pt0r/cfg"
-	"github.com/wandoulabs/codis/pkg/env"
-	"github.com/wandoulabs/codis/pkg/utils"
+	"github.com/reborndb/reborn/pkg/env"
+	"github.com/reborndb/reborn/pkg/utils"
 
 	"net/http"
 	_ "net/http/pprof"

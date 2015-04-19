@@ -9,10 +9,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/binlog"
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/store/rocksdb"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/redis"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/binlog"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/store/rocksdb"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/redis"
 )
 
 var (

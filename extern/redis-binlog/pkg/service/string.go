@@ -4,8 +4,8 @@
 package service
 
 import (
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/binlog"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/redis"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/binlog"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/redis"
 )
 
 // GET key

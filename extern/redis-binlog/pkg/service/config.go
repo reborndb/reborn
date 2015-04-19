@@ -7,7 +7,7 @@ import (
 	"bytes"
 
 	"github.com/BurntSushi/toml"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/bytesize"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/bytesize"
 )
 
 type Config struct {

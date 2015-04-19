@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/testing/assert"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/testing/assert"
 )
 
 func TestDecodeInvalidRequests(t *testing.T) {

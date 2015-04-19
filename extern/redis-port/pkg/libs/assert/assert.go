@@ -3,7 +3,7 @@
 
 package assert
 
-import "github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
+import "github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
 
 func Must(b bool) {
 	if b {

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/rdb"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/rdb"
 )
 
 func ldel(t *testing.T, db uint32, key string, expect int64) {

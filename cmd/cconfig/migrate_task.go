@@ -6,7 +6,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/wandoulabs/codis/pkg/models"
+	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/juju/errors"
 

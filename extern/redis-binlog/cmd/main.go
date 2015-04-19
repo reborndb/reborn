@@ -13,13 +13,13 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/docopt/docopt-go"
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/binlog"
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/service"
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/store"
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/store/leveldb"
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/store/rocksdb"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/binlog"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/service"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/store"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/store/leveldb"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/store/rocksdb"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
 )
 
 var args struct {

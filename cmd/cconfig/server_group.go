@@ -9,7 +9,7 @@ import (
 
 	"github.com/docopt/docopt-go"
 	log "github.com/ngaut/logging"
-	"github.com/wandoulabs/codis/pkg/models"
+	"github.com/reborndb/reborn/pkg/models"
 )
 
 // codis redis instance manage tool

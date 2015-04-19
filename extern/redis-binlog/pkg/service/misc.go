@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/redis"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/redis"
 )
 
 // PING

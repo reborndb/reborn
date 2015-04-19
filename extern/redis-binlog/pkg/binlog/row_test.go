@@ -8,7 +8,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/testing/assert"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/testing/assert"
 )
 
 func TestEncodeSimple(t *testing.T) {

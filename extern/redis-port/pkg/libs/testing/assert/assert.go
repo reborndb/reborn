@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/trace"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/trace"
 )
 
 func Fatalf(t *testing.T, format string, args ...interface{}) {

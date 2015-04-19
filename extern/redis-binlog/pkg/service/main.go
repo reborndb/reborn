@@ -7,11 +7,11 @@ import (
 	"io"
 	"net"
 
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/binlog"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/atomic2"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/redis"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/binlog"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/atomic2"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/redis"
 )
 
 func Serve(config *Config, bl *binlog.Binlog) error {

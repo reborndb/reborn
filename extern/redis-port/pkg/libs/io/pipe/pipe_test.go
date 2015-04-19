@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/bytesize"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/io/ioutils"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/testing/assert"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/bytesize"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/io/ioutils"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/testing/assert"
 )
 
 func openPipe(t *testing.T, fileName string) (Reader, Writer) {

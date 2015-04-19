@@ -7,9 +7,9 @@ import (
 	"container/list"
 	"sync"
 
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/store"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/store"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
 )
 
 var (

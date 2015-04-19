@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"hash/crc32"
 
-	"github.com/wandoulabs/codis/pkg/models"
+	"github.com/reborndb/reborn/pkg/models"
 )
 
 const (

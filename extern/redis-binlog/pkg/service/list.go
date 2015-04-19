@@ -3,7 +3,7 @@
 
 package service
 
-import "github.com/wandoulabs/codis/extern/redis-port/pkg/redis"
+import "github.com/reborndb/reborn/extern/redis-port/pkg/redis"
 
 // LINDEX key index
 func (h *Handler) LIndex(arg0 interface{}, args [][]byte) (redis.Resp, error) {

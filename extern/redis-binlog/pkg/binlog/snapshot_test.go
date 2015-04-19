@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/rdb"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/rdb"
 )
 
 func TestSnapshot(t *testing.T) {

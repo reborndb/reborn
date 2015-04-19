@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wandoulabs/codis/pkg/models"
+	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/juju/errors"

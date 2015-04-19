@@ -13,7 +13,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/ngaut/go-zookeeper/zk"
 	"github.com/ngaut/zkhelper"
-	"github.com/wandoulabs/codis/pkg/models"
+	"github.com/reborndb/reborn/pkg/models"
 
 	"sync/atomic"
 

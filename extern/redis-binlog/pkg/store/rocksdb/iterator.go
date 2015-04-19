@@ -4,8 +4,8 @@
 package rocksdb
 
 import (
-	"github.com/wandoulabs/codis/extern/redis-binlog/extern/gorocks"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-binlog/extern/gorocks"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
 )
 
 type Iterator struct {

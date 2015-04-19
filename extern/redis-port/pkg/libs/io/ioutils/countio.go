@@ -6,7 +6,7 @@ package ioutils
 import (
 	"io"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/atomic2"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/atomic2"
 )
 
 type CountReader struct {

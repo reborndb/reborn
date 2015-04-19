@@ -6,7 +6,7 @@ package pipe
 import (
 	"os"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
 )
 
 type rfileBuffer struct {

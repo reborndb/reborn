@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wandoulabs/codis/pkg/utils"
+	"github.com/reborndb/reborn/pkg/utils"
 
-	"github.com/wandoulabs/codis/pkg/models"
-	"github.com/wandoulabs/codis/pkg/proxy/group"
-	"github.com/wandoulabs/codis/pkg/proxy/parser"
-	"github.com/wandoulabs/codis/pkg/proxy/router/topology"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/proxy/group"
+	"github.com/reborndb/reborn/pkg/proxy/parser"
+	"github.com/reborndb/reborn/pkg/proxy/router/topology"
 
 	log "github.com/ngaut/logging"
 

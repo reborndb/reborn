@@ -9,7 +9,7 @@ import (
 
 	"container/list"
 	"github.com/juju/errors"
-	"github.com/wandoulabs/codis/pkg/proxy/redispool"
+	"github.com/reborndb/reborn/pkg/proxy/redispool"
 )
 
 type SimpleConnectionPool struct {

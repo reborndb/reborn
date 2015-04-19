@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/rdb"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/redis"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/rdb"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/redis"
 )
 
 func TestSlotNum(t *testing.T) {

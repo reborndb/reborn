@@ -6,10 +6,10 @@ package binlog
 import (
 	"time"
 
-	"github.com/wandoulabs/codis/extern/redis-binlog/pkg/store"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/log"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/rdb"
+	"github.com/reborndb/reborn/extern/redis-binlog/pkg/store"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/log"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/rdb"
 )
 
 const (

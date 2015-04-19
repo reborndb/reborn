@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/testing/assert"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/testing/assert"
 )
 
 func hexStringToObject(t *testing.T, s string) interface{} {

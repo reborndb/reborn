@@ -7,8 +7,8 @@ import (
 
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
-	"github.com/wandoulabs/codis/pkg/proxy/parser"
-	"github.com/wandoulabs/codis/pkg/proxy/redisconn"
+	"github.com/reborndb/reborn/pkg/proxy/parser"
+	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 )
 
 type taskRunner struct {

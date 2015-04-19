@@ -15,7 +15,7 @@ import (
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
-	"github.com/wandoulabs/codis/pkg/models"
+	"github.com/reborndb/reborn/pkg/models"
 )
 
 var (

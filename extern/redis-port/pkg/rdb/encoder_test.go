@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/counter"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/io/ioutils"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/testing/assert"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/counter"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/io/ioutils"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/testing/assert"
 )
 
 func toString(text string) String {

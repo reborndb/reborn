@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/cupcake/rdb"
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
 )
 
 type objectEncoder interface {

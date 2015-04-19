@@ -3,7 +3,7 @@
 
 package redis
 
-import "github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
+import "github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
 
 type Server struct {
 	t HandlerTable

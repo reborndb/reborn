@@ -6,7 +6,7 @@ package ioutils
 import (
 	"io"
 
-	"github.com/wandoulabs/codis/extern/redis-port/pkg/libs/errors"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/errors"
 )
 
 type simpleReader struct {

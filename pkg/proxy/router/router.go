@@ -16,15 +16,15 @@ import (
 	"syscall"
 	"time"
 
-	topo "github.com/wandoulabs/codis/pkg/proxy/router/topology"
+	topo "github.com/reborndb/reborn/pkg/proxy/router/topology"
 
 	"bytes"
 
-	"github.com/wandoulabs/codis/pkg/models"
-	"github.com/wandoulabs/codis/pkg/proxy/cachepool"
-	"github.com/wandoulabs/codis/pkg/proxy/group"
-	"github.com/wandoulabs/codis/pkg/proxy/parser"
-	"github.com/wandoulabs/codis/pkg/proxy/redispool"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/proxy/cachepool"
+	"github.com/reborndb/reborn/pkg/proxy/group"
+	"github.com/reborndb/reborn/pkg/proxy/parser"
+	"github.com/reborndb/reborn/pkg/proxy/redispool"
 
 	"container/list"
 

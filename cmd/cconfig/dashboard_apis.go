@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wandoulabs/codis/pkg/models"
-	"github.com/wandoulabs/codis/pkg/utils"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 
 	"github.com/go-martini/martini"
 	"github.com/juju/errors"

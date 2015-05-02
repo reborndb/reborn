@@ -555,6 +555,12 @@ func (s *Server) handleTopoEvent() {
 				s.handleMarkOffline()
 				e.(*killEvent).done <- nil
 			default:
+				if s.top.IsSessionExpiredEvent(e) {
+					log.Warningf("session expired: %+v", e)
+					s.resetTopo()
+					continue
+				}
+
 				evtPath := GetEventPath(e)
 				log.Infof("got event %s, %v, lastActionSeq %d", s.pi.Id, e, s.lastActionSeq)
 				if strings.Index(evtPath, models.GetActionResponsePath(s.conf.productName)) == 0 {
@@ -623,7 +629,7 @@ func (s *Server) FillSlots() {
 	}
 }
 
-func (s *Server) RegisterAndWait() {
+func (s *Server) RegisterAndWait(wait bool) {
 	_, err := s.top.CreateProxyInfo(&s.pi)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
@@ -634,8 +640,25 @@ func (s *Server) RegisterAndWait() {
 		log.Warning(errors.ErrorStack(err))
 	}
 
-	s.registerSignal()
-	s.waitOnline()
+	if wait {
+		s.waitOnline()
+	}
+}
+
+func (s *Server) resetTopo() {
+	log.Error("resetTopo")
+	if s.top != nil {
+		s.top.Close(s.conf.proxyId)
+	}
+
+	s.top = topo.NewTopo(s.conf.productName, s.conf.zkAddr, s.conf.f, s.conf.provider)
+	s.RegisterAndWait(false)
+	_, err := s.top.WatchChildren(models.GetWatchActionPath(s.conf.productName), s.evtbus)
+	if err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+
+	s.FillSlots()
 }
 
 func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
@@ -675,7 +698,8 @@ func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
 		return s.startAt.String()
 	}))
 
-	s.RegisterAndWait()
+	s.RegisterAndWait(true)
+	s.registerSignal()
 
 	_, err = s.top.WatchChildren(models.GetWatchActionPath(conf.productName), s.evtbus)
 	if err != nil {

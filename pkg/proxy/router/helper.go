@@ -208,7 +208,11 @@ func getRespOpKeys(c *session) (*parser.Resp, []byte, [][]byte, error) {
 
 func filter(opstr string, keys [][]byte, c *session, timeoutSec int) (rawresp []byte, next bool, err error) {
 	if !allowOp(opstr) {
-		return nil, false, errors.Trace(fmt.Errorf("%s not allowed", opstr))
+		errmsg, err := respcoding.Marshal(fmt.Errorf("%s not allowed", opstr))
+		if err != nil {
+			log.Fatal("should never happend", opstr)
+		}
+		return errmsg, false, errors.New(string(errmsg))
 	}
 
 	buf, shouldClose, handled, err := handleSpecCommand(opstr, keys, timeoutSec)

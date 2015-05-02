@@ -146,12 +146,21 @@ func (top *Topology) DoResponse(seq int, pi *models.ProxyInfo) error {
 	return err
 }
 
-func (top *Topology) doWatch(evtch <-chan topo.Event, evtbus chan interface{}) {
-	e := <-evtch
-	if e.State == topo.StateExpired || e.Type == topo.EventNotWatching {
-		log.Fatalf("session expired: %+v", e)
+func (top *Topology) IsSessionExpiredEvent(event interface{}) bool {
+	e, ok := event.(topo.Event)
+	if !ok {
+		return false
 	}
 
+	if e.State == topo.StateExpired && e.Type == topo.EventNotWatching {
+		return true
+	}
+
+	return false
+}
+
+func (top *Topology) doWatch(evtch <-chan topo.Event, evtbus chan interface{}) {
+	e := <-evtch
 	log.Warningf("topo event %+v", e)
 
 	switch e.Type {

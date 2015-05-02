@@ -81,6 +81,13 @@ func (s *Server) stopTaskRunners() {
 	}
 }
 
+func (s *Server) dumpCounter() {
+	for {
+		time.Sleep(5 * time.Second)
+		log.Info(s.counter.String())
+	}
+}
+
 func (s *Server) fillSlot(i int, force bool) {
 	if !validSlot(i) {
 		return
@@ -710,6 +717,7 @@ func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
 
 	//start event handler
 	go s.handleTopoEvent()
+	go s.dumpCounter()
 
 	log.Info("proxy start ok")
 

@@ -212,7 +212,7 @@ func filter(opstr string, keys [][]byte, c *session, timeoutSec int) (rawresp []
 		if err != nil {
 			log.Fatal("should never happend", opstr)
 		}
-		return errmsg, false, errors.Trace(fmt.Errorf("%s not allowed", opstr))
+		return errmsg, false, errors.New(string(errmsg))
 	}
 
 	buf, shouldClose, handled, err := handleSpecCommand(opstr, keys, timeoutSec)

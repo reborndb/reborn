@@ -4,7 +4,7 @@
 package router
 
 import (
-	"io"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -227,6 +227,24 @@ func TestInvalidRedisCmdUnknown(t *testing.T) {
 	}
 }
 
+func TestNotAllowedCmd(t *testing.T) {
+	InitEnv()
+	c, err := redis.Dial("tcp", "localhost:19000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	_, err = c.Do("save")
+	if err == nil {
+		t.Error("should report error")
+	}
+
+	if strings.Index(err.Error(), "not allowed") < 0 {
+		t.Error("should report error")
+	}
+}
+
 func TestInvalidRedisCmdPing(t *testing.T) {
 	InitEnv()
 	c, err := redis.Dial("tcp", "localhost:19000")
@@ -235,9 +253,10 @@ func TestInvalidRedisCmdPing(t *testing.T) {
 	}
 	defer c.Close()
 
-	_, err = c.Do("SAVE")
-	if err != io.EOF {
-		t.Fatal(err)
+	reply, err := c.Do("ping")
+
+	if reply.(string) != "PONG" {
+		t.Error("should report error", reply)
 	}
 }
 

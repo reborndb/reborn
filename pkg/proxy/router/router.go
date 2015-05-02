@@ -230,7 +230,7 @@ func (s *Server) redisTunnel(c *session) error {
 	opstr := strings.ToUpper(string(op))
 	buf, next, err := filter(opstr, keys, c, s.conf.netTimeout)
 	if err != nil {
-		if len(buf) > 0 { //quit command
+		if len(buf) > 0 { //quit command or error message
 			s.sendBack(c, op, keys, resp, buf)
 		}
 		return errors.Trace(err)

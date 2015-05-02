@@ -450,7 +450,7 @@ func (s *Server) handleMarkOffline() {
 	s.top.Close(s.pi.Id)
 	if s.OnSuicide == nil {
 		s.OnSuicide = func() error {
-			log.Fatalf("suicide %+v", s.pi)
+			log.Fatalf("suicide %+v, %s", s.pi, s.counter)
 			return nil
 		}
 	}

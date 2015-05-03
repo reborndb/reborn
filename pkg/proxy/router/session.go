@@ -54,12 +54,7 @@ func (s *session) String() string {
 }
 
 func (s *session) writeResp(resp *PipelineResponse) error {
-	buf, err := resp.resp.Bytes()
-	if err != nil {
-		return errors.Trace(err)
-	}
-	_, err = s.Write(buf)
-	return errors.Trace(err)
+	return resp.resp.WriteTo(s.w)
 }
 
 func (s *session) handleResponse(resp *PipelineResponse) (flush bool, err error) {

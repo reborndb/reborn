@@ -170,7 +170,7 @@ func TestWrite2Redis(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = write2Redis(resp, &result)
+	err = resp.WriteTo(&result)
 	if err != nil {
 		t.Error(err)
 	}

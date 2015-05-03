@@ -37,12 +37,7 @@ func (tr *taskRunner) readloop() {
 }
 
 func (tr *taskRunner) dowrite(r *PipelineRequest, flush bool) error {
-	b, err := r.req.Bytes()
-	if err != nil {
-		return errors.Trace(err)
-	}
-
-	_, err = tr.c.Write(b)
+	err := r.req.WriteTo(tr.c)
 	if err != nil {
 		return errors.Trace(err)
 	}

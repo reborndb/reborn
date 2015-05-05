@@ -145,13 +145,13 @@ func GetFenceProxyMap(zkConn zkhelper.Conn, productName string) (map[string]bool
 var ErrUnknownProxyStatus = errors.New("unknown status, should be (online offline)")
 
 func SetProxyStatus(zkConn zkhelper.Conn, productName string, proxyName string, status string) error {
+	if status != PROXY_STATE_ONLINE && status != PROXY_STATE_MARK_OFFLINE && status != PROXY_STATE_OFFLINE {
+		return errors.Errorf("%v, %s", ErrUnknownProxyStatus, status)
+	}
+
 	p, err := GetProxyInfo(zkConn, productName, proxyName)
 	if err != nil {
 		return errors.Trace(err)
-	}
-
-	if status != PROXY_STATE_ONLINE && status != PROXY_STATE_MARK_OFFLINE && status != PROXY_STATE_OFFLINE {
-		return errors.Errorf("%v, %s", ErrUnknownProxyStatus, status)
 	}
 
 	// check slot status before setting proxy online

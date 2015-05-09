@@ -70,6 +70,8 @@ func TestMsetResults(t *testing.T) {
 		if !strings.Contains(err.Error(), "bad number of keys for mset command") {
 			t.Error(err)
 		}
+	} else {
+		t.Error("unkown error - should not get here")
 	}
 }
 

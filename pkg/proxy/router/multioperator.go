@@ -132,9 +132,15 @@ func (oper *MultiOperator) delResults(mop *MulOp) ([]byte, error) {
 }
 
 func (oper *MultiOperator) msetResults(mop *MulOp) ([]byte, error) {
+	// add mop.keys len check
+	keysNum := len(mop.keys)
+	if keysNum%2 != 0 {
+		return nil, errors.Errorf("bad number of keys for mset command - %d", keysNum)
+	}
+
 	conn := oper.pool.Get()
 	defer conn.Close()
-	for i := 0; i < len(mop.keys); i += 2 {
+	for i := 0; i < keysNum; i += 2 {
 		log.Info(string(mop.keys[i]), string(mop.keys[i+1]))
 		_, err := conn.Do("set", mop.keys[i], mop.keys[i+1]) //change mset to set
 		if err != nil {

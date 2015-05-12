@@ -53,6 +53,28 @@ func TestMgetResults(t *testing.T) {
 	}
 }
 
+func TestMsetResults(t *testing.T) {
+	redisrv, err := miniredis.Run()
+	if err != nil {
+		t.Fatal("can not run miniredis")
+	}
+	defer redisrv.Close()
+
+	// for mset x y z bad case test
+	moper := NewMultiOperator(redisrv.Addr())
+	_, err = moper.msetResults(&MulOp{
+		op: "mset",
+		keys: [][]byte{[]byte("x"),
+			[]byte("y"), []byte("z")}})
+	if err != nil {
+		if !strings.Contains(err.Error(), "bad number of keys for mset command") {
+			t.Error(err)
+		}
+	} else {
+		t.Error("unkown error - should not get here")
+	}
+}
+
 func TestDeltResults(t *testing.T) {
 	redisrv, err := miniredis.Run()
 	if err != nil {

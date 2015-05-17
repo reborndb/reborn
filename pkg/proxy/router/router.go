@@ -523,7 +523,12 @@ func (s *Server) processAction(e interface{}) {
 	s.lastActionSeq = seqs[len(seqs)-1]
 }
 
-func (s *Server) dispatch(r *PipelineRequest) {
+func (s *Server) dispatch(r *PipelineRequest) (success bool) {
+	slotStatus := s.slots[r.slotIdx].slotInfo.State.Status
+	if slotStatus != models.SLOT_STATUS_ONLINE && slotStatus != models.SLOT_STATUS_MIGRATE {
+		return false
+	}
+
 	s.handleMigrateState(r.slotIdx, r.keys[0])
 	tr, ok := s.pipeConns[s.slots[r.slotIdx].dst.Master()]
 	if !ok {
@@ -537,6 +542,7 @@ func (s *Server) dispatch(r *PipelineRequest) {
 	}
 	tr.in <- r
 
+	return true
 }
 
 func (s *Server) handleTopoEvent() {
@@ -550,12 +556,15 @@ func (s *Server) handleTopoEvent() {
 
 			for e := s.bufferedReq.Front(); e != nil; {
 				next := e.Next()
-				s.dispatch(e.Value.(*PipelineRequest))
-				s.bufferedReq.Remove(e)
+				if s.dispatch(e.Value.(*PipelineRequest)) {
+					s.bufferedReq.Remove(e)
+				}
 				e = next
 			}
 
-			s.dispatch(r)
+			if !s.dispatch(r) {
+				log.Fatalf("should never happend, %+v", r)
+			}
 		case e := <-s.evtbus:
 			switch e.(type) {
 			case *killEvent:

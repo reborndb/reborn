@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ngaut/zkhelper"
@@ -154,7 +155,10 @@ func GetActionSeqList(zkConn zkhelper.Conn, productName string) ([]int, error) {
 func ExtraSeqList(nodes []string) ([]int, error) {
 	var seqs []int
 	for _, nodeName := range nodes {
-		seq, err := strconv.Atoi(nodeName)
+		//ugly code for support old version
+		ss := strings.Split(nodeName, "_")
+		seq, err := strconv.Atoi(ss[len(ss)-1])
+
 		if err != nil {
 			return nil, errors.Trace(err)
 		}

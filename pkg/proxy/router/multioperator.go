@@ -4,6 +4,7 @@
 package router
 
 import (
+	"sync"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -77,20 +78,34 @@ func (oper *MultiOperator) work() {
 
 func (oper *MultiOperator) mgetResults(mop *MulOp) ([]byte, error) {
 	results := make([]interface{}, len(mop.keys))
-	conn := oper.pool.Get()
-	defer conn.Close()
-	for i, key := range mop.keys {
-		replys, err := redis.Values(conn.Do("mget", key))
-		if err != nil {
-			return nil, errors.Trace(err)
-		}
-
-		for _, reply := range replys {
-			if reply != nil {
-				results[i] = reply
-			} else {
-				results[i] = nil
+	wg := &sync.WaitGroup{}
+	wg.Add(len(mop.keys))
+	for i, _ := range mop.keys {
+		go func(index int, key []byte) {
+			conn := oper.pool.Get()
+			defer conn.Close()
+			defer wg.Done()
+			replys, err := redis.Values(conn.Do("mget", key))
+			if err != nil {
+				results[index] = err
+				log.Warning(err)
+				return
 			}
+
+			for _, reply := range replys {
+				if reply != nil {
+					results[index] = reply
+				} else {
+					results[index] = nil
+				}
+			}
+		}(i, mop.keys[i])
+	}
+
+	wg.Wait()
+	for _, v := range results {
+		if _, ok := v.(error); ok {
+			return nil, errors.Trace(v.(error))
 		}
 	}
 

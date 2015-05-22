@@ -152,7 +152,7 @@ func (s *Server) createTaskRunners() {
 	}
 }
 
-func (s *Server) handleMigrateState(slotIndex int, key []byte) error {
+func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 	shd := s.slots[slotIndex]
 	if shd.slotInfo.State.Status != models.SLOT_STATUS_MIGRATE {
 		return nil
@@ -175,11 +175,11 @@ func (s *Server) handleMigrateState(slotIndex int, key []byte) error {
 
 	redisReader := redisConn.(*redispool.PooledConn).BufioReader()
 
-	err = WriteMigrateKeyCmd(redisConn.(*redispool.PooledConn), shd.dst.Master(), 30*1000, key)
+	err = WriteMigrateKeyCmd(redisConn.(*redispool.PooledConn), shd.dst.Master(), 30*1000, keys...)
 	if err != nil {
 		redisConn.Close()
 		log.Warningf("migrate key %s error, from %s to %s",
-			string(key), shd.migrateFrom.Master(), shd.dst.Master())
+			string(keys[0]), shd.migrateFrom.Master(), shd.dst.Master())
 		return errors.Trace(err)
 	}
 
@@ -192,12 +192,12 @@ func (s *Server) handleMigrateState(slotIndex int, key []byte) error {
 
 	result, err := resp.Bytes()
 
-	log.Debug("migrate", string(key), "from", shd.migrateFrom.Master(), "to", shd.dst.Master(),
+	log.Debug("migrate", string(keys[0]), "from", shd.migrateFrom.Master(), "to", shd.dst.Master(),
 		string(result))
 
 	if resp.Type == parser.ErrorResp {
 		redisConn.Close()
-		log.Error(string(key), string(resp.Raw), "migrateFrom", shd.migrateFrom.Master())
+		log.Error(string(keys[0]), string(resp.Raw), "migrateFrom", shd.migrateFrom.Master())
 		return errors.New(string(resp.Raw))
 	}
 
@@ -249,13 +249,16 @@ func (s *Server) redisTunnel(c *session) error {
 	}
 
 	if isMulOp(opstr) {
-		if len(keys) > 1 { //can not send to redis directly
+		keys, err := resp.Keys()
+		if err != nil {
+			return errors.Trace(err)
+		}
+		if !isTheSameSlot(keys) { //can not send to redis directly
 			var result []byte
 			err := s.moper.handleMultiOp(opstr, keys, &result)
 			if err != nil {
 				return errors.Trace(err)
 			}
-
 			s.sendBack(c, op, keys, resp, result)
 			return nil
 		}
@@ -529,7 +532,7 @@ func (s *Server) dispatch(r *PipelineRequest) (success bool) {
 		return false
 	}
 
-	s.handleMigrateState(r.slotIdx, r.keys[0])
+	s.handleMigrateState(r.slotIdx, r.keys...)
 	tr, ok := s.pipeConns[s.slots[r.slotIdx].dst.Master()]
 	if !ok {
 		//try recreate taskrunner

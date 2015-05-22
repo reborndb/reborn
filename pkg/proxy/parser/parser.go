@@ -310,28 +310,6 @@ func thridAsKey(r *Resp) ([][]byte, error) {
 	return keys, nil
 }
 
-func (r *Resp) Op() ([]byte, error) {
-	if len(r.Multi) > 0 {
-		return r.Multi[0].Raw, nil
-	}
-
-	return nil, errors.Errorf("invalid resp %+v", r)
-}
-
-func (r *Resp) Keys() ([][]byte, error) {
-	key, err := r.Op()
-	if err != nil {
-		return nil, err
-	}
-
-	f, ok := keyFun[string(key)]
-	if !ok {
-		return defaultGetKeys(r)
-	}
-
-	return f(r)
-}
-
 func (r *Resp) WriteTo(w io.Writer) error {
 	switch r.Type {
 	case NoKey:

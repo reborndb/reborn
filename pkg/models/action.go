@@ -189,7 +189,6 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 	}
 
 	var act Action
-	currentTs := time.Now().Unix()
 
 	if gcType == GC_TYPE_N {
 		sort.Strings(actions)
@@ -208,6 +207,8 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 		}
 	} else if gcType == GC_TYPE_SEC {
 		secs := keep
+		currentTs := time.Now().Unix()
+
 		for _, action := range actions {
 			b, _, err := zkConn.Get(path.Join(prefix, action))
 			if err != nil {

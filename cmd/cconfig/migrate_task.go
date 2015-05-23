@@ -71,6 +71,12 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 		from = s.State.MigrateStatus.From
 	}
 
+	// cannot migrate to itself, just ignore
+	if from == to {
+		log.Warning("from == to, ignore", s)
+		return nil
+	}
+
 	// make sure from group & target group exists
 	exists, err := models.GroupExists(t.zkConn, t.productName, from)
 	if err != nil {
@@ -87,12 +93,6 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	}
 	if !exists {
 		return errors.NotFoundf("group %d", to)
-	}
-
-	// cannot migrate to itself, just ignore
-	if from == to {
-		log.Warning("from == to, ignore", s)
-		return nil
 	}
 
 	// modify slot status

@@ -1,18 +1,13 @@
-#Codis - yet another fast distributed solution for Redis
+#Reborn - yet another fast distributed solution for Redis
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/wandoulabs/codis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/wandoulabs/codis.svg)](https://travis-ci.org/wandoulabs/codis)
 
-Codis is a proxy based high performance Redis cluster solution written in Go/C, an alternative to Twemproxy.
+Reborn is a proxy based high performance Redis cluster solution written in Go/C, an alternative to Twemproxy.
 
-Codis supports multiple stateless proxy with multiple redis instances.
+Reborn supports multiple stateless proxy with multiple redis instances.
 
-Codis is engineered to elastically scale, Easily add or remove redis or proxy instances on-demand/dynamicly.
-
-Codis is production-ready and is widely used by [wandoujia.com](http://wandoujia.com).
-
-
-
+Reborn is engineered to elastically scale, Easily add or remove redis or proxy instances on-demand/dynamicly.
 
 ##Features
 * Auto rebalance
@@ -28,8 +23,8 @@ Codis is production-ready and is widely used by [wandoujia.com](http://wandoujia
 ## Build and Install
 
 * Install go & ZooKeeper
-* go get github.com/wandoulabs/codis
-* cd codis
+* go get github.com/reborndb/reborn
+* cd reborn
 * ./bootstrap.sh
 * make gotest
 * cd sample
@@ -37,13 +32,13 @@ Codis is production-ready and is widely used by [wandoujia.com](http://wandoujia
 
 ## Tutorial
 
-[简体中文](https://github.com/wandoulabs/codis/blob/master/doc/tutorial_zh.md)  
-[English](https://github.com/wandoulabs/codis/blob/master/doc/tutorial_en.md)
+[简体中文](https://github.com/reborndb/reborn/blob/master/doc/tutorial_zh.md)  
+[English](https://github.com/reborndb/reborn/blob/master/doc/tutorial_en.md)
 
 ## FAQ
 
-[简体中文](https://github.com/wandoulabs/codis/blob/master/doc/FAQ_zh.md)  
-[English (WIP) ](https://github.com/wandoulabs/codis/blob/master/doc/FAQ_en.md)
+[简体中文](https://github.com/reborndb/reborn/blob/master/doc/FAQ_zh.md) 
+[English (WIP) ](https://github.com/reborndb/reborn/blob/master/doc/FAQ_en.md)
 
 ## Performance (Benchmark)
 Intel(R) Core(TM) i7-4770 CPU @ 3.40GHz
@@ -54,7 +49,7 @@ MemTotal: 16376596 kB
 Twemproxy:  
   redis-benchmark -p 22121 -c 500 -n 5000000 -P 100 -r 10000 -t get,set
   
-Codis:  
+Reborn:  
   redis-benchmark -p 19000 -c 500 -n 5000000 -P 100 -r 10000 -t get,set
 
 Result:  
@@ -63,12 +58,12 @@ Result:
 
 
 
-[简体中文](https://github.com/wandoulabs/codis/blob/master/doc/benchmark_zh.md)  
+[简体中文](https://github.com/reborndb/reborn/blob/master/doc/benchmark_zh.md)  
 English (WIP)
 
 ## For Java users who want to support HA
 
-[Jodis \(HA Codis Connection Pool based on Jedis\)] (https://github.com/wandoulabs/codis/tree/master/extern/jodis)
+[Jodis \(HA Reborn Connection Pool based on Jedis\)] (https://github.com/wandoulabs/codis/tree/master/extern/jodis)
 
 ## Architecture
 
@@ -98,7 +93,7 @@ Thanks:
 
 ## License
 
-Codis is licensed under MIT， see MIT-LICENSE.txt
+Reborn is licensed under MIT， see MIT-LICENSE.txt
 
 -------------
-*You are welcome to use Codis in your product, and feel free to let us know~ :)*
+*You are welcome to use Reborn in your product, and feel free to let us know~ :)*

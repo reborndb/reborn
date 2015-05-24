@@ -1,8 +1,5 @@
 #Reborn - yet another fast distributed solution for Redis
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/wandoulabs/codis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/wandoulabs/codis.svg)](https://travis-ci.org/wandoulabs/codis)
-
 Reborn is a proxy based high performance Redis cluster solution written in Go/C, an alternative to Twemproxy.
 
 Reborn supports multiple stateless proxy with multiple redis instances.
@@ -63,7 +60,7 @@ English (WIP)
 
 ## For Java users who want to support HA
 
-[Jodis \(HA Reborn Connection Pool based on Jedis\)] (https://github.com/wandoulabs/codis/tree/master/extern/jodis)
+[Jodis \(HA Reborn Connection Pool based on Jedis\)] (https://github.com/reborndb/reborn/tree/master/extern/jodis)
 
 ## Architecture
 

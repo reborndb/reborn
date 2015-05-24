@@ -95,7 +95,6 @@ func (s *Server) fillSlot(i int, force bool) {
 
 	if !force && s.slots[i] != nil { //check
 		log.Fatalf("slot %d already filled, slot: %+v", i, s.slots[i])
-		return
 	}
 
 	s.clearSlot(i)
@@ -306,7 +305,7 @@ func (s *Server) handleConn(c net.Conn) {
 			if GetOriginError(err.(*errors.Err)).Error() != io.EOF.Error() {
 				log.Warningf("close connection %v, %v", client, errors.ErrorStack(err))
 			} else {
-				log.Infof("close connection  %v", client)
+				log.Infof("close connection by eof %v", client)
 			}
 		} else {
 			log.Infof("close connection %v", client)
@@ -585,14 +584,13 @@ func (s *Server) handleTopoEvent() {
 						log.Warning(err)
 					} else {
 						if seq < s.lastActionSeq {
-							log.Info("ignore", seq)
+							log.Infof("ignore, lastActionSeq %d, seq %d", s.lastActionSeq, seq)
 							continue
 						}
 					}
 
 				}
 
-				log.Infof("got event %s, %v, lastActionSeq %d", s.pi.Id, e, s.lastActionSeq)
 				s.processAction(e)
 			}
 		}
@@ -700,8 +698,19 @@ func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
 	if err != nil {
 		log.Fatal("get host name failed", err)
 	}
-	s.pi.Addr = hname + ":" + strings.Split(addr, ":")[1]
-	s.pi.DebugVarAddr = hname + ":" + strings.Split(debugVarAddr, ":")[1]
+
+	addrs := strings.Split(addr, ":")
+	if len(addrs) != 2 {
+		log.Fatalf("bad addr %s", addr)
+	}
+	s.pi.Addr = hname + ":" + addrs[1]
+
+	debugVarAddrs := strings.Split(debugVarAddr, ":")
+	if len(debugVarAddrs) != 2 {
+		log.Fatalf("bad debugVarAddr %s", debugVarAddr)
+	}
+	s.pi.DebugVarAddr = hname + ":" + debugVarAddrs[1]
+
 	s.pi.Pid = os.Getpid()
 	s.pi.StartAt = time.Now().String()
 

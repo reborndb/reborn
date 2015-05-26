@@ -71,14 +71,16 @@ func validSlot(i int) bool {
 	return true
 }
 
-func WriteMigrateKeyCmd(w io.Writer, addr string, timeoutMs int, key []byte) error {
+func WriteMigrateKeyCmd(w io.Writer, addr string, timeoutMs int, keys ...[]byte) error {
 	hostPort := strings.Split(addr, ":")
 	if len(hostPort) != 2 {
 		return errors.Errorf("invalid address " + addr)
 	}
 	respW := respcoding.NewRESPWriter(w)
-	err := respW.WriteCommand("slotsmgrttagone", hostPort[0], hostPort[1],
-		strconv.Itoa(int(timeoutMs)), string(key))
+	args := [][]byte{[]byte("slotsmgrttagone"), []byte(hostPort[0]), []byte(hostPort[1]),
+		[]byte(strconv.Itoa(int(timeoutMs)))}
+	args = append(args, keys...)
+	err := respW.WriteCommand(args...)
 	return errors.Trace(err)
 }
 
@@ -328,4 +330,19 @@ func needResponse(receivers []string, self models.ProxyInfo) bool {
 	}
 
 	return false
+}
+
+func isTheSameSlot(keys [][]byte) bool {
+	firstSlot := -1
+	for _, k := range keys {
+		if firstSlot == -1 {
+			firstSlot = mapKey2Slot(k)
+		} else {
+			if firstSlot != mapKey2Slot(k) {
+				return false
+			}
+		}
+	}
+
+	return true
 }

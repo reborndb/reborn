@@ -24,6 +24,27 @@ type MulOp struct {
 	wait   chan error
 }
 
+type pair struct {
+	key []byte
+	pos int
+}
+
+func getSlotMap(keys [][]byte) map[int][]*pair {
+	slotmap := make(map[int][]*pair)
+	for i, k := range keys { //get slots
+		slot := mapKey2Slot(k)
+		vec, exist := slotmap[slot]
+		if !exist {
+			vec = make([]*pair, 0)
+		}
+		vec = append(vec, &pair{key: k, pos: i})
+
+		slotmap[slot] = vec
+	}
+
+	return slotmap
+}
+
 func NewMultiOperator(server string) *MultiOperator {
 	oper := &MultiOperator{q: make(chan *MulOp, 128)}
 	oper.pool = newPool(server, "")
@@ -76,20 +97,26 @@ func (oper *MultiOperator) work() {
 }
 
 func (oper *MultiOperator) mgetResults(mop *MulOp) ([]byte, error) {
+	slotmap := getSlotMap(mop.keys)
 	results := make([]interface{}, len(mop.keys))
 	conn := oper.pool.Get()
 	defer conn.Close()
-	for i, key := range mop.keys {
-		replys, err := redis.Values(conn.Do("mget", key))
+	for _, vec := range slotmap {
+		req := make([]interface{}, 0, len(vec))
+		for _, p := range vec {
+			req = append(req, p.key)
+		}
+
+		replys, err := redis.Values(conn.Do("mget", req...))
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
 
-		for _, reply := range replys {
+		for i, reply := range replys {
 			if reply != nil {
-				results[i] = reply
+				results[vec[i].pos] = reply
 			} else {
-				results[i] = nil
+				results[vec[i].pos] = nil
 			}
 		}
 	}

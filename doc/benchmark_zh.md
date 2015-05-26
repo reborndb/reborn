@@ -19,7 +19,7 @@
 
 + Software
 
-    - [Reborn a915d3e](https://github.com/reborndb/reborn/tree/a915d3e1bc5b22a11a37292c2717ad8ce88291c1)
+    - [Reborn master](https://github.com/reborndb/reborn)
 
         * 16 x Reborn Redis
 

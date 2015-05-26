@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/counter"
+	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/atomic2"
 	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/io/ioutils"
 	"github.com/reborndb/reborn/extern/redis-port/pkg/libs/testing/assert"
 )
@@ -258,7 +258,7 @@ func TestEncodeRdb(t *testing.T) {
 	}
 	assert.ErrorIsNil(t, enc.EncodeFooter())
 	rdb := b.Bytes()
-	var c counter.Int64
+	var c atomic2.Int64
 	l := NewLoader(ioutils.NewCountReader(bytes.NewReader(rdb), &c))
 	assert.ErrorIsNil(t, l.Header())
 	var i int = 0

@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package models
@@ -72,11 +72,11 @@ func NewSlot(productName string, id int) *Slot {
 }
 
 func GetSlotPath(productName string, slotId int) string {
-	return fmt.Sprintf("/zk/codis/db_%s/slots/slot_%d", productName, slotId)
+	return fmt.Sprintf("/zk/reborn/db_%s/slots/slot_%d", productName, slotId)
 }
 
 func GetSlotBasePath(productName string) string {
-	return fmt.Sprintf("/zk/codis/db_%s/slots", productName)
+	return fmt.Sprintf("/zk/reborn/db_%s/slots", productName)
 }
 
 func GetSlot(zkConn zkhelper.Conn, productName string, id int) (*Slot, error) {

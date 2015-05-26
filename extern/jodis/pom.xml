@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2014 Wandoujia Inc.
+Copyright (c) 2015 Reborndb Org.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,17 @@ THE SOFTWARE.
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.wandoulabs.jodis</groupId>
+    <groupId>com.reborndb.jodis</groupId>
     <artifactId>jodis</artifactId>
     <version>0.1.2</version>
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>
-    <description>Round Robin jedis pool for codis</description>
-    <url>https://github.com/wandoulabs/codis</url>
+    <description>Round Robin jedis pool for reborn</description>
+    <url>https://github.com/reborndb/reborn</url>
     <scm>
-        <connection>scm:git:ssh://github.com:wandoulabs/codis.git</connection>
-        <developerConnection>scm:git:ssh://github.com:wandoulabs/codis.git</developerConnection>
-        <url>ssh://github.com:wandoulabs/codis.git</url>
+        <connection>scm:git:ssh://github.com:reborndb/reborn.git</connection>
+        <developerConnection>scm:git:ssh://github.com:reborndb/reborn.git</developerConnection>
+        <url>ssh://github.com:reborndb/reborn.git</url>
         <tag>HEAD</tag>
     </scm>
     <properties>

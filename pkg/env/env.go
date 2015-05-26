@@ -16,14 +16,14 @@ type Env interface {
 	NewZkConn() (zkhelper.Conn, error)
 }
 
-type CodisEnv struct {
+type RebornEnv struct {
 	zkAddr        string
 	dashboardAddr string
 	productName   string
 	provider      string
 }
 
-func LoadCodisEnv(cfg *cfg.Cfg) Env {
+func LoadRebornEnv(cfg *cfg.Cfg) Env {
 	if cfg == nil {
 		log.Fatal("config error")
 	}
@@ -49,7 +49,7 @@ func LoadCodisEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
-	return &CodisEnv{
+	return &RebornEnv{
 		zkAddr:        zkAddr,
 		dashboardAddr: dashboardAddr,
 		productName:   productName,
@@ -57,15 +57,15 @@ func LoadCodisEnv(cfg *cfg.Cfg) Env {
 	}
 }
 
-func (e *CodisEnv) ProductName() string {
+func (e *RebornEnv) ProductName() string {
 	return e.productName
 }
 
-func (e *CodisEnv) DashboardAddr() string {
+func (e *RebornEnv) DashboardAddr() string {
 	return e.dashboardAddr
 }
 
-func (e *CodisEnv) NewZkConn() (zkhelper.Conn, error) {
+func (e *RebornEnv) NewZkConn() (zkhelper.Conn, error) {
 	switch e.provider {
 	case "zookeeper":
 		return zkhelper.ConnectToZk(e.zkAddr)

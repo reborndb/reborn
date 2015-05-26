@@ -19,9 +19,9 @@
 
 + Software
 
-    - [Codis a915d3e](https://github.com/wandoulabs/codis/tree/a915d3e1bc5b22a11a37292c2717ad8ce88291c1)
+    - [Reborn master](https://github.com/reborndb/reborn)
 
-        * 16 x Codis Redis
+        * 16 x Reborn Redis
 
     - [memtier_benchmark](http://highscalability.com/blog/2014/8/27/the-12m-opssec-redis-cloud-cluster-single-server-unbenchmark.html)
 
@@ -152,7 +152,7 @@
 ###测试脚本###
 ------------
 
-+ test codis-proxy
++ test reborn-proxy
 
 ```bash
 #!/bin/bash
@@ -164,30 +164,30 @@ NTHRD=1
 trap "kill 0" EXIT SIGQUIT SIGKILL SIGTERM
 
 for ((i=1;i<=$NPROXY;i++)); do
-    codis-config proxy offline proxy_${i} 2>&1 >/dev/null
+    reborn-config proxy offline proxy_${i} 2>&1 >/dev/null
 done
 
 for ((i=1;i<=$NPROXY;i++)); do
     cat > config${i}.ini <<EOF
 zk=localhost:2181
-product=codis_bench
+product=reborn_bench
 proxy_id=proxy_${i}
 EOF
     let a="${i}+19000"
     let b="${i}+10000"
-    codis-proxy --cpu=$NCPU -c config${i}.ini -L proxy${i}.log \
+    reborn-proxy --cpu=$NCPU -c config${i}.ini -L proxy${i}.log \
         --addr=0.0.0.0:${a} --http-addr=0.0.0.0:${b} &
 done
 
 sleep 2
 
 for ((i=1;i<=$NPROXY;i++)); do
-    codis-config proxy online proxy_${i}
+    reborn-config proxy online proxy_${i}
 done
 
 sleep 5
 
-echo codis-proxy is ready
+echo reborn-proxy is ready
 
 for ((i=1;i<=$NPROXY;i++)); do
     let a="${i}+19000"

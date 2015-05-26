@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -37,11 +37,12 @@ options:
 `
 
 var banner string = `
-  _____  ____    ____/ /  (_)  _____
- / ___/ / __ \  / __  /  / /  / ___/
-/ /__  / /_/ / / /_/ /  / /  (__  )
-\___/  \____/  \__,_/  /_/  /____/
-
+    ____       __                     ____  ____ 
+   / __ \___  / /_  ____  _________  / __ \/ __ )
+  / /_/ / _ \/ __ \/ __ \/ ___/ __ \/ / / / __  |
+ / _, _/  __/ /_/ / /_/ / /  / / / / /_/ / /_/ / 
+/_/ |_|\___/_.___/\____/_/  /_/ /_/_____/_____/  
+                                                 
 `
 
 func handleSetLogLevel(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +56,7 @@ func main() {
 	fmt.Print(banner)
 	log.SetLevelByString("info")
 
-	args, err := docopt.Parse(usage, nil, true, "codis proxy v0.1", true)
+	args, err := docopt.Parse(usage, nil, true, "reborn proxy v0.1", true)
 	if err != nil {
 		log.Error(err)
 	}
@@ -96,7 +97,7 @@ func main() {
 	dumppath := utils.GetExecutorPath()
 
 	log.Info("dump file path:", dumppath)
-	log.CrashLog(path.Join(dumppath, "codis-proxy.dump"))
+	log.CrashLog(path.Join(dumppath, "reborn-proxy.dump"))
 
 	router.CheckUlimit(1024)
 	runtime.GOMAXPROCS(cpus)

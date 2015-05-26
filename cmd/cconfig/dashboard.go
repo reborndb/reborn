@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -29,7 +29,7 @@ import (
 )
 
 func cmdDashboard(argv []string) (err error) {
-	usage := `usage: codis-config dashboard [--addr=<address>] [--http-log=<log_file>]
+	usage := `usage: reborn-config dashboard [--addr=<address>] [--http-log=<log_file>]
 
 options:
 	--addr	listen ip:port, e.g. localhost:12345, :8086, [default: :8086]
@@ -155,7 +155,7 @@ func createDashboardNode() error {
 	defer conn.Close()
 
 	// make sure root dir is exists
-	rootDir := fmt.Sprintf("/zk/codis/db_%s", globalEnv.ProductName())
+	rootDir := fmt.Sprintf("/zk/reborn/db_%s", globalEnv.ProductName())
 	zkhelper.CreateRecursive(conn, rootDir, "", 0, zkhelper.DefaultDirACLs())
 
 	zkPath := fmt.Sprintf("%s/dashboard", rootDir)
@@ -178,7 +178,7 @@ func releaseDashboardNode() {
 	conn := CreateZkConn()
 	defer conn.Close()
 
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/dashboard", globalEnv.ProductName())
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/dashboard", globalEnv.ProductName())
 	if exists, _, _ := conn.Exists(zkPath); exists {
 		log.Info("removing dashboard node")
 		conn.Delete(zkPath, 0)

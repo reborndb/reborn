@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -15,12 +15,12 @@ import (
 
 func cmdSlot(argv []string) (err error) {
 	usage := `usage:
-	codis-config slot init [-f]
-	codis-config slot info <slot_id>
-	codis-config slot set <slot_id> <group_id> <status>
-	codis-config slot range-set <slot_from> <slot_to> <group_id> <status>
-	codis-config slot migrate <slot_from> <slot_to> <group_id> [--delay=<delay_time_in_ms>]
-	codis-config slot rebalance [--delay=<delay_time_in_ms>]
+	reborn-config slot init [-f]
+	reborn-config slot info <slot_id>
+	reborn-config slot set <slot_id> <group_id> <status>
+	reborn-config slot range-set <slot_from> <slot_to> <group_id> <status>
+	reborn-config slot migrate <slot_from> <slot_to> <group_id> [--delay=<delay_time_in_ms>]
+	reborn-config slot rebalance [--delay=<delay_time_in_ms>]
 `
 
 	args, err := docopt.Parse(usage, argv, true, "", false)

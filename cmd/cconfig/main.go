@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -36,7 +36,7 @@ type Command struct {
 	Ctx   interface{}
 }
 
-var usage = `usage: codis-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
+var usage = `usage: reborn-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
 		<command> [<args>...]
 options:
    -c	set config file
@@ -82,7 +82,7 @@ func runCommand(cmd string, args []string) (err error) {
 	case "slot":
 		return errors.Trace(cmdSlot(argv))
 	}
-	return errors.Errorf("%s is not a valid command. See 'codis-config -h'", cmd)
+	return errors.Errorf("%s is not a valid command. See 'reborn-config -h'", cmd)
 }
 
 func main() {
@@ -96,7 +96,7 @@ func main() {
 		Fatal("ctrl-c or SIGTERM found, exit")
 	}()
 
-	args, err := docopt.Parse(usage, nil, true, "codis config v0.1", true)
+	args, err := docopt.Parse(usage, nil, true, "reborn config v0.1", true)
 	if err != nil {
 		log.Error(err)
 	}
@@ -118,7 +118,7 @@ func main() {
 	}
 
 	// load global vars
-	globalEnv = env.LoadCodisEnv(config)
+	globalEnv = env.LoadRebornEnv(config)
 
 	// set output log file
 	if args["-L"] != nil {

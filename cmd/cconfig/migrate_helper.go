@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -43,9 +43,9 @@ func sendRedisMigrateCmd(c redis.Conn, slotId int, toAddr string) (int, int, err
 }
 
 // Migrator Implement
-type CodisSlotMigrator struct{}
+type RebornSlotMigrator struct{}
 
-func (m *CodisSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, task *MigrateTask, onProgress func(SlotMigrateProgress)) (err error) {
+func (m *RebornSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, task *MigrateTask, onProgress func(SlotMigrateProgress)) (err error) {
 	groupFrom, err := models.GetGroup(task.zkConn, task.productName, fromGroup)
 	if err != nil {
 		return err

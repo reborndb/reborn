@@ -4,16 +4,16 @@ all: build
 build: build-proxy build-config build-server
 
 build-proxy:
-	go build -o bin/codis-proxy ./cmd/proxy
+	go build -o bin/reborn-proxy ./cmd/proxy
 
 build-config:
-	go build -o bin/codis-config ./cmd/cconfig
+	go build -o bin/reborn-config ./cmd/cconfig
 	@rm -rf bin/assets && cp -r cmd/cconfig/assets bin/
 
 build-server:
 	@mkdir -p bin
 	make -j4 -C extern/redis-2.8.13/
-	@cp -f extern/redis-2.8.13/src/redis-server bin/codis-server
+	@cp -f extern/redis-2.8.13/src/redis-server bin/reborn-server
 
 clean:
 	@rm -rf bin

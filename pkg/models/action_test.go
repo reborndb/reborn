@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package models
@@ -106,7 +106,7 @@ func TestForceRemoveLock(t *testing.T) {
 	}
 
 	zkLock.Lock("force remove lock")
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/LOCK", productName)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
 	children, _, err := fakeZkConn.Children(zkPath)
 	if err != nil {
 		t.Error(err)

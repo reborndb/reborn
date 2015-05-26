@@ -1,39 +1,39 @@
-var codisControllers = angular.module('codisControllers', ['ui.bootstrap', 'ngResource', 'highcharts-ng']);
+var rebornControllers = angular.module('rebornControllers', ['ui.bootstrap', 'ngResource', 'highcharts-ng']);
 
-codisControllers.config(['$interpolateProvider',
+rebornControllers.config(['$interpolateProvider',
     function($interpolateProvider) {
         $interpolateProvider.startSymbol('[[');
         $interpolateProvider.endSymbol(']]');
     }
 ]);
 
-codisControllers.config(['$httpProvider', function($httpProvider) {
+rebornControllers.config(['$httpProvider', function($httpProvider) {
     $httpProvider.defaults.useXDomain = true;
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
 }]);
 
-codisControllers.factory('ServerGroupsFactory', ['$resource', function ($resource) {
+rebornControllers.factory('ServerGroupsFactory', ['$resource', function ($resource) {
     return $resource('http://localhost:18087/api/server_groups', {}, {
         query: { method: 'GET', isArray: true },
         create : { method: 'PUT' }
     });
 }]);
 
-codisControllers.factory('ProxyStatusFactory', ['$resource', function ($resource) {
+rebornControllers.factory('ProxyStatusFactory', ['$resource', function ($resource) {
     return $resource('http://localhost:18087/api/proxy', {}, {
         query: { method: 'GET', url : 'http://localhost:18087/api/proxy/list', isArray: true },
         setStatus: { method: 'POST' }
     });
 }]);
 
-codisControllers.factory('RedisStatusFactory', ['$resource', function ($resource) {
+rebornControllers.factory('RedisStatusFactory', ['$resource', function ($resource) {
     return $resource('http://localhost:18087/api/redis', {}, {
         stat: { method: 'GET', url : 'http://localhost:18087/api/redis/:addr/stat' },
         slotInfoByGroupId : { method : 'GET', url: 'http://localhost:18087/api/redis/group/:group_id/:slot_id/slotinfo'}
     });
 }]);
 
-codisControllers.factory('MigrateStatusFactory', ['$resource', function ($resource) {
+rebornControllers.factory('MigrateStatusFactory', ['$resource', function ($resource) {
     return $resource('http://localhost:18087/api/migrate/status', {}, {
         query: { method: 'GET' },
         tasks: { method: 'GET', url: 'http://localhost:18087/api/migrate/tasks', isArray: true},
@@ -45,13 +45,13 @@ codisControllers.factory('MigrateStatusFactory', ['$resource', function ($resour
     });
 }]);
 
-codisControllers.factory('SlotFactory', ['$resource', function ($resource) {
+rebornControllers.factory('SlotFactory', ['$resource', function ($resource) {
     return $resource('http://localhost:18087/api/slot', {}, {
         rangeSet: { method: 'POST' }
     });
 }]);
 
-codisControllers.factory('ServerGroupFactory', ['$resource', function ($resource) {
+rebornControllers.factory('ServerGroupFactory', ['$resource', function ($resource) {
     return $resource('http://localhost:18087/api/server_group/:id', {}, {
         show: { method: 'GET', isArray: true },
         delete: { method: 'DELETE', params: {id: '@id'} },
@@ -62,7 +62,7 @@ codisControllers.factory('ServerGroupFactory', ['$resource', function ($resource
     });
 }]);
 
-codisControllers.controller('codisProxyCtl', ['$scope', '$http', 'ProxyStatusFactory',
+rebornControllers.controller('rebornProxyCtl', ['$scope', '$http', 'ProxyStatusFactory',
 function($scope, $http, ProxyStatusFactory) {
     $scope.proxies = ProxyStatusFactory.query();
 
@@ -93,7 +93,7 @@ function($scope, $http, ProxyStatusFactory) {
 
 }]);
 
-codisControllers.controller('codisOverviewCtl', ['$scope', '$http', '$timeout',
+rebornControllers.controller('rebornOverviewCtl', ['$scope', '$http', '$timeout',
 function($scope, $http, $timeout) {
 
     var refreshChart = function(data) {
@@ -176,7 +176,7 @@ function($scope, $http, $timeout) {
 
 }]);
 
-codisControllers.controller('codisSlotCtl', ['$scope', '$http', '$modal', 'SlotFactory',
+rebornControllers.controller('rebornSlotCtl', ['$scope', '$http', '$modal', 'SlotFactory',
 function($scope, $http, $modal, SlotFactory) {
     $scope.rangeSet = function() {
         var modalInstance = $modal.open({
@@ -208,7 +208,7 @@ function($scope, $http, $modal, SlotFactory) {
     }
 }]);
 
-codisControllers.controller('codisMigrateCtl', ['$scope', '$http', '$modal', 'MigrateStatusFactory',
+rebornControllers.controller('rebornMigrateCtl', ['$scope', '$http', '$modal', 'MigrateStatusFactory',
 function($scope, $http, $modal, MigrateStatusFactory) {
     $scope.migrate_status = MigrateStatusFactory.query();
     $scope.migrate_tasks = MigrateStatusFactory.tasks();
@@ -271,16 +271,16 @@ function($scope, $http, $modal, MigrateStatusFactory) {
     }
 }]);
 
-codisControllers.controller('redisCtl', ['$scope', 'RedisStatusFactory',
+rebornControllers.controller('redisCtl', ['$scope', 'RedisStatusFactory',
 function($scope, RedisStatusFactory) {
     $scope.serverInfo = RedisStatusFactory.stat($scope.server);
 }]);
 
-codisControllers.controller('slotInfoCtl', ['$scope', 'RedisStatusFactory', function($scope, RedisStatusFactory){
+rebornControllers.controller('slotInfoCtl', ['$scope', 'RedisStatusFactory', function($scope, RedisStatusFactory){
     $scope.slotInfo = RedisStatusFactory.slotInfoByGroupId({'slot_id': $scope.slot.id, 'group_id': $scope.slot.state.migrate_status.from })
 }]);
 
-codisControllers.controller('codisServerGroupMainCtl', ['$scope', '$http', '$modal', '$log', 'ServerGroupsFactory', 'ServerGroupFactory',
+rebornControllers.controller('rebornServerGroupMainCtl', ['$scope', '$http', '$modal', '$log', 'ServerGroupsFactory', 'ServerGroupFactory',
 function($scope, $http, $modal, $log, ServerGroupsFactory, ServerGroupFactory) {
 
     $scope.removeServer = function(server) {

@@ -2,7 +2,7 @@
 
 cd ../extern || exit $?
 
-docker rmi codis/redis
+docker rmi reborn/redis
 
 cat > Dockerfile <<EOF
 FROM debian:latest
@@ -19,13 +19,13 @@ RUN mkdir -p /var/run/sshd
 ENTRYPOINT ["/usr/sbin/sshd", "-D"]
 EXPOSE 22
 
-ENV HOMEDIR /codis
+ENV HOMEDIR /reborn
 RUN mkdir -p \${HOMEDIR}
 
-RUN groupadd -r codis && useradd -r -g codis codis -s /bin/bash -d \${HOMEDIR}
-RUN echo 'codis:codis' | chpasswd
+RUN groupadd -r reborn && useradd -r -g reborn reborn -s /bin/bash -d \${HOMEDIR}
+RUN echo 'reborn:reborn' | chpasswd
 
-ENV BUILDDIR /tmp/codis
+ENV BUILDDIR /tmp/reborn
 RUN mkdir -p \${BUILDDIR}
 
 # copy & build redis source code
@@ -33,15 +33,15 @@ ADD redis-2.8.13 \${BUILDDIR}
 WORKDIR \${BUILDDIR}/src
 RUN make distclean
 RUN make -j
-RUN cp redis-server \${HOMEDIR}/codis-server
+RUN cp redis-server \${HOMEDIR}/reborn-server
 RUN cp redis-cli    \${HOMEDIR}/
 RUN rm -rf \${BUILDDIR}
 ADD redis-test/conf/6379.conf \${HOMEDIR}/redis.conf
 EXPOSE 6379
 
-RUN chown -R codis:codis \${HOMEDIR}
+RUN chown -R reborn:reborn \${HOMEDIR}
 EOF
 
-docker build --force-rm -t codis/redis . && rm -f Dockerfile
+docker build --force-rm -t reborn/redis . && rm -f Dockerfile
 
-# docker run --name "codis-redis" -h "codis-redis" -d -p 6022:22 -p 6079:6379 codis/redis
+# docker run --name "reborn-redis" -h "reborn-redis" -d -p 6022:22 -p 6079:6379 reborn/redis

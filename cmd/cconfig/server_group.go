@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -12,16 +12,16 @@ import (
 	"github.com/reborndb/reborn/pkg/models"
 )
 
-// codis redis instance manage tool
+// reborn redis instance manage tool
 
 func cmdServer(argv []string) (err error) {
 	usage := `usage:
-	codis-config server list
-	codis-config server add <group_id> <redis_addr> <role>
-	codis-config server remove <group_id> <redis_addr>
-	codis-config server promote <group_id> <redis_addr>
-	codis-config server add-group <group_id>
-	codis-config server remove-group <group_id>
+	reborn-config server list
+	reborn-config server add <group_id> <redis_addr> <role>
+	reborn-config server remove <group_id> <redis_addr>
+	reborn-config server promote <group_id> <redis_addr>
+	reborn-config server add-group <group_id>
+	reborn-config server remove-group <group_id>
 `
 	args, err := docopt.Parse(usage, argv, true, "", false)
 	if err != nil {

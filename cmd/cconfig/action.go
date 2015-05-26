@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -14,7 +14,7 @@ import (
 )
 
 func cmdAction(argv []string) (err error) {
-	usage := `usage: codis-config action (gc [-n <num> | -s <seconds>] | remove-lock | remove-fence)
+	usage := `usage: reborn-config action (gc [-n <num> | -s <seconds>] | remove-lock | remove-fence)
 
 options:
 	gc:

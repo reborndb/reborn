@@ -1,7 +1,7 @@
 /**
  * @(#)RoundRobinJedisPool.java, 2014-11-30.
  * 
- * Copyright (c) 2014 Wandoujia Inc.
+ * Copyright (c) 2015 Reborndb Org.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.wandoulabs.jodis;
+package com.reborndb.jodis;
 
 import java.io.IOException;
 import java.util.List;
@@ -53,7 +53,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
 /**
- * A round robin connection pool for connecting multiple codis proxies based on
+ * A round robin connection pool for connecting multiple reborn proxies based on
  * Jedis and Curator.
  * 
  * @author Apache9
@@ -66,11 +66,11 @@ public class RoundRobinJedisPool implements JedisResourcePool {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final String JSON_NAME_CODIS_PROXY_ADDR = "addr";
+    private static final String JSON_NAME_REBORN_PROXY_ADDR = "addr";
 
-    private static final String JSON_NAME_CODIS_PROXY_STATE = "state";
+    private static final String JSON_NAME_REBORN_PROXY_STATE = "state";
 
-    private static final String CODIS_PROXY_STATE_ONLINE = "online";
+    private static final String REBORN_PROXY_STATE_ONLINE = "online";
 
     private static final int CURATOR_RETRY_BASE_SLEEP_MS = 100;
 
@@ -121,8 +121,8 @@ public class RoundRobinJedisPool implements JedisResourcePool {
      * @param zkSessionTimeoutMs
      *            ZooKeeper session timeout in ms
      * @param zkPath
-     *            the codis proxy dir on ZooKeeper. e.g.,
-     *            "/zk/codis/db_xxx/proxy"
+     *            the reborn proxy dir on ZooKeeper. e.g.,
+     *            "/zk/reborn/db_xxx/proxy"
      * @param poolConfig
      *            same as JedisPool
      * @see #RoundRobinJedisPool(String, int, String, JedisPoolConfig, int)
@@ -144,8 +144,8 @@ public class RoundRobinJedisPool implements JedisResourcePool {
      * @param zkSessionTimeoutMs
      *            ZooKeeper session timeout in ms
      * @param zkPath
-     *            the codis proxy dir on ZooKeeper. e.g.,
-     *            "/zk/codis/db_xxx/proxy"
+     *            the reborn proxy dir on ZooKeeper. e.g.,
+     *            "/zk/reborn/db_xxx/proxy"
      * @param poolConfig
      *            same as JedisPool
      * @param timeout
@@ -173,8 +173,8 @@ public class RoundRobinJedisPool implements JedisResourcePool {
      * @param closeCurator
      *            Whether to close the curatorClient passed in when close.
      * @param zkPath
-     *            the codis proxy dir on ZooKeeper. e.g.
-     *            "/zk/codis/db_xxx/proxy"
+     *            the reborn proxy dir on ZooKeeper. e.g.
+     *            "/zk/reborn/db_xxx/proxy"
      * @param poolConfig
      *            same as JedisPool
      */
@@ -191,8 +191,8 @@ public class RoundRobinJedisPool implements JedisResourcePool {
      * @param closeCurator
      *            Whether to close the curatorClient passed in when close.
      * @param zkPath
-     *            the codis proxy dir on ZooKeeper. e.g.
-     *            "/zk/codis/db_xxx/proxy"
+     *            the reborn proxy dir on ZooKeeper. e.g.
+     *            "/zk/reborn/db_xxx/proxy"
      * @param poolConfig
      *            same as JedisPool
      * @param timeout
@@ -245,11 +245,11 @@ public class RoundRobinJedisPool implements JedisResourcePool {
         for (ChildData childData: watcher.getCurrentData()) {
             try {
                 JsonNode proxyInfo = MAPPER.readTree(childData.getData());
-                if (!CODIS_PROXY_STATE_ONLINE.equals(proxyInfo.get(JSON_NAME_CODIS_PROXY_STATE)
+                if (!REBORN_PROXY_STATE_ONLINE.equals(proxyInfo.get(JSON_NAME_REBORN_PROXY_STATE)
                         .asText())) {
                     continue;
                 }
-                String addr = proxyInfo.get(JSON_NAME_CODIS_PROXY_ADDR).asText();
+                String addr = proxyInfo.get(JSON_NAME_REBORN_PROXY_ADDR).asText();
                 PooledObject pool = addr2Pool.remove(addr);
                 if (pool == null) {
                     LOG.info("Add new proxy: " + addr);

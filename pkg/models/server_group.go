@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package models
@@ -75,7 +75,7 @@ func NewServerGroup(productName string, id int) *ServerGroup {
 }
 
 func GroupExists(zkConn zkhelper.Conn, productName string, groupId int) (bool, error) {
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d", productName, groupId)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", productName, groupId)
 	exists, _, err := zkConn.Exists(zkPath)
 	if err != nil {
 		return false, errors.Trace(err)
@@ -106,7 +106,7 @@ func GetGroup(zkConn zkhelper.Conn, productName string, groupId int) (*ServerGro
 
 func ServerGroups(zkConn zkhelper.Conn, productName string) ([]*ServerGroup, error) {
 	var ret []*ServerGroup
-	root := fmt.Sprintf("/zk/codis/db_%s/servers", productName)
+	root := fmt.Sprintf("/zk/reborn/db_%s/servers", productName)
 	groups, _, err := zkConn.Children(root)
 	if err != nil {
 		return nil, errors.Trace(err)
@@ -158,7 +158,7 @@ func (self *ServerGroup) Remove(zkConn zkhelper.Conn) error {
 	}
 
 	// do delete
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d", self.ProductName, self.Id)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
 	err = zkhelper.DeleteRecursive(zkConn, zkPath, -1)
 
 	// we know that there's no slots affected, so this action doesn't need proxy confirm
@@ -167,7 +167,7 @@ func (self *ServerGroup) Remove(zkConn zkhelper.Conn) error {
 }
 
 func (self *ServerGroup) RemoveServer(zkConn zkhelper.Conn, addr string) error {
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d/%s", self.ProductName, self.Id, addr)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, addr)
 	data, _, err := zkConn.Get(zkPath)
 	if err != nil {
 		return errors.Trace(err)
@@ -246,7 +246,7 @@ func (self *ServerGroup) Create(zkConn zkhelper.Conn) error {
 	if self.Id < 0 {
 		return errors.NotSupportedf("invalid server group id %d", self.Id)
 	}
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d", self.ProductName, self.Id)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
 	_, err := zkhelper.CreateOrUpdate(zkConn, zkPath, "", 0, zkhelper.DefaultDirACLs(), true)
 	if err != nil {
 		return errors.Trace(err)
@@ -266,7 +266,7 @@ func (self *ServerGroup) Create(zkConn zkhelper.Conn) error {
 }
 
 func (self *ServerGroup) Exists(zkConn zkhelper.Conn) (bool, error) {
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d", self.ProductName, self.Id)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
 	b, err := zkhelper.NodeExists(zkConn, zkPath)
 	if err != nil {
 		return false, errors.Trace(err)
@@ -305,7 +305,7 @@ func (self *ServerGroup) AddServer(zkConn zkhelper.Conn, s *Server) error {
 		return errors.Trace(err)
 	}
 
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d/%s", self.ProductName, self.Id, s.Addr)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, s.Addr)
 	_, err = zkhelper.CreateOrUpdate(zkConn, zkPath, string(val), 0, zkhelper.DefaultFileACLs(), true)
 
 	// update servers
@@ -333,7 +333,7 @@ func (self *ServerGroup) AddServer(zkConn zkhelper.Conn, s *Server) error {
 
 func (self *ServerGroup) GetServers(zkConn zkhelper.Conn) ([]*Server, error) {
 	var ret []*Server
-	root := fmt.Sprintf("/zk/codis/db_%s/servers/group_%d", self.ProductName, self.Id)
+	root := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
 	nodes, _, err := zkConn.Children(root)
 	if err != nil {
 		return nil, errors.Trace(err)

@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/wandoulabs/codis",
+	"ImportPath": "github.com/reborndb/reborn",
 	"GoVersion": "go1.3.3",
 	"Packages": [
 		"./..."

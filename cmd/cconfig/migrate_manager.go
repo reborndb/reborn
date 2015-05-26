@@ -44,11 +44,11 @@ type MigrateManager struct {
 }
 
 func getManagerPath(productName string) string {
-	return fmt.Sprintf("/zk/codis/db_%s/migrate_manager", productName)
+	return fmt.Sprintf("/zk/reborn/db_%s/migrate_manager", productName)
 }
 
 func (m *MigrateManager) createNode() error {
-	zkhelper.CreateRecursive(m.zkConn, fmt.Sprintf("/zk/codis/db_%s/migrate_tasks", m.productName), "", 0, zkhelper.DefaultDirACLs())
+	zkhelper.CreateRecursive(m.zkConn, fmt.Sprintf("/zk/reborn/db_%s/migrate_tasks", m.productName), "", 0, zkhelper.DefaultDirACLs())
 	_, err := m.zkConn.Create(getManagerPath(m.productName),
 		[]byte(""), zk.FlagEphemeral, zkhelper.DefaultFileACLs())
 	if err != nil {
@@ -70,7 +70,7 @@ func NewMigrateManager(zkConn zkhelper.Conn, pn string, preTaskCheck MigrateTask
 	}
 	err := m.createNode()
 	if err != nil {
-		Fatal("another codis-config exists? shut it down and try again")
+		Fatal("another reborn-config exists? shut it down and try again")
 	}
 	go m.loop()
 	return m

@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package utils
@@ -16,7 +16,7 @@ import (
 )
 
 func InitConfig() (*cfg.Cfg, error) {
-	configFile := os.Getenv("CODIS_CONF")
+	configFile := os.Getenv("REBORN_CONF")
 	if len(configFile) == 0 {
 		configFile = "config.ini"
 	}
@@ -36,7 +36,7 @@ func InitConfigFromFile(filename string) (*cfg.Cfg, error) {
 }
 
 func GetZkLock(zkConn zkhelper.Conn, productName string) zkhelper.ZLocker {
-	zkPath := fmt.Sprintf("/zk/codis/db_%s/LOCK", productName)
+	zkPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
 	ret := zkhelper.CreateMutex(zkConn, zkPath)
 	return ret
 }

@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package main
@@ -48,7 +48,7 @@ type MigrateTask struct {
 func NewMigrateTask(info MigrateTaskInfo) *MigrateTask {
 	return &MigrateTask{
 		MigrateTaskInfo: info,
-		slotMigrator:    &CodisSlotMigrator{},
+		slotMigrator:    &RebornSlotMigrator{},
 		stopChan:        make(chan struct{}),
 		productName:     globalEnv.ProductName(),
 	}

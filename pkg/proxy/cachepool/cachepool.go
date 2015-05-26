@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package cachepool
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"container/list"
+
 	"github.com/juju/errors"
 	"github.com/reborndb/reborn/pkg/proxy/redispool"
 )

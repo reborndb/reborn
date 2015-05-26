@@ -1,5 +1,5 @@
 {
-  "name": "codis-web",
+  "name": "reborn-web",
   "private": true,
   "dependencies": {
     "angular" : "~1.2.x",

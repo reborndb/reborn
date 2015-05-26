@@ -18,7 +18,7 @@ func TestMigrateManager(t *testing.T) {
 		t.Error("mgr is null")
 	}
 
-	nodePath := fmt.Sprintf("/zk/codis/db_%s/migrate_manager", testProductName)
+	nodePath := fmt.Sprintf("/zk/reborn/db_%s/migrate_manager", testProductName)
 	b, _, err := fakeZkConn.Exists(nodePath)
 	if !b || err != nil {
 		t.Error("create migrate mgr node error")

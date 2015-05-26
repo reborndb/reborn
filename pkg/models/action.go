@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package models
@@ -46,7 +46,7 @@ type Action struct {
 }
 
 func GetWatchActionPath(productName string) string {
-	return fmt.Sprintf("/zk/codis/db_%s/actions", productName)
+	return fmt.Sprintf("/zk/reborn/db_%s/actions", productName)
 }
 
 func GetActionResponsePath(productName string) string {
@@ -353,7 +353,7 @@ func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType A
 }
 
 func ForceRemoveLock(zkConn zkhelper.Conn, productName string) error {
-	lockPath := fmt.Sprintf("/zk/codis/db_%s/LOCK", productName)
+	lockPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
 	children, _, err := zkConn.Children(lockPath)
 	if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 		return errors.Trace(err)

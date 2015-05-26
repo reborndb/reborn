@@ -1,8 +1,8 @@
 <!doctype html>
-<html class="no-js" ng-app="codisControllers">
+<html class="no-js" ng-app="rebornControllers">
   <head>
     <meta charset="utf-8">
-    <title>Codis</title>
+    <title>Reborn</title>
     <style type="text/css">
       .panel-heading {
           overflow: hidden;
@@ -169,7 +169,7 @@
     <div class="navbar navbar-default navbar-static-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="#">Codis</a>
+          <a class="navbar-brand" href="#">Reborn</a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
@@ -181,7 +181,7 @@
 
     <div class="container">
       <!-- Server Groups -->
-      <div ng-controller="codisOverviewCtl" ng-cloak>
+      <div ng-controller="rebornOverviewCtl" ng-cloak>
         <div class="row">
           <div class="col-md-4">
             <h4> Overview <button ng-click="refresh()" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-refresh"></span></button> </h4>
@@ -206,7 +206,7 @@
         </div>
       </div>
 
-      <div ng-controller="codisServerGroupMainCtl" ng-cloak>
+      <div ng-controller="rebornServerGroupMainCtl" ng-cloak>
         <div class="row">
           <div class="col-md-12">
             <h4> Server Groups <button ng-click="refresh()" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-refresh"></span></button></h4>
@@ -258,7 +258,7 @@
         </div>
       </div>
 
-      <div ng-controller="codisSlotCtl" ng-cloak>
+      <div ng-controller="rebornSlotCtl" ng-cloak>
         <div class="row">
           <div class="col-md-12">
             <h4> Slot Control </h4>
@@ -272,7 +272,7 @@
         </div>
       </div>
 
-      <div ng-controller="codisMigrateCtl" ng-cloak>
+      <div ng-controller="rebornMigrateCtl" ng-cloak>
         <div class="row">
           <div class="col-md-12">
             <h4> Migrate Status <button ng-click="refresh()" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-refresh"></span></button> 
@@ -339,7 +339,7 @@
         </div>
       </div>
 
-      <div ng-controller="codisProxyCtl" ng-cloak>
+      <div ng-controller="rebornProxyCtl" ng-cloak>
         <div class="row">
           <div class="col-md-12">
             <h4> Proxy Status <button ng-click="refresh()" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-refresh"></span></button> </h4>

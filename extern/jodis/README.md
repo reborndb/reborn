@@ -1,22 +1,22 @@
-#Jodis - Java client for codis
-Jodis is a java client for codis based on [Jedis](https://github.com/xetorthio/jedis) and [Curator](http://curator.apache.org/).
+#Jodis - Java client for reborn
+Jodis is a java client for reborn based on [Jedis](https://github.com/xetorthio/jedis) and [Curator](http://curator.apache.org/).
 
 ##Features
-- Use a round robin policy to balance load to multiple codis proxies.
+- Use a round robin policy to balance load to multiple reborn proxies.
 - Detect proxy online and offline automatically.
 
 ##How to use
 Add this to your pom.xml. We deploy jodis to https://oss.sonatype.org.
 ```xml
 <dependency>
-  <groupId>com.wandoulabs.jodis</groupId>
+  <groupId>com.reborndb.jodis</groupId>
   <artifactId>jodis</artifactId>
   <version>0.1.2</version>
 </dependency>
 ```
 To use it
 ```java
-JedisResourcePool jedisPool = new RoundRobinJedisPool("zkserver:2181", 30000, "/zk/codis/db_xxx/proxy", new JedisPoolConfig());
+JedisResourcePool jedisPool = new RoundRobinJedisPool("zkserver:2181", 30000, "/zk/reborn/db_xxx/proxy", new JedisPoolConfig());
 try (Jedis jedis = jedisPool.getResource()) {
     jedis.set("foo", "bar");
     String value = jedis.get("foo");

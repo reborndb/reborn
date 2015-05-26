@@ -1,4 +1,4 @@
-// Copyright 2014 Wandoujia Inc. All Rights Reserved.
+// Copyright 2015 Reborndb Org. All Rights Reserved.
 // Licensed under the MIT (MIT-LICENSE.txt) license.
 
 package models
@@ -83,7 +83,7 @@ func (p *ProxyInfo) DebugVars() (map[string]interface{}, error) {
 }
 
 func GetProxyPath(productName string) string {
-	return fmt.Sprintf("/zk/codis/db_%s/proxy", productName)
+	return fmt.Sprintf("/zk/reborn/db_%s/proxy", productName)
 }
 
 func CreateProxyInfo(zkConn zkhelper.Conn, productName string, pi *ProxyInfo) (string, error) {
@@ -97,7 +97,7 @@ func CreateProxyInfo(zkConn zkhelper.Conn, productName string, pi *ProxyInfo) (s
 }
 
 func GetProxyFencePath(productName string) string {
-	return fmt.Sprintf("/zk/codis/db_%s/fence", productName)
+	return fmt.Sprintf("/zk/reborn/db_%s/fence", productName)
 }
 
 func CreateProxyFenceNode(zkConn zkhelper.Conn, productName string, pi *ProxyInfo) (string, error) {

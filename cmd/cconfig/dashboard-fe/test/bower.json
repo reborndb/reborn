@@ -1,5 +1,5 @@
 {
-  "name": "codis-web",
+  "name": "reborn-web",
   "private": true,
   "dependencies": {
     "chai": "~1.8.0",

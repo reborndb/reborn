@@ -116,7 +116,7 @@ Then the group with id of 2:
 
 ```
 $ ./reborn-config server add 2 localhost:6479 master
-$ ./reborn-config server add 2 localhost:6479 slave
+$ ./reborn-config server add 2 localhost:6480 slave
 ```
 
 4. Config slot range of server group

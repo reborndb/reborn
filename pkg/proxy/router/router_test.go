@@ -16,6 +16,7 @@ import (
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/models"
+	"strconv"
 )
 
 var (
@@ -132,6 +133,48 @@ func TestSingleKeyRedisCmd(t *testing.T) {
 
 	if got, err := redis.String(c.Do("get", "bar")); err != nil || got != "foo" {
 		t.Error("'bar' has the wrong value")
+	}
+}
+
+func TestMget(t *testing.T) {
+	InitEnv()
+	c, err := redis.Dial("tcp", "localhost:19000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	const count = 20480
+	keys := make([]interface{}, count)
+	for i := 0; i < count; i++ {
+		s := strconv.Itoa(i)
+		keys[i] = s
+		_, err := c.Do("SET", s, s)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	reply, err := redis.Values(c.Do("MGET", keys...))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	temp := make([]string, count)
+	values := make([]interface{}, count)
+
+	for i := 0; i < count; i++ {
+		values[i] = &temp[i]
+	}
+	if _, err := redis.Scan(reply, values...); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < count; i++ {
+		if keys[i] != temp[i] {
+			t.Fatalf("key, value not match, expect %v, got %v, reply:%+v",
+				keys[i], temp[i], reply)
+		}
 	}
 }
 

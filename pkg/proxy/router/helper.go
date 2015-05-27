@@ -77,13 +77,14 @@ func WriteMigrateKeyCmd(w io.Writer, addr string, timeoutMs int, keys ...[]byte)
 		return errors.Errorf("invalid address " + addr)
 	}
 	respW := respcoding.NewRESPWriter(w)
-	args := make([]string, 0, 4+len(keys))
-	args = append(args, "slotsmgrttagone", hostPort[0], hostPort[1], strconv.Itoa(int(timeoutMs)))
 	for _, key := range keys {
-		args = append(args, string(key))
+		err := respW.WriteCommand("slotsmgrttagone", hostPort[0], hostPort[1], strconv.Itoa(int(timeoutMs)), string(key))
+		if err != nil {
+			return errors.Trace(err)
+		}
 	}
-	err := respW.WriteCommand(args...)
-	return errors.Trace(err)
+
+	return errors.Trace(respW.Flush())
 }
 
 type DeadlineReadWriter interface {

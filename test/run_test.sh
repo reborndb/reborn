@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "this is gonna take a while"
+rm -f *.log *.out
 
 trap "kill 0" EXIT SIGQUIT SIGKILL SIGTERM
 

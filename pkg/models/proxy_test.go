@@ -10,42 +10,42 @@ import (
 )
 
 func TestProxy(t *testing.T) {
-	fakeZkConn := zkhelper.NewConn()
+	fakeCoordConn := zkhelper.NewConn()
 	path := GetSlotBasePath(productName)
-	children, _, _ := fakeZkConn.Children(path)
+	children, _, _ := fakeCoordConn.Children(path)
 	if len(children) != 0 {
 		t.Error("slot is no empty")
 	}
 
 	g := NewServerGroup(productName, 1)
-	g.Create(fakeZkConn)
+	g.Create(fakeCoordConn)
 
 	// test create new group
-	_, err := ServerGroups(fakeZkConn, productName)
+	_, err := ServerGroups(fakeCoordConn, productName)
 	if err != nil {
 		t.Error(err)
 	}
 
-	ok, err := g.Exists(fakeZkConn)
+	ok, err := g.Exists(fakeCoordConn)
 	if !ok || err != nil {
 		t.Error("create group error")
 	}
 
 	s1 := NewServer(SERVER_TYPE_MASTER, "localhost:1111")
 
-	g.AddServer(fakeZkConn, s1)
+	g.AddServer(fakeCoordConn, s1)
 
-	err = InitSlotSet(fakeZkConn, productName, 1024)
+	err = InitSlotSet(fakeCoordConn, productName, 1024)
 	if err != nil {
 		t.Error(err)
 	}
 
-	children, _, _ = fakeZkConn.Children(path)
+	children, _, _ = fakeCoordConn.Children(path)
 	if len(children) != 1024 {
 		t.Error("init slots error")
 	}
 
-	s, err := GetSlot(fakeZkConn, productName, 1)
+	s, err := GetSlot(fakeCoordConn, productName, 1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -54,7 +54,7 @@ func TestProxy(t *testing.T) {
 		t.Error("init slots error")
 	}
 
-	err = SetSlotRange(fakeZkConn, productName, 0, 1023, 1, SLOT_STATUS_ONLINE)
+	err = SetSlotRange(fakeCoordConn, productName, 0, 1023, 1, SLOT_STATUS_ONLINE)
 	if err != nil {
 		t.Error(err)
 	}
@@ -65,12 +65,12 @@ func TestProxy(t *testing.T) {
 		State: PROXY_STATE_OFFLINE,
 	}
 
-	_, err = CreateProxyInfo(fakeZkConn, productName, pi)
+	_, err = CreateProxyInfo(fakeCoordConn, productName, pi)
 	if err != nil {
 		t.Error(err)
 	}
 
-	ps, err := ProxyList(fakeZkConn, productName, nil)
+	ps, err := ProxyList(fakeCoordConn, productName, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,12 +79,12 @@ func TestProxy(t *testing.T) {
 		t.Error("create proxy error")
 	}
 
-	err = SetProxyStatus(fakeZkConn, productName, pi.Id, PROXY_STATE_ONLINE)
+	err = SetProxyStatus(fakeCoordConn, productName, pi.Id, PROXY_STATE_ONLINE)
 	if err != nil {
 		t.Error(err)
 	}
 
-	p, err := GetProxyInfo(fakeZkConn, productName, pi.Id)
+	p, err := GetProxyInfo(fakeCoordConn, productName, pi.Id)
 	if err != nil {
 		t.Error(err)
 	}

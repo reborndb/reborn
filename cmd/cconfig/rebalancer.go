@@ -21,12 +21,12 @@ type NodeInfo struct {
 	MaxMemory int64
 }
 
-func getLivingNodeInfos(zkConn zkhelper.Conn) ([]*NodeInfo, error) {
-	groups, err := models.ServerGroups(zkConn, globalEnv.ProductName())
+func getLivingNodeInfos(coordConn zkhelper.Conn) ([]*NodeInfo, error) {
+	groups, err := models.ServerGroups(coordConn, globalEnv.ProductName())
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	slots, err := models.Slots(zkConn, globalEnv.ProductName())
+	slots, err := models.Slots(coordConn, globalEnv.ProductName())
 	slotMap := make(map[int][]int)
 	for _, slot := range slots {
 		if slot.State.Status == models.SLOT_STATUS_ONLINE {
@@ -35,7 +35,7 @@ func getLivingNodeInfos(zkConn zkhelper.Conn) ([]*NodeInfo, error) {
 	}
 	var ret []*NodeInfo
 	for _, g := range groups {
-		master, err := g.Master(zkConn)
+		master, err := g.Master(coordConn)
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
@@ -70,8 +70,8 @@ func getLivingNodeInfos(zkConn zkhelper.Conn) ([]*NodeInfo, error) {
 	return ret, nil
 }
 
-func getQuotaMap(zkConn zkhelper.Conn) (map[int]int, error) {
-	nodes, err := getLivingNodeInfos(zkConn)
+func getQuotaMap(coordConn zkhelper.Conn) (map[int]int, error) {
+	nodes, err := getLivingNodeInfos(coordConn)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -101,12 +101,12 @@ func getQuotaMap(zkConn zkhelper.Conn) (map[int]int, error) {
 }
 
 // experimental simple auto rebalance :)
-func Rebalance(zkConn zkhelper.Conn, delay int) error {
-	targetQuota, err := getQuotaMap(zkConn)
+func Rebalance(coordConn zkhelper.Conn, delay int) error {
+	targetQuota, err := getQuotaMap(coordConn)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	livingNodes, err := getLivingNodeInfos(zkConn)
+	livingNodes, err := getLivingNodeInfos(coordConn)
 	if err != nil {
 		return errors.Trace(err)
 	}

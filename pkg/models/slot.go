@@ -79,9 +79,9 @@ func GetSlotBasePath(productName string) string {
 	return fmt.Sprintf("/zk/reborn/db_%s/slots", productName)
 }
 
-func GetSlot(zkConn zkhelper.Conn, productName string, id int) (*Slot, error) {
-	zkPath := GetSlotPath(productName, id)
-	data, _, err := zkConn.Get(zkPath)
+func GetSlot(coordConn zkhelper.Conn, productName string, id int) (*Slot, error) {
+	coordPath := GetSlotPath(productName, id)
+	data, _, err := coordConn.Get(coordPath)
 	if err != nil {
 		return nil, err
 	}
@@ -110,16 +110,16 @@ func GetMigratingSlots(conn zkhelper.Conn, productName string) ([]*Slot, error) 
 	return migrateSlots, nil
 }
 
-func Slots(zkConn zkhelper.Conn, productName string) ([]*Slot, error) {
-	zkPath := GetSlotBasePath(productName)
-	children, _, err := zkConn.Children(zkPath)
+func Slots(coordConn zkhelper.Conn, productName string) ([]*Slot, error) {
+	coordPath := GetSlotBasePath(productName)
+	children, _, err := coordConn.Children(coordPath)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
 
 	var slots []*Slot
 	for _, p := range children {
-		data, _, err := zkConn.Get(path.Join(zkPath, p))
+		data, _, err := coordConn.Get(path.Join(coordPath, p))
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
@@ -133,8 +133,8 @@ func Slots(zkConn zkhelper.Conn, productName string) ([]*Slot, error) {
 	return slots, nil
 }
 
-func NoGroupSlots(zkConn zkhelper.Conn, productName string) ([]*Slot, error) {
-	slots, err := Slots(zkConn, productName)
+func NoGroupSlots(coordConn zkhelper.Conn, productName string) ([]*Slot, error) {
+	slots, err := Slots(coordConn, productName)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -148,12 +148,12 @@ func NoGroupSlots(zkConn zkhelper.Conn, productName string) ([]*Slot, error) {
 	return ret, nil
 }
 
-func SetSlots(zkConn zkhelper.Conn, productName string, slots []*Slot, groupId int, status SlotStatus) error {
+func SetSlots(coordConn zkhelper.Conn, productName string, slots []*Slot, groupId int, status SlotStatus) error {
 	if status != SLOT_STATUS_OFFLINE && status != SLOT_STATUS_ONLINE {
 		return errors.New("invalid status")
 	}
 
-	ok, err := GroupExists(zkConn, productName, groupId)
+	ok, err := GroupExists(coordConn, productName, groupId)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -169,8 +169,8 @@ func SetSlots(zkConn zkhelper.Conn, productName string, slots []*Slot, groupId i
 			return errors.Trace(err)
 		}
 
-		zkPath := GetSlotPath(productName, s.Id)
-		_, err = zkhelper.CreateOrUpdate(zkConn, zkPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
+		coordPath := GetSlotPath(productName, s.Id)
+		_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -183,17 +183,17 @@ func SetSlots(zkConn zkhelper.Conn, productName string, slots []*Slot, groupId i
 		Status:  status,
 	}
 
-	err = NewAction(zkConn, productName, ACTION_TYPE_MULTI_SLOT_CHANGED, param, "", true)
+	err = NewAction(coordConn, productName, ACTION_TYPE_MULTI_SLOT_CHANGED, param, "", true)
 	return errors.Trace(err)
 
 }
 
-func SetSlotRange(zkConn zkhelper.Conn, productName string, fromSlot, toSlot, groupId int, status SlotStatus) error {
+func SetSlotRange(coordConn zkhelper.Conn, productName string, fromSlot, toSlot, groupId int, status SlotStatus) error {
 	if status != SLOT_STATUS_OFFLINE && status != SLOT_STATUS_ONLINE {
 		return errors.New("invalid status")
 	}
 
-	ok, err := GroupExists(zkConn, productName, groupId)
+	ok, err := GroupExists(coordConn, productName, groupId)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -202,7 +202,7 @@ func SetSlotRange(zkConn zkhelper.Conn, productName string, fromSlot, toSlot, gr
 	}
 
 	for i := fromSlot; i <= toSlot; i++ {
-		s, err := GetSlot(zkConn, productName, i)
+		s, err := GetSlot(coordConn, productName, i)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -213,8 +213,8 @@ func SetSlotRange(zkConn zkhelper.Conn, productName string, fromSlot, toSlot, gr
 			return errors.Trace(err)
 		}
 
-		zkPath := GetSlotPath(productName, i)
-		_, err = zkhelper.CreateOrUpdate(zkConn, zkPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
+		coordPath := GetSlotPath(productName, i)
+		_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -226,27 +226,27 @@ func SetSlotRange(zkConn zkhelper.Conn, productName string, fromSlot, toSlot, gr
 		GroupId: groupId,
 		Status:  status,
 	}
-	err = NewAction(zkConn, productName, ACTION_TYPE_MULTI_SLOT_CHANGED, param, "", true)
+	err = NewAction(coordConn, productName, ACTION_TYPE_MULTI_SLOT_CHANGED, param, "", true)
 	return errors.Trace(err)
 }
 
 // danger operation !
-func InitSlotSet(zkConn zkhelper.Conn, productName string, totalSlotNum int) error {
+func InitSlotSet(coordConn zkhelper.Conn, productName string, totalSlotNum int) error {
 	for i := 0; i < totalSlotNum; i++ {
 		slot := NewSlot(productName, i)
-		if err := slot.Update(zkConn); err != nil {
+		if err := slot.Update(coordConn); err != nil {
 			return errors.Trace(err)
 		}
 	}
 	return nil
 }
 
-func (s *Slot) SetMigrateStatus(zkConn zkhelper.Conn, fromGroup, toGroup int) error {
+func (s *Slot) SetMigrateStatus(coordConn zkhelper.Conn, fromGroup, toGroup int) error {
 	if fromGroup < 0 || toGroup < 0 {
 		return errors.Errorf("invalid group id, from %d, to %d", fromGroup, toGroup)
 	}
 	// wait until all proxy confirmed
-	err := NewAction(zkConn, s.ProductName, ACTION_TYPE_SLOT_PREMIGRATE, s, "", true)
+	err := NewAction(coordConn, s.ProductName, ACTION_TYPE_SLOT_PREMIGRATE, s, "", true)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -257,10 +257,10 @@ func (s *Slot) SetMigrateStatus(zkConn zkhelper.Conn, fromGroup, toGroup int) er
 
 	s.GroupId = toGroup
 
-	return s.Update(zkConn)
+	return s.Update(coordConn)
 }
 
-func (s *Slot) Update(zkConn zkhelper.Conn) error {
+func (s *Slot) Update(coordConn zkhelper.Conn) error {
 	// status validation
 	switch s.State.Status {
 	case SLOT_STATUS_MIGRATE, SLOT_STATUS_OFFLINE,
@@ -278,16 +278,16 @@ func (s *Slot) Update(zkConn zkhelper.Conn) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	zkPath := GetSlotPath(s.ProductName, s.Id)
-	_, err = zkhelper.CreateOrUpdate(zkConn, zkPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
+	coordPath := GetSlotPath(s.ProductName, s.Id)
+	_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	if s.State.Status == SLOT_STATUS_MIGRATE {
-		err = NewAction(zkConn, s.ProductName, ACTION_TYPE_SLOT_MIGRATE, s, "", true)
+		err = NewAction(coordConn, s.ProductName, ACTION_TYPE_SLOT_MIGRATE, s, "", true)
 	} else {
-		err = NewAction(zkConn, s.ProductName, ACTION_TYPE_SLOT_CHANGED, s, "", true)
+		err = NewAction(coordConn, s.ProductName, ACTION_TYPE_SLOT_CHANGED, s, "", true)
 	}
 
 	return errors.Trace(err)

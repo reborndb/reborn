@@ -86,35 +86,35 @@ func GetProxyPath(productName string) string {
 	return fmt.Sprintf("/zk/reborn/db_%s/proxy", productName)
 }
 
-func CreateProxyInfo(zkConn zkhelper.Conn, productName string, pi *ProxyInfo) (string, error) {
+func CreateProxyInfo(coordConn zkhelper.Conn, productName string, pi *ProxyInfo) (string, error) {
 	data, err := json.Marshal(pi)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
 	dir := GetProxyPath(productName)
-	zkhelper.CreateRecursive(zkConn, dir, "", 0, zkhelper.DefaultDirACLs())
-	return zkConn.Create(path.Join(dir, pi.Id), data, zk.FlagEphemeral, zkhelper.DefaultFileACLs())
+	zkhelper.CreateRecursive(coordConn, dir, "", 0, zkhelper.DefaultDirACLs())
+	return coordConn.Create(path.Join(dir, pi.Id), data, zk.FlagEphemeral, zkhelper.DefaultFileACLs())
 }
 
 func GetProxyFencePath(productName string) string {
 	return fmt.Sprintf("/zk/reborn/db_%s/fence", productName)
 }
 
-func CreateProxyFenceNode(zkConn zkhelper.Conn, productName string, pi *ProxyInfo) (string, error) {
-	return zkhelper.CreateRecursive(zkConn, path.Join(GetProxyFencePath(productName), pi.Addr), "",
+func CreateProxyFenceNode(coordConn zkhelper.Conn, productName string, pi *ProxyInfo) (string, error) {
+	return zkhelper.CreateRecursive(coordConn, path.Join(GetProxyFencePath(productName), pi.Addr), "",
 		0, zkhelper.DefaultFileACLs())
 }
 
-func ProxyList(zkConn zkhelper.Conn, productName string, filter func(*ProxyInfo) bool) ([]ProxyInfo, error) {
+func ProxyList(coordConn zkhelper.Conn, productName string, filter func(*ProxyInfo) bool) ([]ProxyInfo, error) {
 	ret := make([]ProxyInfo, 0)
 	root := GetProxyPath(productName)
-	proxies, _, err := zkConn.Children(root)
+	proxies, _, err := coordConn.Children(root)
 	if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 		return nil, errors.Trace(err)
 	}
 
 	for _, proxyName := range proxies {
-		pi, err := GetProxyInfo(zkConn, productName, proxyName)
+		pi, err := GetProxyInfo(coordConn, productName, proxyName)
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
@@ -126,8 +126,8 @@ func ProxyList(zkConn zkhelper.Conn, productName string, filter func(*ProxyInfo)
 	return ret, nil
 }
 
-func GetFenceProxyMap(zkConn zkhelper.Conn, productName string) (map[string]bool, error) {
-	children, _, err := zkConn.Children(GetProxyFencePath(productName))
+func GetFenceProxyMap(coordConn zkhelper.Conn, productName string) (map[string]bool, error) {
+	children, _, err := coordConn.Children(GetProxyFencePath(productName))
 	if err != nil {
 		if err.Error() == zk.ErrNoNode.Error() {
 			return make(map[string]bool), nil
@@ -144,19 +144,19 @@ func GetFenceProxyMap(zkConn zkhelper.Conn, productName string) (map[string]bool
 
 var ErrUnknownProxyStatus = errors.New("unknown status, should be (online offline)")
 
-func SetProxyStatus(zkConn zkhelper.Conn, productName string, proxyName string, status string) error {
+func SetProxyStatus(coordConn zkhelper.Conn, productName string, proxyName string, status string) error {
 	if status != PROXY_STATE_ONLINE && status != PROXY_STATE_MARK_OFFLINE && status != PROXY_STATE_OFFLINE {
 		return errors.Errorf("%v, %s", ErrUnknownProxyStatus, status)
 	}
 
-	p, err := GetProxyInfo(zkConn, productName, proxyName)
+	p, err := GetProxyInfo(coordConn, productName, proxyName)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	// check slot status before setting proxy online
 	if status == PROXY_STATE_ONLINE {
-		slots, err := Slots(zkConn, productName)
+		slots, err := Slots(coordConn, productName)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -173,7 +173,7 @@ func SetProxyStatus(zkConn zkhelper.Conn, productName string, proxyName string, 
 	p.State = status
 	b, _ := json.Marshal(p)
 
-	_, err = zkConn.Set(path.Join(GetProxyPath(productName), proxyName), b, -1)
+	_, err = coordConn.Set(path.Join(GetProxyPath(productName), proxyName), b, -1)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -181,14 +181,14 @@ func SetProxyStatus(zkConn zkhelper.Conn, productName string, proxyName string, 
 	if status == PROXY_STATE_MARK_OFFLINE {
 		// wait for the proxy down
 		for {
-			_, _, c, err := zkConn.GetW(path.Join(GetProxyPath(productName), proxyName))
+			_, _, c, err := coordConn.GetW(path.Join(GetProxyPath(productName), proxyName))
 			if zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 				return nil
 			} else if err != nil {
 				return errors.Trace(err)
 			}
 			<-c
-			info, err := GetProxyInfo(zkConn, productName, proxyName)
+			info, err := GetProxyInfo(coordConn, productName, proxyName)
 			log.Info("mark_offline, check proxy status:", proxyName, info, err)
 			if zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 				log.Info("shutdown proxy successful")
@@ -206,9 +206,9 @@ func SetProxyStatus(zkConn zkhelper.Conn, productName string, proxyName string, 
 	return nil
 }
 
-func GetProxyInfo(zkConn zkhelper.Conn, productName string, proxyName string) (*ProxyInfo, error) {
+func GetProxyInfo(coordConn zkhelper.Conn, productName string, proxyName string) (*ProxyInfo, error) {
 	var pi ProxyInfo
-	data, _, err := zkConn.Get(path.Join(GetProxyPath(productName), proxyName))
+	data, _, err := coordConn.Get(path.Join(GetProxyPath(productName), proxyName))
 	if err != nil {
 		return nil, errors.Trace(err)
 	}

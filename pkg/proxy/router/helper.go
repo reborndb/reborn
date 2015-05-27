@@ -266,13 +266,13 @@ type killEvent struct {
 }
 
 type Conf struct {
-	proxyId     string
-	productName string
-	zkAddr      string
-	f           topology.ZkFactory
-	netTimeout  int    //seconds
-	proto       string //tcp or tcp4
-	provider    string
+	proxyId         string
+	productName     string
+	f               topology.CoordFactory
+	netTimeout      int    //seconds
+	proto           string //tcp or tcp4
+	coordinatorAddr string
+	coordinator     string
 }
 
 func LoadConf(configFile string) (*Conf, error) {
@@ -286,11 +286,11 @@ func LoadConf(configFile string) (*Conf, error) {
 	if len(srvConf.productName) == 0 {
 		log.Fatalf("invalid config: product entry is missing in %s", configFile)
 	}
-	srvConf.zkAddr, _ = conf.ReadString("zk", "")
-	if len(srvConf.zkAddr) == 0 {
-		log.Fatalf("invalid config: need zk entry is missing in %s", configFile)
+	srvConf.coordinatorAddr, _ = conf.ReadString("coordinator_addr", "")
+	if len(srvConf.coordinatorAddr) == 0 {
+		log.Fatalf("invalid config: need coordinator addr entry is missing in %s", configFile)
 	}
-	srvConf.zkAddr = strings.TrimSpace(srvConf.zkAddr)
+	srvConf.coordinatorAddr = strings.TrimSpace(srvConf.coordinatorAddr)
 
 	srvConf.proxyId, _ = conf.ReadString("proxy_id", "")
 	if len(srvConf.proxyId) == 0 {
@@ -299,7 +299,7 @@ func LoadConf(configFile string) (*Conf, error) {
 
 	srvConf.netTimeout, _ = conf.ReadInt("net_timeout", 5)
 	srvConf.proto, _ = conf.ReadString("proto", "tcp")
-	srvConf.provider, _ = conf.ReadString("coordinator", "zookeeper")
+	srvConf.coordinator, _ = conf.ReadString("coordinator", "zookeeper")
 	log.Infof("%+v", srvConf)
 
 	return srvConf, nil

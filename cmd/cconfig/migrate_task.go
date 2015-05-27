@@ -39,7 +39,7 @@ func (p SlotMigrateProgress) String() string {
 type MigrateTask struct {
 	MigrateTaskInfo
 	stopChan     chan struct{}
-	zkConn       zkhelper.Conn
+	coordConn       zkhelper.Conn
 	productName  string
 	slotMigrator SlotMigrator
 	progressChan chan SlotMigrateProgress
@@ -56,7 +56,7 @@ func NewMigrateTask(info MigrateTaskInfo) *MigrateTask {
 
 func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	// set slot status
-	s, err := models.GetSlot(t.zkConn, t.productName, slotId)
+	s, err := models.GetSlot(t.coordConn, t.productName, slotId)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -78,7 +78,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	}
 
 	// make sure from group & target group exists
-	exists, err := models.GroupExists(t.zkConn, t.productName, from)
+	exists, err := models.GroupExists(t.coordConn, t.productName, from)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -87,7 +87,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 		return errors.NotFoundf("group %d", from)
 	}
 
-	exists, err = models.GroupExists(t.zkConn, t.productName, to)
+	exists, err = models.GroupExists(t.coordConn, t.productName, to)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -96,7 +96,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	}
 
 	// modify slot status
-	if err := s.SetMigrateStatus(t.zkConn, from, to); err != nil {
+	if err := s.SetMigrateStatus(t.coordConn, from, to); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -116,7 +116,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	s.State.Status = models.SLOT_STATUS_ONLINE
 	s.State.MigrateStatus.From = models.INVALID_ID
 	s.State.MigrateStatus.To = models.INVALID_ID
-	if err := s.Update(t.zkConn); err != nil {
+	if err := s.Update(t.coordConn); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -134,8 +134,8 @@ func (t *MigrateTask) stop() error {
 // migrate multi slots
 func (t *MigrateTask) run() error {
 	// create zk conn on demand
-	t.zkConn = CreateZkConn()
-	defer t.zkConn.Close()
+	t.coordConn = CreateCoordConn()
+	defer t.coordConn.Close()
 
 	to := t.NewGroupId
 	t.Status = MIGRATE_TASK_MIGRATING
@@ -158,7 +158,7 @@ func (t *MigrateTask) run() error {
 }
 
 func preMigrateCheck(t *MigrateTask) (bool, error) {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 
 	slots, err := models.GetMigratingSlots(conn, t.productName)

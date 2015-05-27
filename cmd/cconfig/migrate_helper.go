@@ -46,21 +46,21 @@ func sendRedisMigrateCmd(c redis.Conn, slotId int, toAddr string) (int, int, err
 type RebornSlotMigrator struct{}
 
 func (m *RebornSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, task *MigrateTask, onProgress func(SlotMigrateProgress)) (err error) {
-	groupFrom, err := models.GetGroup(task.zkConn, task.productName, fromGroup)
+	groupFrom, err := models.GetGroup(task.coordConn, task.productName, fromGroup)
 	if err != nil {
 		return err
 	}
-	groupTo, err := models.GetGroup(task.zkConn, task.productName, toGroup)
-	if err != nil {
-		return err
-	}
-
-	fromMaster, err := groupFrom.Master(task.zkConn)
+	groupTo, err := models.GetGroup(task.coordConn, task.productName, toGroup)
 	if err != nil {
 		return err
 	}
 
-	toMaster, err := groupTo.Master(task.zkConn)
+	fromMaster, err := groupFrom.Master(task.coordConn)
+	if err != nil {
+		return err
+	}
+
+	toMaster, err := groupTo.Master(task.coordConn)
 	if err != nil {
 		return err
 	}

@@ -59,10 +59,10 @@ options:
 
 var proxiesSpeed int64
 
-func CreateZkConn() zkhelper.Conn {
-	conn, err := globalEnv.NewZkConn()
+func CreateCoordConn() zkhelper.Conn {
+	conn, err := globalEnv.NewCoordConn()
 	if err != nil {
-		Fatal("Failed to create zk connection: " + err.Error())
+		Fatal("Failed to create coordinator connection: " + err.Error())
 	}
 	return conn
 }
@@ -90,7 +90,7 @@ func jsonRetSucc() (int, string) {
 }
 
 func getAllProxyOps() int64 {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 	proxies, err := models.ProxyList(conn, globalEnv.ProductName(), nil)
 	if err != nil {
@@ -111,7 +111,7 @@ func getAllProxyOps() int64 {
 
 // for debug
 func getAllProxyDebugVars() map[string]map[string]interface{} {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 	proxies, err := models.ProxyList(conn, globalEnv.ProductName(), nil)
 	if err != nil {
@@ -151,22 +151,22 @@ func pageSlots(r render.Render) {
 }
 
 func createDashboardNode() error {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 
 	// make sure root dir is exists
 	rootDir := fmt.Sprintf("/zk/reborn/db_%s", globalEnv.ProductName())
 	zkhelper.CreateRecursive(conn, rootDir, "", 0, zkhelper.DefaultDirACLs())
 
-	zkPath := fmt.Sprintf("%s/dashboard", rootDir)
+	coordPath := fmt.Sprintf("%s/dashboard", rootDir)
 	// make sure we're the only one dashboard
-	if exists, _, _ := conn.Exists(zkPath); exists {
-		data, _, _ := conn.Get(zkPath)
+	if exists, _, _ := conn.Exists(coordPath); exists {
+		data, _, _ := conn.Get(coordPath)
 		return errors.New("dashboard already exists: " + string(data))
 	}
 
 	content := fmt.Sprintf(`{"addr": "%v", "pid": %v}`, globalEnv.DashboardAddr(), os.Getpid())
-	pathCreated, err := conn.Create(zkPath, []byte(content),
+	pathCreated, err := conn.Create(coordPath, []byte(content),
 		zk.FlagEphemeral, zkhelper.DefaultFileACLs())
 
 	log.Info("dashboard node created:", pathCreated, string(content))
@@ -175,13 +175,13 @@ func createDashboardNode() error {
 }
 
 func releaseDashboardNode() {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/dashboard", globalEnv.ProductName())
-	if exists, _, _ := conn.Exists(zkPath); exists {
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/dashboard", globalEnv.ProductName())
+	if exists, _, _ := conn.Exists(coordPath); exists {
 		log.Info("removing dashboard node")
-		conn.Delete(zkPath, 0)
+		conn.Delete(coordPath, 0)
 	}
 }
 
@@ -258,14 +258,14 @@ func runDashboard(addr string, httpLogFile string) {
 		r.Redirect("/admin")
 	})
 
-	// create temp node in ZK
+	// create temp node in coordinator
 	if err := createDashboardNode(); err != nil {
 		Fatal(err)
 	}
 	defer releaseDashboardNode()
 
 	// create long live migrate manager
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 	globalMigrateManager = NewMigrateManager(conn, globalEnv.ProductName(), preMigrateCheck)
 	defer globalMigrateManager.removeNode()

@@ -53,9 +53,9 @@ func GetActionResponsePath(productName string) string {
 	return path.Join(path.Dir(GetWatchActionPath(productName)), "ActionResponse")
 }
 
-func GetActionWithSeq(zkConn zkhelper.Conn, productName string, seq int64, provider string) (*Action, error) {
+func GetActionWithSeq(coordConn zkhelper.Conn, productName string, seq int64, provider string) (*Action, error) {
 	var act Action
-	data, _, err := zkConn.Get(path.Join(GetWatchActionPath(productName), zkConn.Seq2Str(seq)))
+	data, _, err := coordConn.Get(path.Join(GetWatchActionPath(productName), coordConn.Seq2Str(seq)))
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -67,8 +67,8 @@ func GetActionWithSeq(zkConn zkhelper.Conn, productName string, seq int64, provi
 	return &act, nil
 }
 
-func GetActionObject(zkConn zkhelper.Conn, productName string, seq int64, act interface{}, provider string) error {
-	data, _, err := zkConn.Get(path.Join(GetWatchActionPath(productName), zkConn.Seq2Str(seq)))
+func GetActionObject(coordConn zkhelper.Conn, productName string, seq int64, act interface{}, provider string) error {
+	data, _, err := coordConn.Get(path.Join(GetWatchActionPath(productName), coordConn.Seq2Str(seq)))
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -82,7 +82,7 @@ func GetActionObject(zkConn zkhelper.Conn, productName string, seq int64, act in
 
 var ErrReceiverTimeout = errors.New("receiver timeout")
 
-func WaitForReceiverWithTimeout(zkConn zkhelper.Conn, productName string, actionZkPath string, proxies []ProxyInfo, timeoutInMs int) error {
+func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, actionCoordPath string, proxies []ProxyInfo, timeoutInMs int) error {
 	if len(proxies) == 0 {
 		return nil
 	}
@@ -98,10 +98,10 @@ func WaitForReceiverWithTimeout(zkConn zkhelper.Conn, productName string, action
 	// check every 500ms
 	for times < checkTimes {
 		if times >= 6 && (times*500)%1000 == 0 {
-			log.Warning("abnormal waiting time for receivers", actionZkPath, offlineProxyIds)
+			log.Warning("abnormal waiting time for receivers", actionCoordPath, offlineProxyIds)
 		}
 		// get confirm ids
-		nodes, _, err := zkConn.Children(actionZkPath)
+		nodes, _, err := coordConn.Children(actionCoordPath)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -136,15 +136,15 @@ func WaitForReceiverWithTimeout(zkConn zkhelper.Conn, productName string, action
 	// set offline proxies
 	for _, id := range offlineProxyIds {
 		log.Errorf("mark proxy %s to PROXY_STATE_MARK_OFFLINE", id)
-		if err := SetProxyStatus(zkConn, productName, id, PROXY_STATE_MARK_OFFLINE); err != nil {
+		if err := SetProxyStatus(coordConn, productName, id, PROXY_STATE_MARK_OFFLINE); err != nil {
 			return errors.Trace(err)
 		}
 	}
 	return errors.Trace(ErrReceiverTimeout)
 }
 
-func GetActionSeqList(zkConn zkhelper.Conn, productName string) ([]int, error) {
-	nodes, _, err := zkConn.Children(GetWatchActionPath(productName))
+func GetActionSeqList(coordConn zkhelper.Conn, productName string) ([]int, error) {
+	nodes, _, err := coordConn.Children(GetWatchActionPath(productName))
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -170,11 +170,11 @@ func ExtraSeqList(nodes []string) ([]int, error) {
 	return seqs, nil
 }
 
-func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) error {
+func ActionGC(coordConn zkhelper.Conn, productName string, gcType int, keep int) error {
 	prefix := GetWatchActionPath(productName)
 	respPrefix := GetActionResponsePath(productName)
 
-	exists, err := zkhelper.NodeExists(zkConn, prefix)
+	exists, err := zkhelper.NodeExists(coordConn, prefix)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -183,7 +183,7 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 		return nil
 	}
 
-	actions, _, err := zkConn.Children(prefix)
+	actions, _, err := coordConn.Children(prefix)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -197,10 +197,10 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 			return nil
 		}
 		for _, action := range actions[:len(actions)-keep-500] {
-			if err := zkhelper.DeleteRecursive(zkConn, path.Join(prefix, action), -1); err != nil {
+			if err := zkhelper.DeleteRecursive(coordConn, path.Join(prefix, action), -1); err != nil {
 				return errors.Trace(err)
 			}
-			err := zkhelper.DeleteRecursive(zkConn, path.Join(respPrefix, action), -1)
+			err := zkhelper.DeleteRecursive(coordConn, path.Join(respPrefix, action), -1)
 			if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 				return errors.Trace(err)
 			}
@@ -210,7 +210,7 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 		currentTs := time.Now().Unix()
 
 		for _, action := range actions {
-			b, _, err := zkConn.Get(path.Join(prefix, action))
+			b, _, err := coordConn.Get(path.Join(prefix, action))
 			if err != nil {
 				return errors.Trace(err)
 			}
@@ -221,10 +221,10 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 			ts, _ := strconv.ParseInt(act.Ts, 10, 64)
 
 			if currentTs-ts > int64(secs) {
-				if err := zkhelper.DeleteRecursive(zkConn, path.Join(prefix, action), -1); err != nil {
+				if err := zkhelper.DeleteRecursive(coordConn, path.Join(prefix, action), -1); err != nil {
 					return errors.Trace(err)
 				}
-				err := zkhelper.DeleteRecursive(zkConn, path.Join(respPrefix, action), -1)
+				err := zkhelper.DeleteRecursive(coordConn, path.Join(respPrefix, action), -1)
 				if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 					return errors.Trace(err)
 				}
@@ -235,15 +235,15 @@ func ActionGC(zkConn zkhelper.Conn, productName string, gcType int, keep int) er
 	return nil
 }
 
-func CreateActionRootPath(zkConn zkhelper.Conn, path string) error {
+func CreateActionRootPath(coordConn zkhelper.Conn, path string) error {
 	// if action dir not exists, create it first
-	exists, err := zkhelper.NodeExists(zkConn, path)
+	exists, err := zkhelper.NodeExists(coordConn, path)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	if !exists {
-		_, err := zkhelper.CreateOrUpdate(zkConn, path, "", 0, zkhelper.DefaultDirACLs(), true)
+		_, err := zkhelper.CreateOrUpdate(coordConn, path, "", 0, zkhelper.DefaultDirACLs(), true)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -252,12 +252,12 @@ func CreateActionRootPath(zkConn zkhelper.Conn, path string) error {
 	return nil
 }
 
-func NewAction(zkConn zkhelper.Conn, productName string, actionType ActionType, target interface{}, desc string, needConfirm bool) error {
+func NewAction(coordConn zkhelper.Conn, productName string, actionType ActionType, target interface{}, desc string, needConfirm bool) error {
 	// new action with default timeout: 30s
-	return NewActionWithTimeout(zkConn, productName, actionType, target, desc, needConfirm, 30*1000)
+	return NewActionWithTimeout(coordConn, productName, actionType, target, desc, needConfirm, 30*1000)
 }
 
-func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType ActionType, target interface{}, desc string, needConfirm bool, timeoutInMs int) error {
+func NewActionWithTimeout(coordConn zkhelper.Conn, productName string, actionType ActionType, target interface{}, desc string, needConfirm bool, timeoutInMs int) error {
 	ts := strconv.FormatInt(time.Now().Unix(), 10)
 
 	action := &Action{
@@ -268,7 +268,7 @@ func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType A
 	}
 
 	// set action receivers
-	proxies, err := ProxyList(zkConn, productName, func(p *ProxyInfo) bool {
+	proxies, err := ProxyList(coordConn, productName, func(p *ProxyInfo) bool {
 		return p.State == PROXY_STATE_ONLINE
 	})
 	if err != nil {
@@ -277,7 +277,7 @@ func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType A
 	if needConfirm {
 		// do fencing here, make sure 'offline' proxies are really offline
 		// now we only check whether the proxy lists are match
-		fenceProxies, err := GetFenceProxyMap(zkConn, productName)
+		fenceProxies, err := GetFenceProxyMap(coordConn, productName)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -305,29 +305,29 @@ func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType A
 
 	prefix := GetWatchActionPath(productName)
 	//action root path
-	err = CreateActionRootPath(zkConn, prefix)
+	err = CreateActionRootPath(coordConn, prefix)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	//response path
 	respPath := path.Join(path.Dir(prefix), "ActionResponse")
-	err = CreateActionRootPath(zkConn, respPath)
+	err = CreateActionRootPath(coordConn, respPath)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	//create response node, etcd do not support create in order directory
 	//get path first
-	actionRespPath, err := zkConn.Create(respPath+"/", b, int32(zk.FlagSequence), zkhelper.DefaultFileACLs())
+	actionRespPath, err := coordConn.Create(respPath+"/", b, int32(zk.FlagSequence), zkhelper.DefaultFileACLs())
 	if err != nil {
 		log.Error(err, respPath)
 		return errors.Trace(err)
 	}
 
 	//remove file then create directory
-	zkConn.Delete(actionRespPath, -1)
-	actionRespPath, err = zkConn.Create(actionRespPath, b, 0, zkhelper.DefaultDirACLs())
+	coordConn.Delete(actionRespPath, -1)
+	actionRespPath, err = coordConn.Create(actionRespPath, b, 0, zkhelper.DefaultDirACLs())
 	if err != nil {
 		log.Error(err, respPath)
 		return errors.Trace(err)
@@ -337,14 +337,14 @@ func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType A
 
 	// create action node
 	actionPath := path.Join(prefix, suffix)
-	_, err = zkConn.Create(actionPath, b, 0, zkhelper.DefaultFileACLs())
+	_, err = coordConn.Create(actionPath, b, 0, zkhelper.DefaultFileACLs())
 	if err != nil {
 		log.Error(err, actionPath)
 		return errors.Trace(err)
 	}
 
 	if needConfirm {
-		if err := WaitForReceiverWithTimeout(zkConn, productName, actionRespPath, proxies, timeoutInMs); err != nil {
+		if err := WaitForReceiverWithTimeout(coordConn, productName, actionRespPath, proxies, timeoutInMs); err != nil {
 			return errors.Trace(err)
 		}
 	}
@@ -352,9 +352,9 @@ func NewActionWithTimeout(zkConn zkhelper.Conn, productName string, actionType A
 	return nil
 }
 
-func ForceRemoveLock(zkConn zkhelper.Conn, productName string) error {
+func ForceRemoveLock(coordConn zkhelper.Conn, productName string) error {
 	lockPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
-	children, _, err := zkConn.Children(lockPath)
+	children, _, err := coordConn.Children(lockPath)
 	if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 		return errors.Trace(err)
 	}
@@ -362,7 +362,7 @@ func ForceRemoveLock(zkConn zkhelper.Conn, productName string) error {
 	for _, c := range children {
 		fullPath := path.Join(lockPath, c)
 		log.Info("deleting..", fullPath)
-		err := zkConn.Delete(fullPath, 0)
+		err := coordConn.Delete(fullPath, 0)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -371,14 +371,14 @@ func ForceRemoveLock(zkConn zkhelper.Conn, productName string) error {
 	return nil
 }
 
-func ForceRemoveDeadFence(zkConn zkhelper.Conn, productName string) error {
-	proxies, err := ProxyList(zkConn, productName, func(p *ProxyInfo) bool {
+func ForceRemoveDeadFence(coordConn zkhelper.Conn, productName string) error {
+	proxies, err := ProxyList(coordConn, productName, func(p *ProxyInfo) bool {
 		return p.State == PROXY_STATE_ONLINE
 	})
 	if err != nil {
 		return errors.Trace(err)
 	}
-	fenceProxies, err := GetFenceProxyMap(zkConn, productName)
+	fenceProxies, err := GetFenceProxyMap(coordConn, productName)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -392,7 +392,7 @@ func ForceRemoveDeadFence(zkConn zkhelper.Conn, productName string) error {
 	for remainFence, _ := range fenceProxies {
 		fencePath := filepath.Join(path, remainFence)
 		log.Info("removing fence: ", fencePath)
-		if err := zkhelper.DeleteRecursive(zkConn, fencePath, -1); err != nil {
+		if err := zkhelper.DeleteRecursive(coordConn, fencePath, -1); err != nil {
 			return errors.Trace(err)
 		}
 	}

@@ -169,7 +169,7 @@ done
 
 for ((i=1;i<=$NPROXY;i++)); do
     cat > config${i}.ini <<EOF
-zk=localhost:2181
+coordinator_addr=localhost:2181
 product=reborn_bench
 proxy_id=proxy_${i}
 EOF

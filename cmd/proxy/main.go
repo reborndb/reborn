@@ -22,18 +22,20 @@ var (
 	cpus       = 2
 	addr       = ":9000"
 	httpAddr   = ":9001"
+	proxyID    = ""
 	configFile = "config.ini"
 )
 
-var usage = `usage: proxy [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>] [--cpu=<cpu_num>] [--addr=<proxy_listen_addr>] [--http-addr=<debug_http_server_addr>]
+var usage = `usage: proxy [options]
 
 options:
-   -c	set config file
-   -L	set output log file, default is stdout
-   --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
-   --cpu=<cpu_num>		num of cpu cores that proxy can use
-   --addr=<proxy_listen_addr>		proxy listen address, example: 0.0.0.0:9000
-   --http-addr=<debug_http_server_addr>		debug vars http server
+   -c <config_file>               set config file
+   -L <log_file>                  set output log file, default is stdout
+   --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
+   --cpu=<cpu_num>                num of cpu cores that proxy can use
+   --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
+   --id=<proxy_id>                proxy id, global unique, can not be empty 
+   --http-addr=<debug_http_addr>  debug vars http server
 `
 
 var banner string = `
@@ -94,6 +96,12 @@ func main() {
 		httpAddr = args["--http-addr"].(string)
 	}
 
+	if args["--id"] != nil {
+		proxyID = args["--id"].(string)
+	} else {
+		log.Fatalf("invalid empty proxy id")
+	}
+
 	dumppath := utils.GetExecutorPath()
 
 	log.Info("dump file path:", dumppath)
@@ -109,7 +117,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := router.NewServer(addr, httpAddr, conf)
+	s := router.NewServer(addr, httpAddr, proxyID, conf)
 	s.Run()
 	log.Warning("exit")
 }

@@ -53,15 +53,16 @@ commands:
 ```
 $ ../bin/reborn-proxy -h
 
-usage: proxy [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>] [--cpu=<cpu_num>] [--addr=<proxy_listen_addr>] [--http-addr=<debug_http_server_addr>]
+usage: proxy [options]
 
 options:
-   -c	set config file
-   -L	set output log file, default is stdout
-   --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
-   --cpu=<cpu_num>		num of cpu cores that proxy can use
-   --addr=<proxy_listen_addr>		proxy listen address, example: 0.0.0.0:9000
-   --http-addr=<debug_http_server_addr>		debug vars http server
+   -c <config_file>               set config file
+   -L <log_file>                  set output log file, default is stdout
+   --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
+   --cpu=<cpu_num>                num of cpu cores that proxy can use
+   --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
+   --id=<proxy_id>                proxy id, global unique, can not be empty 
+   --http-addr=<debug_http_addr>  debug vars http server
 ```
 
 ## Deploy
@@ -76,7 +77,6 @@ options:
 coordinator_addr=localhost:2181   <- Location of `zookeeper`, use `coordinator_addr=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181` for `zookeeper` clusters.
 `coordinator_addr=http://hostname1:2181,http://hostname2:2181,http://hostname3:2181 for `etcd` clusters.
 product=test        <- Product name, also the name of this Coids clusters, can be considered as namespace, Reborn with different names have no intersection. 
-proxy_id=proxy_1    <- Proxy will take this as identifier for proxy, multiple proxy can use different `config.ini` with various `proxy_id`.
 dashboard_addr=localhost:18087  <- dashboard provides the RESTful API for CLI
 coordinator=zookeeper  <-replace zookeeper to etcd if you are using etcd.
 ```

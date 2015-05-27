@@ -62,9 +62,9 @@ run_gc 2>&1 | tee -a config.log &
 ########################################
 # restart reborn-proxy
 
-> proxy1.log; ../bin/reborn-proxy -c config1.ini -L proxy1.log --addr=0.0.0.0:9000 --http-addr=0.0.0.0:10000 &
-> proxy2.log; ../bin/reborn-proxy -c config2.ini -L proxy2.log --addr=0.0.0.0:9001 --http-addr=0.0.0.0:10001 &
-> proxy3.log; ../bin/reborn-proxy -c config3.ini -L proxy3.log --addr=0.0.0.0:9002 --http-addr=0.0.0.0:10001 &
+> proxy1.log; ../bin/reborn-proxy -c config1.ini --id=proxy_1 -L proxy1.log --addr=0.0.0.0:9000 --http-addr=0.0.0.0:10000 &
+> proxy2.log; ../bin/reborn-proxy -c config2.ini --id=proxy_2 -L proxy2.log --addr=0.0.0.0:9001 --http-addr=0.0.0.0:10001 &
+> proxy3.log; ../bin/reborn-proxy -c config3.ini --id=proxy_3 -L proxy3.log --addr=0.0.0.0:9002 --http-addr=0.0.0.0:10001 &
 
 sleep 2
 

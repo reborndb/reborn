@@ -51,6 +51,8 @@ type Server struct {
 	bufferedReq *list.List
 	conf        *Conf
 
+	proxyID string
+
 	pipeConns map[string]*taskRunner //redis->taskrunner
 }
 
@@ -664,7 +666,7 @@ func (s *Server) RegisterAndWait(wait bool) {
 func (s *Server) resetTopo() {
 	log.Error("resetTopo")
 	if s.top != nil {
-		s.top.Close(s.conf.proxyId)
+		s.top.Close(s.proxyID)
 	}
 
 	s.top = topo.NewTopo(s.conf.productName, s.conf.coordinatorAddr, s.conf.f, s.conf.coordinator)
@@ -677,7 +679,11 @@ func (s *Server) resetTopo() {
 	s.FillSlots()
 }
 
-func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
+func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Server {
+	if len(proxyID) == 0 {
+		log.Fatalf("invalid empty proxy id")
+	}
+
 	log.Infof("start with configuration: %+v", conf)
 	s := &Server{
 		conf:          conf,
@@ -692,19 +698,22 @@ func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
 		pools:         cachepool.NewCachePool(),
 		pipeConns:     make(map[string]*taskRunner),
 		bufferedReq:   list.New(),
+		proxyID:       proxyID,
 	}
 
-	s.pi.Id = conf.proxyId
+	s.pi.Id = proxyID
 	s.pi.State = models.PROXY_STATE_OFFLINE
-	hname, err := os.Hostname()
-	if err != nil {
-		log.Fatal("get host name failed", err)
-	}
 
 	addrs := strings.Split(addr, ":")
 	if len(addrs) != 2 {
 		log.Fatalf("bad addr %s", addr)
 	}
+
+	hname, err := os.Hostname()
+	if err != nil {
+		log.Fatal("get host name failed", err)
+	}
+
 	s.pi.Addr = hname + ":" + addrs[1]
 
 	debugVarAddrs := strings.Split(debugVarAddr, ":")

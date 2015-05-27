@@ -32,7 +32,7 @@ var (
 
 func InitEnv() {
 	go once.Do(func() {
-		proxyId = "proxy_test"
+		proxyID = "proxy_test"
 
 		conn = zkhelper.NewConn()
 		conf = &Conf{
@@ -84,7 +84,7 @@ func InitEnv() {
 
 		go func() { //set proxy online
 			time.Sleep(3 * time.Second)
-			err := models.SetProxyStatus(conn, conf.productName, proxyId, models.PROXY_STATE_ONLINE)
+			err := models.SetProxyStatus(conn, conf.productName, proxyID, models.PROXY_STATE_ONLINE)
 			if err != nil {
 				log.Fatal(errors.ErrorStack(err))
 			}
@@ -308,7 +308,7 @@ func TestMarkOffline(t *testing.T) {
 	}
 	proxyMutex.Unlock()
 
-	err := models.SetProxyStatus(conn, conf.productName, proxyId, models.PROXY_STATE_MARK_OFFLINE)
+	err := models.SetProxyStatus(conn, conf.productName, proxyID, models.PROXY_STATE_MARK_OFFLINE)
 	if err != nil {
 		t.Fatal(errors.ErrorStack(err))
 	}

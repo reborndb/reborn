@@ -13,7 +13,7 @@ import (
 type Env interface {
 	ProductName() string
 	DashboardAddr() string
-	NewZkConn() (zkhelper.Conn, error)
+	NewCoordConn() (zkhelper.Conn, error)
 }
 
 type RebornEnv struct {
@@ -65,7 +65,7 @@ func (e *RebornEnv) DashboardAddr() string {
 	return e.dashboardAddr
 }
 
-func (e *RebornEnv) NewZkConn() (zkhelper.Conn, error) {
+func (e *RebornEnv) NewCoordConn() (zkhelper.Conn, error) {
 	switch e.coordinator {
 	case "zookeeper":
 		return zkhelper.ConnectToZk(e.coordinatorAddr)

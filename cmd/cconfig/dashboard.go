@@ -60,7 +60,7 @@ options:
 var proxiesSpeed int64
 
 func CreateZkConn() zkhelper.Conn {
-	conn, err := globalEnv.NewZkConn()
+	conn, err := globalEnv.NewCoordConn()
 	if err != nil {
 		Fatal("Failed to create zk connection: " + err.Error())
 	}

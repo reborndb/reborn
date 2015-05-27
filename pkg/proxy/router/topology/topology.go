@@ -26,21 +26,21 @@ type ZkFactory func(coordAddr string) (zkhelper.Conn, error)
 type Topology struct {
 	ProductName string
 	coordAddr   string
-	zkConn      zkhelper.Conn
+	coordConn   zkhelper.Conn
 	fact        ZkFactory
 	coordinator string
 }
 
 func (top *Topology) GetGroup(groupId int) (*models.ServerGroup, error) {
-	return models.GetGroup(top.zkConn, top.ProductName, groupId)
+	return models.GetGroup(top.coordConn, top.ProductName, groupId)
 }
 
 func (top *Topology) Exist(path string) (bool, error) {
-	return zkhelper.NodeExists(top.zkConn, path)
+	return zkhelper.NodeExists(top.coordConn, path)
 }
 
 func (top *Topology) GetSlotByIndex(i int) (*models.Slot, *models.ServerGroup, error) {
-	slot, err := models.GetSlot(top.zkConn, top.ProductName, i)
+	slot, err := models.GetSlot(top.coordConn, top.ProductName, i)
 	if err != nil {
 		return nil, nil, errors.Trace(err)
 	}
@@ -50,7 +50,7 @@ func (top *Topology) GetSlotByIndex(i int) (*models.Slot, *models.ServerGroup, e
 		log.Errorf("slot not online, %+v", slot)
 	}
 
-	groupServer, err := models.GetGroup(top.zkConn, top.ProductName, slot.GroupId)
+	groupServer, err := models.GetGroup(top.coordConn, top.ProductName, slot.GroupId)
 	if err != nil {
 		return nil, nil, errors.Trace(err)
 	}
@@ -76,22 +76,22 @@ func NewTopo(ProductName string, coordAddr string, f ZkFactory, coordinator stri
 
 func (top *Topology) InitZkConn() {
 	var err error
-	top.zkConn, err = top.fact(top.coordAddr)
+	top.coordConn, err = top.fact(top.coordAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (top *Topology) GetActionWithSeq(seq int64) (*models.Action, error) {
-	return models.GetActionWithSeq(top.zkConn, top.ProductName, seq, top.coordinator)
+	return models.GetActionWithSeq(top.coordConn, top.ProductName, seq, top.coordinator)
 }
 
 func (top *Topology) GetActionWithSeqObject(seq int64, act *models.Action) error {
-	return models.GetActionObject(top.zkConn, top.ProductName, seq, act, top.coordinator)
+	return models.GetActionObject(top.coordConn, top.ProductName, seq, act, top.coordinator)
 }
 
 func (top *Topology) GetActionSeqList(productName string) ([]int, error) {
-	return models.GetActionSeqList(top.zkConn, productName)
+	return models.GetActionSeqList(top.coordConn, productName)
 }
 
 func (top *Topology) IsChildrenChangedEvent(e interface{}) bool {
@@ -99,36 +99,36 @@ func (top *Topology) IsChildrenChangedEvent(e interface{}) bool {
 }
 
 func (top *Topology) CreateProxyInfo(pi *models.ProxyInfo) (string, error) {
-	return models.CreateProxyInfo(top.zkConn, top.ProductName, pi)
+	return models.CreateProxyInfo(top.coordConn, top.ProductName, pi)
 }
 
 func (top *Topology) CreateProxyFenceNode(pi *models.ProxyInfo) (string, error) {
-	return models.CreateProxyFenceNode(top.zkConn, top.ProductName, pi)
+	return models.CreateProxyFenceNode(top.coordConn, top.ProductName, pi)
 }
 
 func (top *Topology) GetProxyInfo(proxyName string) (*models.ProxyInfo, error) {
-	return models.GetProxyInfo(top.zkConn, top.ProductName, proxyName)
+	return models.GetProxyInfo(top.coordConn, top.ProductName, proxyName)
 }
 
 func (top *Topology) GetActionResponsePath(seq int) string {
-	return path.Join(models.GetActionResponsePath(top.ProductName), top.zkConn.Seq2Str(int64(seq)))
+	return path.Join(models.GetActionResponsePath(top.ProductName), top.coordConn.Seq2Str(int64(seq)))
 }
 
 func (top *Topology) SetProxyStatus(proxyName string, status string) error {
-	return models.SetProxyStatus(top.zkConn, top.ProductName, proxyName, status)
+	return models.SetProxyStatus(top.coordConn, top.ProductName, proxyName, status)
 }
 
 func (top *Topology) Close(proxyName string) {
 	// delete fence znode
-	pi, err := models.GetProxyInfo(top.zkConn, top.ProductName, proxyName)
+	pi, err := models.GetProxyInfo(top.coordConn, top.ProductName, proxyName)
 	if err != nil {
 		log.Error("killing fence error, proxy %s is not exists", proxyName)
 	} else {
-		zkhelper.DeleteRecursive(top.zkConn, path.Join(models.GetProxyFencePath(top.ProductName), pi.Addr), -1)
+		zkhelper.DeleteRecursive(top.coordConn, path.Join(models.GetProxyFencePath(top.ProductName), pi.Addr), -1)
 	}
 	// delete ephemeral znode
-	zkhelper.DeleteRecursive(top.zkConn, path.Join(models.GetProxyPath(top.ProductName), proxyName), -1)
-	top.zkConn.Close()
+	zkhelper.DeleteRecursive(top.coordConn, path.Join(models.GetProxyPath(top.ProductName), proxyName), -1)
+	top.coordConn.Close()
 }
 
 func (top *Topology) DoResponse(seq int, pi *models.ProxyInfo) error {
@@ -140,7 +140,7 @@ func (top *Topology) DoResponse(seq int, pi *models.ProxyInfo) error {
 		return errors.Trace(err)
 	}
 
-	_, err = top.zkConn.Create(path.Join(actionPath, pi.Id), data,
+	_, err = top.coordConn.Create(path.Join(actionPath, pi.Id), data,
 		0, zkhelper.DefaultFileACLs())
 
 	return err
@@ -176,7 +176,7 @@ func (top *Topology) doWatch(evtch <-chan topo.Event, evtbus chan interface{}) {
 }
 
 func (top *Topology) WatchChildren(path string, evtbus chan interface{}) ([]string, error) {
-	content, _, evtch, err := top.zkConn.ChildrenW(path)
+	content, _, evtch, err := top.coordConn.ChildrenW(path)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -186,7 +186,7 @@ func (top *Topology) WatchChildren(path string, evtbus chan interface{}) ([]stri
 }
 
 func (top *Topology) WatchNode(path string, evtbus chan interface{}) ([]byte, error) {
-	content, _, evtch, err := top.zkConn.GetW(path)
+	content, _, evtch, err := top.coordConn.GetW(path)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}

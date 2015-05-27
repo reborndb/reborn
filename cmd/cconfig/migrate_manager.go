@@ -37,8 +37,8 @@ type MigrateManager struct {
 	preCheck     MigrateTaskCheckFunc
 	pendingTasks *list.List
 	runningTask  *MigrateTask
-	// zkConn
-	zkConn      zkhelper.Conn
+	// coordConn
+	coordConn   zkhelper.Conn
 	productName string
 	lck         sync.RWMutex
 }
@@ -48,8 +48,8 @@ func getManagerPath(productName string) string {
 }
 
 func (m *MigrateManager) createNode() error {
-	zkhelper.CreateRecursive(m.zkConn, fmt.Sprintf("/zk/reborn/db_%s/migrate_tasks", m.productName), "", 0, zkhelper.DefaultDirACLs())
-	_, err := m.zkConn.Create(getManagerPath(m.productName),
+	zkhelper.CreateRecursive(m.coordConn, fmt.Sprintf("/zk/reborn/db_%s/migrate_tasks", m.productName), "", 0, zkhelper.DefaultDirACLs())
+	_, err := m.coordConn.Create(getManagerPath(m.productName),
 		[]byte(""), zk.FlagEphemeral, zkhelper.DefaultFileACLs())
 	if err != nil {
 		log.Error("dashboard already exists! err: ", err)
@@ -58,14 +58,14 @@ func (m *MigrateManager) createNode() error {
 }
 
 func (m *MigrateManager) removeNode() error {
-	return zkhelper.DeleteRecursive(m.zkConn, getManagerPath(m.productName), 0)
+	return zkhelper.DeleteRecursive(m.coordConn, getManagerPath(m.productName), 0)
 }
 
-func NewMigrateManager(zkConn zkhelper.Conn, pn string, preTaskCheck MigrateTaskCheckFunc) *MigrateManager {
+func NewMigrateManager(coordConn zkhelper.Conn, pn string, preTaskCheck MigrateTaskCheckFunc) *MigrateManager {
 	m := &MigrateManager{
 		pendingTasks: list.New(),
 		preCheck:     preTaskCheck,
-		zkConn:       zkConn,
+		coordConn:    coordConn,
 		productName:  pn,
 	}
 	err := m.createNode()
@@ -98,7 +98,7 @@ func (m *MigrateManager) loop() error {
 		m.lck.Unlock()
 
 		t := ele.Value.(*MigrateTask)
-		t.zkConn = m.zkConn
+		t.coordConn = m.coordConn
 		t.productName = m.productName
 
 		m.runningTask = t

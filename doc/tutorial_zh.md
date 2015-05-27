@@ -64,7 +64,7 @@ options:
    --log-level=<loglevel>      输出日志级别 (debug < info (default) < warn < error < fatal)
    --cpu=<cpu_num>             proxy占用的 cpu 核数, 默认1, 最好设置为机器的物理cpu数的一半到2/3左右
    --addr=<proxy_listen_addr>  proxy 的 redis server 监听的地址, 格式 <ip or hostname>:<port>, 如: localhost:9000, :9001
-   --id=<proxy_id>             proxy id，需要全局唯一，如果为为空，则使用host:pid
+   --id=<proxy_id>             proxy id，需要全局唯一，不能为空
    --http-addr=<debug_http_addr>   proxy 的调试信息启动的http server, 可以访问 http://debug_http_server_addr/debug/vars
 ```
 

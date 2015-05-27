@@ -21,14 +21,14 @@ type TopoUpdate interface {
 	OnSlotChange(slotId int)
 }
 
-type ZkFactory func(zkAddr string) (zkhelper.Conn, error)
+type ZkFactory func(coordAddr string) (zkhelper.Conn, error)
 
 type Topology struct {
 	ProductName string
-	zkAddr      string
+	coordAddr   string
 	zkConn      zkhelper.Conn
 	fact        ZkFactory
-	provider    string
+	coordinator string
 }
 
 func (top *Topology) GetGroup(groupId int) (*models.ServerGroup, error) {
@@ -58,10 +58,10 @@ func (top *Topology) GetSlotByIndex(i int) (*models.Slot, *models.ServerGroup, e
 	return slot, groupServer, nil
 }
 
-func NewTopo(ProductName string, zkAddr string, f ZkFactory, provider string) *Topology {
-	t := &Topology{zkAddr: zkAddr, ProductName: ProductName, fact: f, provider: provider}
+func NewTopo(ProductName string, coordAddr string, f ZkFactory, coordinator string) *Topology {
+	t := &Topology{coordAddr: coordAddr, ProductName: ProductName, fact: f, coordinator: coordinator}
 	if t.fact == nil {
-		switch t.provider {
+		switch t.coordinator {
 		case "etcd":
 			t.fact = zkhelper.NewEtcdConn
 		case "zookeeper":
@@ -76,18 +76,18 @@ func NewTopo(ProductName string, zkAddr string, f ZkFactory, provider string) *T
 
 func (top *Topology) InitZkConn() {
 	var err error
-	top.zkConn, err = top.fact(top.zkAddr)
+	top.zkConn, err = top.fact(top.coordAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (top *Topology) GetActionWithSeq(seq int64) (*models.Action, error) {
-	return models.GetActionWithSeq(top.zkConn, top.ProductName, seq, top.provider)
+	return models.GetActionWithSeq(top.zkConn, top.ProductName, seq, top.coordinator)
 }
 
 func (top *Topology) GetActionWithSeqObject(seq int64, act *models.Action) error {
-	return models.GetActionObject(top.zkConn, top.ProductName, seq, act, top.provider)
+	return models.GetActionObject(top.zkConn, top.ProductName, seq, act, top.coordinator)
 }
 
 func (top *Topology) GetActionSeqList(productName string) ([]int, error) {

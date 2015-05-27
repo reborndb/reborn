@@ -34,7 +34,7 @@ options:
    --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
    --cpu=<cpu_num>                num of cpu cores that proxy can use
    --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
-   --id=<proxy_id>                proxy id, global unique, if empty, use host:pid instead 
+   --id=<proxy_id>                proxy id, global unique, can not be empty 
    --http-addr=<debug_http_addr>  debug vars http server
 `
 
@@ -98,6 +98,8 @@ func main() {
 
 	if args["--id"] != nil {
 		proxyID = args["--id"].(string)
+	} else {
+		log.Fatalf("invalid empty proxy id")
 	}
 
 	dumppath := utils.GetExecutorPath()

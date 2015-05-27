@@ -5,7 +5,6 @@ package router
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -678,14 +677,8 @@ func (s *Server) resetTopo() {
 }
 
 func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Server {
-	hname, err := os.Hostname()
-	if err != nil {
-		log.Fatal("get host name failed", err)
-	}
-
 	if len(proxyID) == 0 {
-		proxyID = fmt.Sprintf("%s:%d", hname, os.Getpid())
-		log.Infof("empty proxy id, use %s instead", proxyID)
+		log.Fatalf("invalid empty proxy id")
 	}
 
 	log.Infof("start with configuration: %+v", conf)
@@ -712,6 +705,12 @@ func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Se
 	if len(addrs) != 2 {
 		log.Fatalf("bad addr %s", addr)
 	}
+
+	hname, err := os.Hostname()
+	if err != nil {
+		log.Fatal("get host name failed", err)
+	}
+
 	s.pi.Addr = hname + ":" + addrs[1]
 
 	debugVarAddrs := strings.Split(debugVarAddr, ":")

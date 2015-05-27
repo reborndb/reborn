@@ -70,11 +70,11 @@ func NewTopo(ProductName string, coordAddr string, f ZkFactory, coordinator stri
 			log.Fatal("coordinator not found in config")
 		}
 	}
-	t.InitZkConn()
+	t.InitCoordConn()
 	return t
 }
 
-func (top *Topology) InitZkConn() {
+func (top *Topology) InitCoordConn() {
 	var err error
 	top.coordConn, err = top.fact(top.coordAddr)
 	if err != nil {

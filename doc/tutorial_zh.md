@@ -77,7 +77,7 @@ reborn-config 和 reborn-proxy 在不加 -c 参数的时候, 默认会读取当�
 config.ini:
 
 ```
-zk=localhost:2181   <- zookeeper的地址, 如果是zookeeper集群，可以这么写: zk=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181
+coordinator_addr=localhost:2181   <- zookeeper的地址, 如果是zookeeper集群，可以这么写: coordinator_addr=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181
 如果是etcd，则写成http://hostname1:port,http://hostname2:port,http://hostname3:port
 product=test        <- 产品名称, 这个reborn集群的名字, 可以认为是命名空间, 不同命名空间的reborn没有交集
 proxy_id=proxy_1    <- proxy会读取, 用于标记proxy的名字, 针对多个proxy的情况, 可以使用不同的config.ini, 只需要更改 proxy_id 即可

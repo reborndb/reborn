@@ -73,8 +73,8 @@ options:
 `config.ini`:
 
 ```
-zk=localhost:2181   <- Location of `zookeeper`, use `zk=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181` for `zookeeper` clusters.
-`zk=http://hostname1:2181,http://hostname2:2181,http://hostname3:2181 for `etcd` clusters.
+coordinator_addr=localhost:2181   <- Location of `zookeeper`, use `coordinator_addr=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181` for `zookeeper` clusters.
+`coordinator_addr=http://hostname1:2181,http://hostname2:2181,http://hostname3:2181 for `etcd` clusters.
 product=test        <- Product name, also the name of this Coids clusters, can be considered as namespace, Reborn with different names have no intersection. 
 proxy_id=proxy_1    <- Proxy will take this as identifier for proxy, multiple proxy can use different `config.ini` with various `proxy_id`.
 dashboard_addr=localhost:18087  <- dashboard provides the RESTful API for CLI

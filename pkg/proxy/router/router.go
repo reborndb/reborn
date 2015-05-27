@@ -47,7 +47,7 @@ type Server struct {
 	moper       *MultiOperator
 	pools       *cachepool.CachePool
 	counter     *stats.Counters
-	OnSuicide   OnSuicideFun
+	onSuicide   onSuicideFun
 	bufferedReq *list.List
 	conf        *Conf
 
@@ -451,14 +451,14 @@ func (s *Server) checkAndDoTopoChange(seq int) bool {
 
 func (s *Server) handleMarkOffline() {
 	s.top.Close(s.pi.Id)
-	if s.OnSuicide == nil {
-		s.OnSuicide = func() error {
+	if s.onSuicide == nil {
+		s.onSuicide = func() error {
 			log.Fatalf("suicide %+v, %s", s.pi, s.counter)
 			return nil
 		}
 	}
 
-	s.OnSuicide()
+	s.onSuicide()
 }
 
 func (s *Server) handleProxyCommand() {

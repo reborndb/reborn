@@ -307,7 +307,7 @@ type Slot struct {
 	migrateFrom *group.Group
 }
 
-type OnSuicideFun func() error
+type onSuicideFun func() error
 
 func needResponse(receivers []string, self models.ProxyInfo) bool {
 	var pi models.ProxyInfo

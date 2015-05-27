@@ -10,13 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"strconv"
+
 	"github.com/alicebob/miniredis"
 	"github.com/garyburd/redigo/redis"
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/models"
-	"strconv"
 )
 
 var (
@@ -345,7 +346,7 @@ func TestMarkOffline(t *testing.T) {
 
 	suicide := int64(0)
 	proxyMutex.Lock()
-	s.OnSuicide = func() error {
+	s.onSuicide = func() error {
 		atomic.StoreInt64(&suicide, 1)
 		return nil
 	}

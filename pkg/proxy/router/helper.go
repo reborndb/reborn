@@ -268,7 +268,7 @@ type killEvent struct {
 type Conf struct {
 	proxyId         string
 	productName     string
-	f               topology.ZkFactory
+	f               topology.CoordFactory
 	netTimeout      int    //seconds
 	proto           string //tcp or tcp4
 	coordinatorAddr string

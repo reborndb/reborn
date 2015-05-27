@@ -100,7 +100,7 @@ func TestNewAction(t *testing.T) {
 
 func TestForceRemoveLock(t *testing.T) {
 	fakeCoordConn := zkhelper.NewConn()
-	zkLock := utils.GetZkLock(fakeCoordConn, productName)
+	zkLock := utils.GetCoordLock(fakeCoordConn, productName)
 	if zkLock == nil {
 		t.Error("create lock error")
 	}

@@ -21,13 +21,13 @@ type TopoUpdate interface {
 	OnSlotChange(slotId int)
 }
 
-type ZkFactory func(coordAddr string) (zkhelper.Conn, error)
+type CoordFactory func(coordAddr string) (zkhelper.Conn, error)
 
 type Topology struct {
 	ProductName string
 	coordAddr   string
 	coordConn   zkhelper.Conn
-	fact        ZkFactory
+	fact        CoordFactory
 	coordinator string
 }
 
@@ -58,7 +58,7 @@ func (top *Topology) GetSlotByIndex(i int) (*models.Slot, *models.ServerGroup, e
 	return slot, groupServer, nil
 }
 
-func NewTopo(ProductName string, coordAddr string, f ZkFactory, coordinator string) *Topology {
+func NewTopo(ProductName string, coordAddr string, f CoordFactory, coordinator string) *Topology {
 	t := &Topology{coordAddr: coordAddr, ProductName: ProductName, fact: f, coordinator: coordinator}
 	if t.fact == nil {
 		switch t.coordinator {

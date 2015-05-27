@@ -335,6 +335,10 @@ func needResponse(receivers []string, self models.ProxyInfo) bool {
 }
 
 func isTheSameSlot(keys [][]byte) bool {
+	if len(keys) == 1 {
+		return true
+	}
+
 	firstSlot := -1
 	for _, k := range keys {
 		if firstSlot == -1 {

@@ -202,9 +202,9 @@ func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 			log.Error(string(keys[0]), string(resp.Raw), "migrateFrom", shd.migrateFrom.Master())
 			return errors.New(string(resp.Raw))
 		}
-
-		s.counter.Add("Migrate", 1)
 	}
+
+	s.counter.Add("Migrate", int64(len(keys)))
 
 	return nil
 }
@@ -532,13 +532,17 @@ func (s *Server) dispatch(r *PipelineRequest) (success bool) {
 		return false
 	}
 
-	s.handleMigrateState(r.slotIdx, r.keys...)
+	if err := s.handleMigrateState(r.slotIdx, r.keys...); err != nil {
+		r.backQ <- &PipelineResponse{ctx: r, resp: nil, err: err}
+		return true
+	}
+
 	tr, ok := s.pipeConns[s.slots[r.slotIdx].dst.Master()]
 	if !ok {
 		//try recreate taskrunner
 		if err := s.createTaskRunner(s.slots[r.slotIdx]); err != nil {
 			r.backQ <- &PipelineResponse{ctx: r, resp: nil, err: err}
-			return
+			return true
 		}
 
 		tr = s.pipeConns[s.slots[r.slotIdx].dst.Master()]
@@ -575,9 +579,7 @@ func (s *Server) handleTopoEvent() {
 				e.(*killEvent).done <- nil
 			default:
 				if s.top.IsSessionExpiredEvent(e) {
-					log.Warningf("session expired: %+v", e)
-					s.resetTopo()
-					continue
+					log.Fatalf("session expired: %+v", e)
 				}
 
 				evtPath := GetEventPath(e)
@@ -661,22 +663,6 @@ func (s *Server) RegisterAndWait(wait bool) {
 	if wait {
 		s.waitOnline()
 	}
-}
-
-func (s *Server) resetTopo() {
-	log.Error("resetTopo")
-	if s.top != nil {
-		s.top.Close(s.proxyID)
-	}
-
-	s.top = topo.NewTopo(s.conf.productName, s.conf.coordinatorAddr, s.conf.f, s.conf.coordinator)
-	s.RegisterAndWait(false)
-	_, err := s.top.WatchChildren(models.GetWatchActionPath(s.conf.productName), s.evtbus)
-	if err != nil {
-		log.Fatal(errors.ErrorStack(err))
-	}
-
-	s.FillSlots()
 }
 
 func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Server {

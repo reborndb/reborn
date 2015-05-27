@@ -35,7 +35,7 @@ func InitConfigFromFile(filename string) (*cfg.Cfg, error) {
 	return ret, nil
 }
 
-func GetZkLock(coordConn zkhelper.Conn, productName string) zkhelper.ZLocker {
+func GetCoordLock(coordConn zkhelper.Conn, productName string) zkhelper.ZLocker {
 	zkPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
 	ret := zkhelper.CreateMutex(coordConn, zkPath)
 	return ret

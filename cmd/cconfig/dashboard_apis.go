@@ -317,7 +317,7 @@ func apiRemoveServerGroup(param martini.Params) (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
 
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("removing group %s", param["id"]))
 
 	defer func() {
@@ -342,7 +342,7 @@ func apiAddServerGroup(newGroup models.ServerGroup) (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
 
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("add group %+v", newGroup))
 
 	defer func() {
@@ -377,7 +377,7 @@ func apiAddServerToGroup(server models.Server, param martini.Params) (int, strin
 	conn := CreateCoordConn()
 	defer conn.Close()
 
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("add server to group,  %+v", server))
 	defer func() {
 		err := lock.Unlock()
@@ -413,7 +413,7 @@ func apiPromoteServer(server models.Server, param martini.Params) (int, string) 
 	conn := CreateCoordConn()
 	defer conn.Close()
 
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("promote server %+v", server))
 	defer func() {
 		err := lock.Unlock()
@@ -443,7 +443,7 @@ func apiRemoveServerFromGroup(server models.Server, param martini.Params) (int, 
 	conn := CreateCoordConn()
 	defer conn.Close()
 
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("removing server from group, %+v", server))
 	defer func() {
 		err := lock.Unlock()
@@ -523,7 +523,7 @@ func apiSlotRangeSet(task RangeSetTask) (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
 
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("set slot range, %+v", task))
 	defer func() {
 		err := lock.Unlock()
@@ -554,7 +554,7 @@ func apiActionGC(r *http.Request) (int, string) {
 
 	conn := CreateCoordConn()
 	defer conn.Close()
-	lock := utils.GetZkLock(conn, globalEnv.ProductName())
+	lock := utils.GetCoordLock(conn, globalEnv.ProductName())
 	lock.Lock(fmt.Sprintf("action gc"))
 	defer func() {
 		err := lock.Unlock()

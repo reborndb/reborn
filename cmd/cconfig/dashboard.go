@@ -59,7 +59,7 @@ options:
 
 var proxiesSpeed int64
 
-func CreateZkConn() zkhelper.Conn {
+func CreateCoordConn() zkhelper.Conn {
 	conn, err := globalEnv.NewCoordConn()
 	if err != nil {
 		Fatal("Failed to create zk connection: " + err.Error())
@@ -90,7 +90,7 @@ func jsonRetSucc() (int, string) {
 }
 
 func getAllProxyOps() int64 {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 	proxies, err := models.ProxyList(conn, globalEnv.ProductName(), nil)
 	if err != nil {
@@ -111,7 +111,7 @@ func getAllProxyOps() int64 {
 
 // for debug
 func getAllProxyDebugVars() map[string]map[string]interface{} {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 	proxies, err := models.ProxyList(conn, globalEnv.ProductName(), nil)
 	if err != nil {
@@ -151,7 +151,7 @@ func pageSlots(r render.Render) {
 }
 
 func createDashboardNode() error {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 
 	// make sure root dir is exists
@@ -175,7 +175,7 @@ func createDashboardNode() error {
 }
 
 func releaseDashboardNode() {
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 
 	zkPath := fmt.Sprintf("/zk/reborn/db_%s/dashboard", globalEnv.ProductName())
@@ -265,7 +265,7 @@ func runDashboard(addr string, httpLogFile string) {
 	defer releaseDashboardNode()
 
 	// create long live migrate manager
-	conn := CreateZkConn()
+	conn := CreateCoordConn()
 	defer conn.Close()
 	globalMigrateManager = NewMigrateManager(conn, globalEnv.ProductName(), preMigrateCheck)
 	defer globalMigrateManager.removeNode()

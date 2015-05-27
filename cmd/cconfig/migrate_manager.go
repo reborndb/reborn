@@ -31,7 +31,7 @@ type SlotMigrator interface {
 // check if migrate task is valid
 type MigrateTaskCheckFunc func(t *MigrateTask) (bool, error)
 
-// migrate task will store on zk
+// migrate task will store on coordinator
 type MigrateManager struct {
 	// pre migrate check functions
 	preCheck     MigrateTaskCheckFunc

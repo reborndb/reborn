@@ -47,8 +47,8 @@ func (self *ServerGroup) String() string {
 	return string(b) + "\n"
 }
 
-func GetServer(coordConn zkhelper.Conn, zkPath string) (*Server, error) {
-	data, _, err := coordConn.Get(zkPath)
+func GetServer(coordConn zkhelper.Conn, coordPath string) (*Server, error) {
+	data, _, err := coordConn.Get(coordPath)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -75,8 +75,8 @@ func NewServerGroup(productName string, id int) *ServerGroup {
 }
 
 func GroupExists(coordConn zkhelper.Conn, productName string, groupId int) (bool, error) {
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", productName, groupId)
-	exists, _, err := coordConn.Exists(zkPath)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", productName, groupId)
+	exists, _, err := coordConn.Exists(coordPath)
 	if err != nil {
 		return false, errors.Trace(err)
 	}
@@ -158,8 +158,8 @@ func (self *ServerGroup) Remove(coordConn zkhelper.Conn) error {
 	}
 
 	// do delete
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
-	err = zkhelper.DeleteRecursive(coordConn, zkPath, -1)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+	err = zkhelper.DeleteRecursive(coordConn, coordPath, -1)
 
 	// we know that there's no slots affected, so this action doesn't need proxy confirm
 	err = NewAction(coordConn, self.ProductName, ACTION_TYPE_SERVER_GROUP_REMOVE, self, "", false)
@@ -167,8 +167,8 @@ func (self *ServerGroup) Remove(coordConn zkhelper.Conn) error {
 }
 
 func (self *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) error {
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, addr)
-	data, _, err := coordConn.Get(zkPath)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, addr)
+	data, _, err := coordConn.Get(coordPath)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -183,7 +183,7 @@ func (self *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) erro
 		return errors.New("cannot remove master, use promote first")
 	}
 
-	err = coordConn.Delete(zkPath, -1)
+	err = coordConn.Delete(coordPath, -1)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -246,8 +246,8 @@ func (self *ServerGroup) Create(coordConn zkhelper.Conn) error {
 	if self.Id < 0 {
 		return errors.NotSupportedf("invalid server group id %d", self.Id)
 	}
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
-	_, err := zkhelper.CreateOrUpdate(coordConn, zkPath, "", 0, zkhelper.DefaultDirACLs(), true)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+	_, err := zkhelper.CreateOrUpdate(coordConn, coordPath, "", 0, zkhelper.DefaultDirACLs(), true)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -266,8 +266,8 @@ func (self *ServerGroup) Create(coordConn zkhelper.Conn) error {
 }
 
 func (self *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
-	b, err := zkhelper.NodeExists(coordConn, zkPath)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+	b, err := zkhelper.NodeExists(coordConn, coordPath)
 	if err != nil {
 		return false, errors.Trace(err)
 	}
@@ -305,8 +305,8 @@ func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
 		return errors.Trace(err)
 	}
 
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, s.Addr)
-	_, err = zkhelper.CreateOrUpdate(coordConn, zkPath, string(val), 0, zkhelper.DefaultFileACLs(), true)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, s.Addr)
+	_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(val), 0, zkhelper.DefaultFileACLs(), true)
 
 	// update servers
 	servers, err = self.GetServers(coordConn)

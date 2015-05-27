@@ -82,7 +82,7 @@ func GetActionObject(coordConn zkhelper.Conn, productName string, seq int64, act
 
 var ErrReceiverTimeout = errors.New("receiver timeout")
 
-func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, actionZkPath string, proxies []ProxyInfo, timeoutInMs int) error {
+func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, actionCoordPath string, proxies []ProxyInfo, timeoutInMs int) error {
 	if len(proxies) == 0 {
 		return nil
 	}
@@ -98,10 +98,10 @@ func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, act
 	// check every 500ms
 	for times < checkTimes {
 		if times >= 6 && (times*500)%1000 == 0 {
-			log.Warning("abnormal waiting time for receivers", actionZkPath, offlineProxyIds)
+			log.Warning("abnormal waiting time for receivers", actionCoordPath, offlineProxyIds)
 		}
 		// get confirm ids
-		nodes, _, err := coordConn.Children(actionZkPath)
+		nodes, _, err := coordConn.Children(actionCoordPath)
 		if err != nil {
 			return errors.Trace(err)
 		}

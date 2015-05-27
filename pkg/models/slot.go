@@ -80,8 +80,8 @@ func GetSlotBasePath(productName string) string {
 }
 
 func GetSlot(coordConn zkhelper.Conn, productName string, id int) (*Slot, error) {
-	zkPath := GetSlotPath(productName, id)
-	data, _, err := coordConn.Get(zkPath)
+	coordPath := GetSlotPath(productName, id)
+	data, _, err := coordConn.Get(coordPath)
 	if err != nil {
 		return nil, err
 	}
@@ -111,15 +111,15 @@ func GetMigratingSlots(conn zkhelper.Conn, productName string) ([]*Slot, error) 
 }
 
 func Slots(coordConn zkhelper.Conn, productName string) ([]*Slot, error) {
-	zkPath := GetSlotBasePath(productName)
-	children, _, err := coordConn.Children(zkPath)
+	coordPath := GetSlotBasePath(productName)
+	children, _, err := coordConn.Children(coordPath)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
 
 	var slots []*Slot
 	for _, p := range children {
-		data, _, err := coordConn.Get(path.Join(zkPath, p))
+		data, _, err := coordConn.Get(path.Join(coordPath, p))
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
@@ -169,8 +169,8 @@ func SetSlots(coordConn zkhelper.Conn, productName string, slots []*Slot, groupI
 			return errors.Trace(err)
 		}
 
-		zkPath := GetSlotPath(productName, s.Id)
-		_, err = zkhelper.CreateOrUpdate(coordConn, zkPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
+		coordPath := GetSlotPath(productName, s.Id)
+		_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -213,8 +213,8 @@ func SetSlotRange(coordConn zkhelper.Conn, productName string, fromSlot, toSlot,
 			return errors.Trace(err)
 		}
 
-		zkPath := GetSlotPath(productName, i)
-		_, err = zkhelper.CreateOrUpdate(coordConn, zkPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
+		coordPath := GetSlotPath(productName, i)
+		_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -278,8 +278,8 @@ func (s *Slot) Update(coordConn zkhelper.Conn) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	zkPath := GetSlotPath(s.ProductName, s.Id)
-	_, err = zkhelper.CreateOrUpdate(coordConn, zkPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
+	coordPath := GetSlotPath(s.ProductName, s.Id)
+	_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(data), 0, zkhelper.DefaultFileACLs(), true)
 	if err != nil {
 		return errors.Trace(err)
 	}

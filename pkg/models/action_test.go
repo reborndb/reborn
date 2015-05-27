@@ -106,8 +106,8 @@ func TestForceRemoveLock(t *testing.T) {
 	}
 
 	zkLock.Lock("force remove lock")
-	zkPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
-	children, _, err := fakeCoordConn.Children(zkPath)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/LOCK", productName)
+	children, _, err := fakeCoordConn.Children(coordPath)
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,7 +115,7 @@ func TestForceRemoveLock(t *testing.T) {
 		t.Error("create lock error")
 	}
 	ForceRemoveLock(fakeCoordConn, productName)
-	children, _, err = fakeCoordConn.Children(zkPath)
+	children, _, err = fakeCoordConn.Children(coordPath)
 	if err != nil {
 		t.Error(err)
 	}

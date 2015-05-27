@@ -183,24 +183,27 @@ func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 	}
 
 	//handle migrate result
-	resp, err := parser.Parse(redisReader)
-	if err != nil {
-		redisConn.Close()
-		return errors.Trace(err)
+	for i := 0; i < len(keys); i++ {
+		resp, err := parser.Parse(redisReader)
+		if err != nil {
+			redisConn.Close()
+			return errors.Trace(err)
+		}
+
+		result, err := resp.Bytes()
+
+		log.Debug("migrate", string(keys[0]), "from", shd.migrateFrom.Master(), "to", shd.dst.Master(),
+			string(result))
+
+		if resp.Type == parser.ErrorResp {
+			redisConn.Close()
+			log.Error(string(keys[0]), string(resp.Raw), "migrateFrom", shd.migrateFrom.Master())
+			return errors.New(string(resp.Raw))
+		}
+
+		s.counter.Add("Migrate", 1)
 	}
 
-	result, err := resp.Bytes()
-
-	log.Debug("migrate", string(keys[0]), "from", shd.migrateFrom.Master(), "to", shd.dst.Master(),
-		string(result))
-
-	if resp.Type == parser.ErrorResp {
-		redisConn.Close()
-		log.Error(string(keys[0]), string(resp.Raw), "migrateFrom", shd.migrateFrom.Master())
-		return errors.New(string(resp.Raw))
-	}
-
-	s.counter.Add("Migrate", 1)
 	return nil
 }
 
@@ -561,7 +564,7 @@ func (s *Server) handleTopoEvent() {
 			}
 
 			if !s.dispatch(r) {
-				log.Fatalf("should never happend, %+v", r)
+				log.Fatalf("should never happend, %+v, %+v", r, s.slots[r.slotIdx].slotInfo)
 			}
 		case e := <-s.evtbus:
 			switch e.(type) {

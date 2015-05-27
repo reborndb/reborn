@@ -33,12 +33,12 @@ func InitEnv() {
 	go once.Do(func() {
 		conn = zkhelper.NewConn()
 		conf = &Conf{
-			proxyId:     "proxy_test",
-			productName: "test",
-			zkAddr:      "localhost:2181",
-			netTimeout:  5,
-			f:           func(string) (zkhelper.Conn, error) { return conn, nil },
-			proto:       "tcp4",
+			proxyId:         "proxy_test",
+			productName:     "test",
+			coordinatorAddr: "localhost:2181",
+			netTimeout:      5,
+			f:               func(string) (zkhelper.Conn, error) { return conn, nil },
+			proto:           "tcp4",
 		}
 
 		//init action path

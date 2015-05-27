@@ -664,7 +664,7 @@ func (s *Server) resetTopo() {
 		s.top.Close(s.conf.proxyId)
 	}
 
-	s.top = topo.NewTopo(s.conf.productName, s.conf.zkAddr, s.conf.f, s.conf.provider)
+	s.top = topo.NewTopo(s.conf.productName, s.conf.coordinatorAddr, s.conf.f, s.conf.coordinator)
 	s.RegisterAndWait(false)
 	_, err := s.top.WatchChildren(models.GetWatchActionPath(s.conf.productName), s.evtbus)
 	if err != nil {
@@ -679,7 +679,7 @@ func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
 	s := &Server{
 		conf:          conf,
 		evtbus:        make(chan interface{}, 1000),
-		top:           topo.NewTopo(conf.productName, conf.zkAddr, conf.f, conf.provider),
+		top:           topo.NewTopo(conf.productName, conf.coordinatorAddr, conf.f, conf.coordinator),
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),

@@ -17,10 +17,10 @@ type Env interface {
 }
 
 type RebornEnv struct {
-	zkAddr        string
-	dashboardAddr string
-	productName   string
-	provider      string
+	dashboardAddr   string
+	productName     string
+	coordinator     string
+	coordinatorAddr string
 }
 
 func LoadRebornEnv(cfg *cfg.Cfg) Env {
@@ -33,7 +33,7 @@ func LoadRebornEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
-	zkAddr, err := cfg.ReadString("zk", "localhost:2181")
+	coordinatorAddr, err := cfg.ReadString("coordinator_addr", "localhost:2181")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,16 +44,16 @@ func LoadRebornEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
-	provider, err := cfg.ReadString("coordinator", "zookeeper")
+	coordinator, err := cfg.ReadString("coordinator", "zookeeper")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return &RebornEnv{
-		zkAddr:        zkAddr,
-		dashboardAddr: dashboardAddr,
-		productName:   productName,
-		provider:      provider,
+		dashboardAddr:   dashboardAddr,
+		productName:     productName,
+		coordinator:     coordinator,
+		coordinatorAddr: coordinatorAddr,
 	}
 }
 
@@ -66,11 +66,11 @@ func (e *RebornEnv) DashboardAddr() string {
 }
 
 func (e *RebornEnv) NewZkConn() (zkhelper.Conn, error) {
-	switch e.provider {
+	switch e.coordinator {
 	case "zookeeper":
-		return zkhelper.ConnectToZk(e.zkAddr)
+		return zkhelper.ConnectToZk(e.coordinatorAddr)
 	case "etcd":
-		addr := strings.TrimSpace(e.zkAddr)
+		addr := strings.TrimSpace(e.coordinatorAddr)
 		if !strings.HasPrefix(addr, "http://") {
 			addr = "http://" + addr
 		}

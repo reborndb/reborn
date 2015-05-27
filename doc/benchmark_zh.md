@@ -171,12 +171,11 @@ for ((i=1;i<=$NPROXY;i++)); do
     cat > config${i}.ini <<EOF
 coordinator_addr=localhost:2181
 product=reborn_bench
-proxy_id=proxy_${i}
 EOF
     let a="${i}+19000"
     let b="${i}+10000"
     reborn-proxy --cpu=$NCPU -c config${i}.ini -L proxy${i}.log \
-        --addr=0.0.0.0:${a} --http-addr=0.0.0.0:${b} &
+        --addr=0.0.0.0:${a} --http-addr=0.0.0.0:${b} --id=proxy_${i} &
 done
 
 sleep 2

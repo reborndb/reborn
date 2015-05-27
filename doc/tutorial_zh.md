@@ -56,15 +56,16 @@ commands:
 ```
 $ ../bin/reborn-proxy -h
 
-usage: reborn-proxy [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>] [--cpu=<cpu_num>] [--addr=<proxy_listen_addr>] [--http-addr=<debug_http_server_addr>]
+usage: reborn-proxy [options]
 
 options:
    -c	配置文件地址
    -L	日志输出文件地址
-   --log-level=<loglevel>	输出日志级别 (debug < info (default) < warn < error < fatal)
-   --cpu=<cpu_num>		proxy占用的 cpu 核数, 默认1, 最好设置为机器的物理cpu数的一半到2/3左右
-   --addr=<proxy_listen_addr>		proxy 的 redis server 监听的地址, 格式 <ip or hostname>:<port>, 如: localhost:9000, :9001
-   --http-addr=<debug_http_server_addr>   proxy 的调试信息启动的http server, 可以访问 http://debug_http_server_addr/debug/vars
+   --log-level=<loglevel>      输出日志级别 (debug < info (default) < warn < error < fatal)
+   --cpu=<cpu_num>             proxy占用的 cpu 核数, 默认1, 最好设置为机器的物理cpu数的一半到2/3左右
+   --addr=<proxy_listen_addr>  proxy 的 redis server 监听的地址, 格式 <ip or hostname>:<port>, 如: localhost:9000, :9001
+   --id=<proxy_id>             proxy id，需要全局唯一，如果为为空，则使用host:pid
+   --http-addr=<debug_http_addr>   proxy 的调试信息启动的http server, 可以访问 http://debug_http_server_addr/debug/vars
 ```
 
 ###部署
@@ -80,7 +81,6 @@ config.ini:
 coordinator_addr=localhost:2181   <- zookeeper的地址, 如果是zookeeper集群，可以这么写: coordinator_addr=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181
 如果是etcd，则写成http://hostname1:port,http://hostname2:port,http://hostname3:port
 product=test        <- 产品名称, 这个reborn集群的名字, 可以认为是命名空间, 不同命名空间的reborn没有交集
-proxy_id=proxy_1    <- proxy会读取, 用于标记proxy的名字, 针对多个proxy的情况, 可以使用不同的config.ini, 只需要更改 proxy_id 即可
 dashboard_addr=localhost:18087   <- dashboard 服务的地址，CLI 的所有命令都依赖于 dashboard 的 RESTful API，所以必须启动
 coordinator=zookeeper  <- 如果用etcd，则将zookeeper替换为etcd
 ```

@@ -266,7 +266,6 @@ type killEvent struct {
 }
 
 type Conf struct {
-	proxyId         string
 	productName     string
 	f               topology.CoordFactory
 	netTimeout      int    //seconds
@@ -291,11 +290,6 @@ func LoadConf(configFile string) (*Conf, error) {
 		log.Fatalf("invalid config: need coordinator addr entry is missing in %s", configFile)
 	}
 	srvConf.coordinatorAddr = strings.TrimSpace(srvConf.coordinatorAddr)
-
-	srvConf.proxyId, _ = conf.ReadString("proxy_id", "")
-	if len(srvConf.proxyId) == 0 {
-		log.Fatalf("invalid config: need proxy_id entry is missing in %s", configFile)
-	}
 
 	srvConf.netTimeout, _ = conf.ReadInt("net_timeout", 5)
 	srvConf.proto, _ = conf.ReadString("proto", "tcp")

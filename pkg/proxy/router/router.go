@@ -5,6 +5,7 @@ package router
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -50,6 +51,8 @@ type Server struct {
 	OnSuicide   OnSuicideFun
 	bufferedReq *list.List
 	conf        *Conf
+
+	proxyID string
 
 	pipeConns map[string]*taskRunner //redis->taskrunner
 }
@@ -661,7 +664,7 @@ func (s *Server) RegisterAndWait(wait bool) {
 func (s *Server) resetTopo() {
 	log.Error("resetTopo")
 	if s.top != nil {
-		s.top.Close(s.conf.proxyId)
+		s.top.Close(s.proxyID)
 	}
 
 	s.top = topo.NewTopo(s.conf.productName, s.conf.coordinatorAddr, s.conf.f, s.conf.coordinator)
@@ -674,7 +677,17 @@ func (s *Server) resetTopo() {
 	s.FillSlots()
 }
 
-func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
+func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Server {
+	hname, err := os.Hostname()
+	if err != nil {
+		log.Fatal("get host name failed", err)
+	}
+
+	if len(proxyID) == 0 {
+		proxyID = fmt.Sprintf("%s:%d", hname, os.Getpid())
+		log.Infof("empty proxy id, use %s instead", proxyID)
+	}
+
 	log.Infof("start with configuration: %+v", conf)
 	s := &Server{
 		conf:          conf,
@@ -689,14 +702,11 @@ func NewServer(addr string, debugVarAddr string, conf *Conf) *Server {
 		pools:         cachepool.NewCachePool(),
 		pipeConns:     make(map[string]*taskRunner),
 		bufferedReq:   list.New(),
+		proxyID:       proxyID,
 	}
 
-	s.pi.Id = conf.proxyId
+	s.pi.Id = proxyID
 	s.pi.State = models.PROXY_STATE_OFFLINE
-	hname, err := os.Hostname()
-	if err != nil {
-		log.Fatal("get host name failed", err)
-	}
 
 	addrs := strings.Split(addr, ":")
 	if len(addrs) != 2 {

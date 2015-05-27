@@ -27,13 +27,15 @@ var (
 	redis1     *miniredis.Miniredis
 	redis2     *miniredis.Miniredis
 	proxyMutex sync.Mutex
+	proxyID    string
 )
 
 func InitEnv() {
 	go once.Do(func() {
+		proxyId = "proxy_test"
+
 		conn = zkhelper.NewConn()
 		conf = &Conf{
-			proxyId:         "proxy_test",
 			productName:     "test",
 			coordinatorAddr: "localhost:2181",
 			netTimeout:      5,
@@ -82,7 +84,7 @@ func InitEnv() {
 
 		go func() { //set proxy online
 			time.Sleep(3 * time.Second)
-			err := models.SetProxyStatus(conn, conf.productName, conf.proxyId, models.PROXY_STATE_ONLINE)
+			err := models.SetProxyStatus(conn, conf.productName, proxyId, models.PROXY_STATE_ONLINE)
 			if err != nil {
 				log.Fatal(errors.ErrorStack(err))
 			}
@@ -96,7 +98,7 @@ func InitEnv() {
 		}()
 
 		proxyMutex.Lock()
-		s = NewServer(":19000", ":11000",
+		s = NewServer(":19000", ":11000", proxyID,
 			conf,
 		)
 		proxyMutex.Unlock()
@@ -306,7 +308,7 @@ func TestMarkOffline(t *testing.T) {
 	}
 	proxyMutex.Unlock()
 
-	err := models.SetProxyStatus(conn, conf.productName, conf.proxyId, models.PROXY_STATE_MARK_OFFLINE)
+	err := models.SetProxyStatus(conn, conf.productName, proxyId, models.PROXY_STATE_MARK_OFFLINE)
 	if err != nil {
 		t.Fatal(errors.ErrorStack(err))
 	}

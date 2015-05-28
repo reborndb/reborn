@@ -6,6 +6,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 
 	log "github.com/ngaut/logging"
@@ -63,4 +64,22 @@ func (s1 Strings) Eq(s2 []string) bool {
 		}
 	}
 	return true
+}
+
+func CreatePidFile(name string) error {
+	if len(name) == 0 {
+		return nil
+	}
+
+	os.MkdirAll(path.Dir(name), 0700)
+	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err = f.WriteString(fmt.Sprintf("%d", os.Getpid())); err != nil {
+		return err
+	}
+	return nil
 }

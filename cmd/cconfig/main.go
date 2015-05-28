@@ -37,11 +37,12 @@ type Command struct {
 }
 
 var usage = `usage: reborn-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
-		<command> [<args>...]
+		[--http-addr=<debug_http_addr>] <command> [<args>...]
 options:
    -c	set config file
    -L	set output log file, default is stdout
    --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
+   --http-addr=<debug_http_addr>  debug http address
 
 commands:
 	server
@@ -133,8 +134,12 @@ func main() {
 	cmd := args["<command>"].(string)
 	cmdArgs := args["<args>"].([]string)
 
+	debugHTTP := ":10086"
+	if v := args["--http-addr"]; v != nil {
+		debugHTTP = v.(string)
+	}
 	//debug var address
-	go http.ListenAndServe("10086", nil)
+	go http.ListenAndServe(debugHTTP, nil)
 	err = runCommand(cmd, cmdArgs)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))

@@ -17,7 +17,7 @@ pkill -9 reborn-config 2>&1 >/dev/null
 pkill -9 reborn-server
 
 # start dashboard
-../bin/reborn-config -L dashboard.log dashboard --addr=:18087 2>&1 >/dev/null &
+../bin/reborn-config -L dashboard.log --pidfile=dashboard.pid dashboard --addr=:18087 2>&1 >/dev/null &
 echo "starting dashboard ..."
 sleep 3
 ../bin/reborn-config action remove-lock 2>&1

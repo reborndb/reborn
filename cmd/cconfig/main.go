@@ -25,6 +25,7 @@ import (
 var (
 	globalEnv  env.Env
 	livingNode string
+	pidFile    string
 )
 
 type Command struct {
@@ -37,12 +38,13 @@ type Command struct {
 }
 
 var usage = `usage: reborn-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
-		[--http-addr=<debug_http_addr>] <command> [<args>...]
+		[--http-addr=<debug_http_addr>] [--pidfile=<file>] <command> [<args>...]
 options:
    -c	set config file
    -L	set output log file, default is stdout
    --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
    --http-addr=<debug_http_addr>  debug http address
+   --pidfile=<file>  program pidfile
 
 commands:
 	server
@@ -89,17 +91,27 @@ func runCommand(cmd string, args []string) (err error) {
 func main() {
 	log.SetLevelByString("info")
 
+	args, err := docopt.Parse(usage, nil, true, "reborn config v0.1", true)
+	if err != nil {
+		log.Error(err)
+	}
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
 	go func() {
 		<-c
+
+		if len(pidFile) > 0 {
+			os.Remove(pidFile)
+		}
+
 		Fatal("ctrl-c or SIGTERM found, exit")
 	}()
 
-	args, err := docopt.Parse(usage, nil, true, "reborn config v0.1", true)
-	if err != nil {
-		log.Error(err)
+	if v := args["--pidfile"]; v != nil {
+		pidFile = v.(string)
+		utils.CreatePidFile(pidFile)
 	}
 
 	// set config file

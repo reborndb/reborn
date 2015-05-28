@@ -36,6 +36,7 @@ options:
    --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
    --id=<proxy_id>                proxy id, global unique, can not be empty 
    --http-addr=<debug_http_addr>  debug vars http server
+   --dump-path=<path>             dump path to log crash error
 `
 
 var banner string = `
@@ -103,6 +104,9 @@ func main() {
 	}
 
 	dumppath := utils.GetExecutorPath()
+	if args["--dump-path"] != nil {
+		dumppath = args["--dump-path"].(string)
+	}
 
 	log.Info("dump file path:", dumppath)
 	log.CrashLog(path.Join(dumppath, "reborn-proxy.dump"))

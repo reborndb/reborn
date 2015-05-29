@@ -71,8 +71,8 @@ func CreatePidFile(name string) error {
 		return nil
 	}
 
-	os.MkdirAll(path.Dir(name), 0700)
-	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0600)
+	os.MkdirAll(path.Dir(name), 0755)
+	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
 all: build
 	@tar -cf deploy.tar bin sample
 
-build: build-proxy build-config build-server
+build: build-proxy build-config build-server build-agent
 
 build-proxy:
 	go build -o bin/reborn-proxy ./cmd/proxy
@@ -14,6 +14,9 @@ build-server:
 	@mkdir -p bin
 	make -j4 -C extern/redis-2.8.13/
 	@cp -f extern/redis-2.8.13/src/redis-server bin/reborn-server
+
+build-agent:
+	go build -o bin/reborn-agent ./cmd/agent
 
 clean:
 	@rm -rf bin

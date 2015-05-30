@@ -42,10 +42,22 @@ func checkProcs() {
 	m.Unlock()
 
 	for _, p := range restartProcs {
-		if err := p.start(); err != nil {
-			log.Errorf("restart %s err %v", p.Cmd, err)
-		} else {
-			addCheckProc(p)
+		switch strings.ToLower(p.Type) {
+		case proxyType:
+			// for proxy type, we will use a new id to avoid zk node exists error
+			args := new(proxyArgs)
+			map2Args(args, p.Ctx)
+
+			// clear old log and data
+			p.clear()
+
+			startProxy(args)
+		default:
+			if err := p.start(); err != nil {
+				log.Errorf("restart %s err %v", p.Cmd, err)
+			} else {
+				addCheckProc(p)
+			}
 		}
 	}
 }

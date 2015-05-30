@@ -27,7 +27,7 @@ var (
 var usage = `usage: reborn-agent [options]
 
 options:
-    --addr=<listen_addr>           agent http listen address, example: 0.0.0.0:29000
+    --addr=<listen_addr>           agent http listen address, example: 0.0.0.0:39000
     --data-dir=<data_dir>          directory to store important data
     --log-dir=<app_log_dir>        directory to store log 
     -L <log_file>                  set output log file, default is stdout
@@ -62,16 +62,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if v := getStringArg(args, "-c"); len(v) > 0 {
-		configFile = v
+	setStringFromOpt(&configFile, args, "-c")
+	if configFile, err = filepath.Abs(configFile); err != nil {
+		log.Fatal(err)
 	}
 
-	if v := getStringArg(args, "--qdb-config"); len(v) > 0 {
-		qdbConfigFile = v
+	setStringFromOpt(&configFile, args, "--qdb-config")
+	if qdbConfigFile, err = filepath.Abs(configFile); err != nil {
+		log.Fatal(err)
 	}
 
-	if v := getStringArg(args, "--redis-config"); len(v) > 0 {
-		redisConfigFile = v
+	setStringFromOpt(&redisConfigFile, args, "--redis-config")
+	if redisConfigFile, err = filepath.Abs(redisConfigFile); err != nil {
+		log.Fatal(err)
 	}
 
 	if v := getStringArg(args, "--exec-path"); len(v) > 0 {

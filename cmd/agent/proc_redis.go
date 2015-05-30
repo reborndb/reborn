@@ -20,7 +20,9 @@ type redisArgs struct {
 
 // reborn-server [configfile] --port 6380 [other options]
 func startRedis(args *redisArgs) (*process, error) {
-	p := newDefaultProcess("reborn-server", "redis")
+	p := newDefaultProcess("reborn-server", redisType)
+
+	p.Daemonize = true
 
 	if len(redisConfigFile) > 0 {
 		p.addCmdArgs(redisConfigFile)

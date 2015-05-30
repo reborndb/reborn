@@ -162,14 +162,14 @@ func createDashboardNode() error {
 	// make sure we're the only one dashboard
 	if exists, _, _ := conn.Exists(coordPath); exists {
 		data, _, _ := conn.Get(coordPath)
-		return errors.New("dashboard already exists: " + string(data))
+		return errors.Errorf("dashboard already exists: %s", string(data))
 	}
 
 	content := fmt.Sprintf(`{"addr": "%v", "pid": %v}`, globalEnv.DashboardAddr(), os.Getpid())
 	pathCreated, err := conn.Create(coordPath, []byte(content),
 		zk.FlagEphemeral, zkhelper.DefaultFileACLs())
 
-	log.Info("dashboard node created:", pathCreated, string(content))
+	log.Infof("dashboard node %s created, data %s, err %v", pathCreated, string(content), err)
 
 	return errors.Trace(err)
 }
@@ -179,6 +179,7 @@ func releaseDashboardNode() {
 	defer conn.Close()
 
 	coordPath := fmt.Sprintf("/zk/reborn/db_%s/dashboard", globalEnv.ProductName())
+
 	if exists, _, _ := conn.Exists(coordPath); exists {
 		log.Info("removing dashboard node")
 		conn.Delete(coordPath, 0)
@@ -254,6 +255,7 @@ func runDashboard(addr string, httpLogFile string) {
 	m.Get("/api/remove_fence", apiRemoveFence)
 
 	m.Get("/slots", pageSlots)
+	m.Get("/ping", func() int { return 200 })
 	m.Get("/", func(r render.Render) {
 		r.Redirect("/admin")
 	})

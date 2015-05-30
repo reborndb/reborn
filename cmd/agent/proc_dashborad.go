@@ -13,7 +13,7 @@ import (
 )
 
 type dashboardArgs struct {
-	Addr string
+	Addr string `json:"addr"`
 }
 
 // reborn-config -c config.ini -L dashboard.log dashboard --addr=:18087 --http-log=requests.log --pidfile=file
@@ -24,7 +24,7 @@ func startDashboard(args *dashboardArgs) (*process, error) {
 		args.Addr = ":18087"
 	}
 
-	p.Ctx["addr"] = args.Addr
+	p.Ctx = args2Map(args)
 
 	p.addCmdArgs("-c", configFile)
 	p.addCmdArgs("-L", path.Join(p.baseLogDir(), "dashboard.log"))

@@ -47,7 +47,7 @@ type process struct {
 	Cmd  string   `json:"name"`
 	Args []string `json:"args"`
 
-	// for specail use
+	// for saving orgin start args
 	Ctx map[string]string `json:"ctx"`
 
 	postStartFunc func(p *process) error

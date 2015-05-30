@@ -13,7 +13,7 @@ import (
 )
 
 type redisArgs struct {
-	Port string
+	Port string `json:"port"`
 
 	// add customized args later
 }
@@ -31,7 +31,7 @@ func startRedis(args *redisArgs) (*process, error) {
 	if len(args.Port) == 0 {
 		return nil, fmt.Errorf("redis must have a specail port, not empty")
 	}
-	p.Ctx["port"] = args.Port
+	p.Ctx = args2Map(args)
 
 	p.addCmdArgs("--port", args.Port)
 	p.addCmdArgs("--daemonize", "yes")

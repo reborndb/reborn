@@ -12,9 +12,9 @@ import (
 )
 
 type proxyArgs struct {
-	Addr     string
-	HTTPAddr string
-	CPUNum   string
+	Addr     string `json:"addr"`
+	HTTPAddr string `json:"http_addr"`
+	CPUNum   string `json:"cpu_num"`
 }
 
 // reborn-proxy -c configfile -L logfile --cpu=2 --addr=addr --id=id --http-addr=addr --dump-path=path --pidfile=file
@@ -40,6 +40,8 @@ func startProxy(args *proxyArgs) (*process, error) {
 	p.addCmdArgs(fmt.Sprintf("--dump-path=%s", p.baseLogDir()))
 	p.addCmdArgs(fmt.Sprintf("--pidfile=%s", p.pidPath()))
 	p.addCmdArgs(fmt.Sprintf("--id=%s", p.ID))
+
+	p.Ctx = args2Map(args)
 
 	bindProxyProcHandler(p)
 

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 
+	"github.com/kardianos/osext"
 	log "github.com/ngaut/logging"
 
 	"github.com/ngaut/zkhelper"
@@ -43,8 +43,8 @@ func GetCoordLock(coordConn zkhelper.Conn, productName string) zkhelper.ZLocker 
 }
 
 func GetExecutorPath() string {
-	filedirectory := filepath.Dir(os.Args[0])
-	execPath, err := filepath.Abs(filedirectory)
+	// we cannot rely on os.Args[0], it may be faked sometimes
+	execPath, err := osext.ExecutableFolder()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/ngaut/go-zookeeper/zk"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 
 	"sync/atomic"
 
@@ -233,10 +234,8 @@ func runDashboard(addr string, httpLogFile string) {
 	defer f.Close()
 
 	m.Map(stdlog.New(f, "[martini]", stdlog.LstdFlags))
-	binRoot, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		Fatal(err)
-	}
+
+	binRoot := utils.GetExecutorPath()
 
 	m.Use(martini.Static(filepath.Join(binRoot, "assets/statics")))
 	m.Use(render.Renderer(render.Options{

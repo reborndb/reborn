@@ -52,8 +52,6 @@ func startQDB(args *qdbArgs) (*process, error) {
 
 	bindRedisProcHandler(p)
 
-	log.Infof("%s %v", p.Cmd, p.Args)
-
 	if err := p.start(); err != nil {
 		log.Errorf("start redis err %v", err)
 		return nil, err

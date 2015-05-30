@@ -16,6 +16,9 @@ func main() {
 	cmd := os.Args[1]
 	args := os.Args[2:]
 	c := exec.Command(cmd, args...)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+
 	c.Start()
 	os.Exit(0)
 }

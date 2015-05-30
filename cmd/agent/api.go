@@ -18,6 +18,7 @@ func runHTTPServer() {
 
 	m.HandleFunc("/api/start", apiStartProc).Methods("POST", "PUT")
 	m.HandleFunc("/api/start_redis", apiStartRedisProc).Methods("POST", "PUT")
+	m.HandleFunc("/api/start_qdb", apiStartQDBProc).Methods("POST", "PUT")
 	m.HandleFunc("/api/start_proxy", apiStartProxyProc).Methods("POST", "PUT")
 	m.HandleFunc("/api/start_dashboard", apiStartDashboardProc).Methods("POST", "PUT")
 	m.HandleFunc("/api/stop", apiStopProc).Methods("DELETE", "POST", "PUT")
@@ -47,8 +48,7 @@ func apiStartProc(w http.ResponseWriter, r *http.Request) {
 	tp := strings.ToLower(r.FormValue("type"))
 	switch tp {
 	case qdbType:
-		w.WriteHeader(http.StatusNotImplemented)
-		return
+		apiStartQDBProc(w, r)
 	case dashboardType:
 		apiStartDashboardProc(w, r)
 	case proxyType:
@@ -97,6 +97,35 @@ func apiStartRedisProc(w http.ResponseWriter, r *http.Request) {
 	respJson(w, p)
 }
 
+// /start_qdb?addr=addr&dbtype=rocksdb&cpu_num=2
+func apiStartQDBProc(w http.ResponseWriter, r *http.Request) {
+	addr := r.FormValue("addr")
+	dbType := r.FormValue("dbtype")
+	cpuNum := r.FormValue("cpu_num")
+
+	if len(addr) == 0 {
+		respError(w, http.StatusBadRequest, "must have an address for qdb, not empty")
+		return
+	}
+
+	if len(dbType) == 0 {
+		dbType = "rocksdb"
+	}
+
+	args := new(qdbArgs)
+	args.Addr = addr
+	args.DBType = dbType
+	args.CPUNum = cpuNum
+
+	p, err := startQDB(args)
+	if err != nil {
+		respError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respJson(w, p)
+}
+
 // /start_proxy?addr=addr&http_addr=addr&cpu_num=2
 func apiStartProxyProc(w http.ResponseWriter, r *http.Request) {
 	addr := r.FormValue("addr")
@@ -105,10 +134,12 @@ func apiStartProxyProc(w http.ResponseWriter, r *http.Request) {
 
 	if len(addr) == 0 {
 		respError(w, http.StatusBadRequest, "must have an address for proxy, not empty")
+		return
 	}
 
 	if len(httpAddr) == 0 {
 		respError(w, http.StatusBadRequest, "must have a http address for proxy, not empty")
+		return
 	}
 
 	args := new(proxyArgs)

@@ -24,7 +24,7 @@ func startDashboard(args *dashboardArgs) (*process, error) {
 		args.Addr = ":18087"
 	}
 
-	p.Ctx = args2Map(args)
+	p.Ctx["addr"] = args.Addr
 
 	p.addCmdArgs("-c", configFile)
 	p.addCmdArgs("-L", path.Join(p.baseLogDir(), "dashboard.log"))
@@ -33,7 +33,7 @@ func startDashboard(args *dashboardArgs) (*process, error) {
 	p.addCmdArgs("dashboard")
 	// below is for dashboard options
 
-	p.addCmdArgs(fmt.Sprintf("--http-log=%s", path.Join(p.baseLogDir(), "dashboard.log")))
+	p.addCmdArgs(fmt.Sprintf("--http-log=%s", path.Join(p.baseLogDir(), "request.log")))
 	p.addCmdArgs(fmt.Sprintf("--addr=%s", args.Addr))
 
 	bindDashboardProcHandler(p)

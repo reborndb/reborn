@@ -31,7 +31,7 @@ func startRedis(args *redisArgs) (*process, error) {
 	if len(args.Port) == 0 {
 		return nil, fmt.Errorf("redis must have a specail port, not empty")
 	}
-	p.Ctx = args2Map(args)
+	p.Ctx["addr"] = fmt.Sprintf(":%s", args.Port)
 
 	p.addCmdArgs("--port", args.Port)
 	p.addCmdArgs("--daemonize", "yes")
@@ -55,7 +55,7 @@ func startRedis(args *redisArgs) (*process, error) {
 
 func bindRedisProcHandler(p *process) {
 	postStart := func(p *process) error {
-		c, err := redis.DialTimeout("tcp", fmt.Sprintf(":%s", p.Ctx["port"]), 3*time.Second, 3*time.Second, 3*time.Second)
+		c, err := redis.DialTimeout("tcp", p.Ctx["addr"], 3*time.Second, 3*time.Second, 3*time.Second)
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func bindRedisProcHandler(p *process) {
 	}
 
 	stop := func(p *process) error {
-		c, err := redis.Dial("tcp", fmt.Sprintf(":%s", p.Ctx["port"]))
+		c, err := redis.Dial("tcp", p.Ctx["addr"])
 		if err != nil {
 			return err
 		}

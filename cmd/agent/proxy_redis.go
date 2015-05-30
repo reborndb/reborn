@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -32,11 +33,11 @@ func startRedis(args *redisArgs) (*process, error) {
 
 	p.addCmdArgs("--port", args.Port)
 	p.addCmdArgs("--daemonize", "yes")
-	p.addCmdArgs("--logfile", p.logPath())
-	p.addCmdArgs("--dir", dataDir)
+	p.addCmdArgs("--logfile", path.Join(p.baseLogDir(), "redis.log"))
+	p.addCmdArgs("--dir", p.baseDataDir())
 	p.addCmdArgs("--pidfile", p.pidPath())
-	p.addCmdArgs("--dbfilename", p.baseName()+".rdb")
-	p.addCmdArgs("--appendfilename", p.baseName()+".aof")
+	p.addCmdArgs("--dbfilename", "dump.rdb")
+	p.addCmdArgs("--appendfilename", "appendonly.aof")
 
 	bindRedisProcHandler(p)
 

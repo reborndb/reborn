@@ -113,6 +113,9 @@ func (p *process) addCmdArgs(args ...string) {
 }
 
 func (p *process) start() error {
+	os.MkdirAll(p.baseLogDir(), 0755)
+	os.MkdirAll(p.baseDataDir(), 0755)
+
 	c := exec.Command(p.Cmd, p.Args...)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
@@ -121,16 +124,22 @@ func (p *process) start() error {
 		return errors.Trace(err)
 	}
 
+	ch := make(chan error, 1)
 	go func() {
 		// use another goroutine to wait process over
 		// we don't handle anything here, because we will
 		// check process alive in a checker totally.
-		c.Wait()
+		err := c.Wait()
+		ch <- err
 	}()
 
 	// wait some time
 	log.Infof("wait 3 seonds for %s starts ok", p.Type)
-	time.Sleep(3 * time.Second)
+	select {
+	case err := <-ch:
+		return errors.Errorf("start %s but proc exited unexpectedly, err: %v", p.Cmd, err)
+	case <-time.After(3 * time.Second):
+	}
 
 	// we must read pid from pid file
 	var err error
@@ -166,19 +175,19 @@ func (p *process) save() error {
 }
 
 func (p *process) pidPath() string {
-	return path.Join(dataDir, fmt.Sprintf("%s_%s.pid", p.Type, p.ID))
+	return path.Join(p.baseDataDir(), fmt.Sprintf("%s.pid", p.Type))
 }
 
 func (p *process) dataPath() string {
-	return path.Join(dataDir, fmt.Sprintf("%s_%s.dat", p.Type, p.ID))
+	return path.Join(p.baseDataDir(), fmt.Sprintf("%s.dat", p.Type))
 }
 
-func (p *process) logPath() string {
-	return path.Join(logDir, fmt.Sprintf("%s_%s.log", p.Type, p.ID))
+func (p *process) baseDataDir() string {
+	return path.Join(dataDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
 }
 
-func (p *process) baseName() string {
-	return fmt.Sprintf("%s_%s", p.Type, p.ID)
+func (p *process) baseLogDir() string {
+	return path.Join(logDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
 }
 
 func (p *process) checkAlive() (bool, error) {

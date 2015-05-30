@@ -5,7 +5,9 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
+	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -65,17 +67,38 @@ func removeCheckProc(p *process) {
 }
 
 func loadSavedProcs() error {
-	files, err := filepath.Glob(fmt.Sprintf("%s/*.dat", dataDir))
+	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	for _, f := range files {
-		if p, err := loadProcess(f); err != nil {
-			log.Errorf("load process data %s err %v, skip", f, err)
-		} else if p == nil {
+		if !f.IsDir() {
+			continue
+		}
+
+		baseName := path.Base(f.Name())
+		var tp string
+		var id string
+		if seps := strings.Split(baseName, "_"); len(seps) != 2 {
 			continue
 		} else {
+			tp, id = seps[0], seps[1]
+		}
+
+		datFile := path.Join(dataDir, baseName, fmt.Sprintf("%s.dat", tp))
+
+		if p, err := loadProcess(datFile); err != nil {
+			log.Warningf("load process data %s err %v, skip", dataDir, err)
+			continue
+		} else if p == nil {
+			log.Infof("proc %s has no need to be reload, skip", id)
+			continue
+		} else {
+			if id != p.ID {
+				log.Warningf("we need proc %s, but got %s", id, p.ID)
+				continue
+			}
 			// todo bind after start func for different type
 			if err := bindProcHandler(p); err != nil {
 				log.Errorf("bind proc %s err %v, skip", p.Cmd, err)
@@ -86,8 +109,37 @@ func loadSavedProcs() error {
 	}
 
 	//todo remove unnecessary old logs
+	clearOldProcsFiles(dataDir)
+	clearOldProcsFiles(logDir)
 
 	return nil
+}
+
+func clearOldProcsFiles(baseDir string) {
+	files, err := ioutil.ReadDir(baseDir)
+	if err != nil {
+		log.Errorf("read %s err %v", logDir, err)
+		return
+	}
+
+	for _, f := range files {
+		if !f.IsDir() {
+			continue
+		}
+
+		baseName := path.Base(f.Name())
+		var id string
+		if seps := strings.Split(baseName, "_"); len(seps) != 2 {
+			continue
+		} else {
+			id = seps[1]
+		}
+
+		if _, ok := procs[id]; !ok {
+			// we need remove unnecessary files
+			os.RemoveAll(path.Join(baseDir, baseName))
+		}
+	}
 }
 
 func runCheckProcs() {

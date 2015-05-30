@@ -19,11 +19,13 @@ import (
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
+	"github.com/ngaut/zkhelper"
 )
 
 // global objects
 var (
 	globalEnv  env.Env
+	globalConn zkhelper.Conn
 	livingNode string
 	pidFile    string
 )
@@ -55,12 +57,15 @@ commands:
 `
 
 func Fatal(msg interface{}) {
-	// cleanup
-	releaseDashboardNode()
-	if globalMigrateManager != nil {
-		globalMigrateManager.removeNode()
+	if globalConn != nil {
+		globalConn.Close()
 	}
 
+	if len(pidFile) > 0 {
+		os.Remove(pidFile)
+	}
+
+	// cleanup
 	switch msg.(type) {
 	case string:
 		log.Fatal(msg)
@@ -96,21 +101,8 @@ func main() {
 		log.Error(err)
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGTERM, os.Interrupt, os.Kill)
-	go func() {
-		<-c
-
-		if len(pidFile) > 0 {
-			os.Remove(pidFile)
-		}
-
-		Fatal("ctrl-c or SIGTERM found, exit")
-	}()
-
 	if v := args["--pidfile"]; v != nil {
 		pidFile = v.(string)
-		utils.CreatePidFile(pidFile)
 	}
 
 	// set config file
@@ -131,6 +123,7 @@ func main() {
 
 	// load global vars
 	globalEnv = env.LoadRebornEnv(config)
+	globalConn = CreateCoordConn()
 
 	// set output log file
 	if args["-L"] != nil {
@@ -151,6 +144,17 @@ func main() {
 	}
 	//debug var address
 	go http.ListenAndServe(debugHTTP, nil)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, os.Interrupt, os.Kill)
+	go func() {
+		<-c
+
+		Fatal("ctrl-c or SIGTERM found, exit")
+	}()
+
+	utils.CreatePidFile(pidFile)
+
 	err = runCommand(cmd, cmdArgs)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))

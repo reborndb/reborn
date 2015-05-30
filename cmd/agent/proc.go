@@ -124,26 +124,27 @@ func (p *process) start() error {
 		return errors.Trace(err)
 	}
 
-	ch := make(chan error, 1)
 	go func() {
 		// use another goroutine to wait process over
 		// we don't handle anything here, because we will
 		// check process alive in a checker totally.
-		err := c.Wait()
-		ch <- err
+		c.Wait()
 	}()
 
-	// wait some time
-	log.Infof("wait 3 seonds for %s starts ok", p.Type)
-	select {
-	case err := <-ch:
-		return errors.Errorf("start %s but proc exited unexpectedly, err: %v", p.Cmd, err)
-	case <-time.After(3 * time.Second):
+	var err error
+	for i := 0; i < 5; i++ {
+		// we must read pid from pid file
+		time.Sleep(1 * time.Second)
+
+		if p.Pid, err = p.readPid(); err != nil {
+			log.Errorf("read pid failed, err %v, wait 1s and retry", err)
+			err = errors.Trace(err)
+		} else {
+			break
+		}
 	}
 
-	// we must read pid from pid file
-	var err error
-	if p.Pid, err = p.readPid(); err != nil {
+	if err != nil {
 		return errors.Trace(err)
 	}
 
@@ -221,8 +222,8 @@ func (p *process) needRestart() bool {
 }
 
 func (p *process) clear() {
-	os.Remove(p.pidPath())
-	os.Remove(p.dataPath())
+	os.RemoveAll(p.baseDataDir())
+	os.RemoveAll(p.baseLogDir())
 }
 
 func (p *process) stop() error {

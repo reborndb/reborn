@@ -5,8 +5,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"path"
 
 	"github.com/reborndb/go/log"
@@ -49,19 +47,6 @@ func startDashboard(args *dashboardArgs) (*process, error) {
 }
 
 func bindDashboardProcHandler(p *process) error {
-	postStart := func(p *process) error {
-		resp, err := http.Get(fmt.Sprintf("http://%s/ping", p.Ctx["addr"]))
-		if err != nil {
-			return err
-		}
-
-		defer resp.Body.Close()
-		_, err = ioutil.ReadAll(resp.Body)
-
-		return err
-	}
-
-	p.postStartFunc = postStart
 
 	return nil
 }

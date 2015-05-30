@@ -6,6 +6,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -150,19 +152,33 @@ func pageSlots(r render.Render) {
 	r.HTML(200, "slots", nil)
 }
 
-func createDashboardNode() error {
-	conn := CreateCoordConn()
-	defer conn.Close()
-
+func createDashboardNode(conn zkhelper.Conn) error {
 	// make sure root dir is exists
 	rootDir := fmt.Sprintf("/zk/reborn/db_%s", globalEnv.ProductName())
 	zkhelper.CreateRecursive(conn, rootDir, "", 0, zkhelper.DefaultDirACLs())
 
 	coordPath := fmt.Sprintf("%s/dashboard", rootDir)
 	// make sure we're the only one dashboard
-	if exists, _, _ := conn.Exists(coordPath); exists {
-		data, _, _ := conn.Get(coordPath)
-		return errors.Errorf("dashboard already exists: %s", string(data))
+	timeoutCh := time.After(60 * time.Second)
+
+	for {
+		if exists, _, ch, _ := conn.ExistsW(coordPath); exists {
+			data, _, _ := conn.Get(coordPath)
+
+			if checkDashboardAlive(data) {
+				return errors.Errorf("dashboard already exists: %s", string(data))
+			} else {
+				log.Warningf("dashboard %s exists in zk, wait it removed", data)
+
+				select {
+				case <-ch:
+				case <-timeoutCh:
+					return errors.Errorf("wait existed dashboard %s removed timeout", string(data))
+				}
+			}
+		} else {
+			break
+		}
 	}
 
 	content := fmt.Sprintf(`{"addr": "%v", "pid": %v}`, globalEnv.DashboardAddr(), os.Getpid())
@@ -174,10 +190,31 @@ func createDashboardNode() error {
 	return errors.Trace(err)
 }
 
-func releaseDashboardNode() {
-	conn := CreateCoordConn()
-	defer conn.Close()
+func checkDashboardAlive(data []byte) bool {
+	var v struct {
+		Addr string `json:"addr"`
+		Pid  int    `json:"pid"`
+	}
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		log.Errorf("invalid dashboard data %s, json unmarshal err: %v, force remove", data, err)
+		return false
+	}
 
+	resp, err := http.Get(fmt.Sprintf("http://%s/ping", v.Addr))
+	if err != nil {
+		log.Errorf("ping dashboard %s failed, err %v", v.Addr, err)
+		return false
+	}
+
+	// we ping dashboard ok, it may be alive
+	ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	return true
+}
+
+func releaseDashboardNode(conn zkhelper.Conn) {
 	coordPath := fmt.Sprintf("/zk/reborn/db_%s/dashboard", globalEnv.ProductName())
 
 	if exists, _, _ := conn.Exists(coordPath); exists {
@@ -261,16 +298,14 @@ func runDashboard(addr string, httpLogFile string) {
 	})
 
 	// create temp node in coordinator
-	if err := createDashboardNode(); err != nil {
+	if err := createDashboardNode(globalConn); err != nil {
 		Fatal(err)
 	}
-	defer releaseDashboardNode()
+	defer releaseDashboardNode(globalConn)
 
 	// create long live migrate manager
-	conn := CreateCoordConn()
-	defer conn.Close()
-	globalMigrateManager = NewMigrateManager(conn, globalEnv.ProductName(), preMigrateCheck)
-	defer globalMigrateManager.removeNode()
+	globalMigrateManager = NewMigrateManager(globalConn, globalEnv.ProductName(), preMigrateCheck)
+	// defer globalMigrateManager.removeNode()
 
 	go func() {
 		c := getProxySpeedChan()

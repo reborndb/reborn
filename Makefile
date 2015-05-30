@@ -1,7 +1,7 @@
 all: build
 	@tar -cf deploy.tar bin sample
 
-build: build-proxy build-config build-server build-agent
+build: build-proxy build-config build-server build-agent build-daemon
 
 build-proxy:
 	go build -o bin/reborn-proxy ./cmd/proxy
@@ -17,6 +17,9 @@ build-server:
 
 build-agent:
 	go build -o bin/reborn-agent ./cmd/agent
+
+build-daemon:
+	go build -o bin/reborn-daemon ./cmd/daemon
 
 clean:
 	@rm -rf bin

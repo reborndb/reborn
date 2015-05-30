@@ -54,6 +54,10 @@ type process struct {
 
 	// if not nil, we will use this func to stop process
 	stopFunc func(p *process) error
+
+	// some procs like redis support daemonize directly,
+	// so we don't use reborn-daemon to start these procs
+	Daemonize bool `json:"daemonize"`
 }
 
 func newDefaultProcess(cmd string, tp string) *process {
@@ -64,6 +68,7 @@ func newDefaultProcess(cmd string, tp string) *process {
 	p.Cmd = cmd
 	p.Type = tp
 	p.Ctx = make(map[string]string)
+	p.Daemonize = false
 
 	return p
 }
@@ -116,7 +121,14 @@ func (p *process) start() error {
 	os.MkdirAll(p.baseLogDir(), 0755)
 	os.MkdirAll(p.baseDataDir(), 0755)
 
-	c := exec.Command(p.Cmd, p.Args...)
+	var c *exec.Cmd
+	if p.Daemonize {
+		c = exec.Command(p.Cmd, p.Args...)
+	} else {
+		args := append([]string{p.Cmd}, p.Args...)
+		c = exec.Command("reborn-daemon", args...)
+	}
+
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 
@@ -131,14 +143,16 @@ func (p *process) start() error {
 		c.Wait()
 	}()
 
+	log.Infof("wait 3s to let %s start ok", p.Type)
+	time.Sleep(3 * time.Second)
+
 	var err error
 	for i := 0; i < 5; i++ {
 		// we must read pid from pid file
-		time.Sleep(1 * time.Second)
-
 		if p.Pid, err = p.readPid(); err != nil {
 			log.Errorf("read pid failed, err %v, wait 1s and retry", err)
 			err = errors.Trace(err)
+			time.Sleep(1 * time.Second)
 		} else {
 			break
 		}
@@ -161,6 +175,7 @@ func (p *process) start() error {
 		}
 	}
 
+	log.Infof("%s start ok now", p.Type)
 	return errors.Trace(p.save())
 }
 

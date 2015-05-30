@@ -20,8 +20,8 @@ var (
 	dataDir         = "./var/data"
 	logDir          = "./var/log"
 	configFile      = "config.ini"
-	qdbConfigFile   = "qdb.toml"
-	redisConfigFile = "redis.conf"
+	qdbConfigFile   = "" // like "qdb.toml"
+	redisConfigFile = "" // like "redis.conf"
 )
 
 var usage = `usage: reborn-agent [options]

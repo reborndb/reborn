@@ -54,6 +54,18 @@ func setStringFromOpt(dest *string, args map[string]interface{}, key string) {
 	}
 }
 
+func resetAbsPath(dest *string) {
+	if len(*dest) == 0 {
+		return
+	}
+
+	var err error
+	*dest, err = filepath.Abs(*dest)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	log.SetLevelByString("info")
 
@@ -63,19 +75,13 @@ func main() {
 	}
 
 	setStringFromOpt(&configFile, args, "-c")
-	if configFile, err = filepath.Abs(configFile); err != nil {
-		log.Fatal(err)
-	}
+	resetAbsPath(&configFile)
 
-	setStringFromOpt(&configFile, args, "--qdb-config")
-	if qdbConfigFile, err = filepath.Abs(configFile); err != nil {
-		log.Fatal(err)
-	}
+	setStringFromOpt(&qdbConfigFile, args, "--qdb-config")
+	resetAbsPath(&qdbConfigFile)
 
 	setStringFromOpt(&redisConfigFile, args, "--redis-config")
-	if redisConfigFile, err = filepath.Abs(redisConfigFile); err != nil {
-		log.Fatal(err)
-	}
+	resetAbsPath(&redisConfigFile)
 
 	if v := getStringArg(args, "--exec-path"); len(v) > 0 {
 		path := os.ExpandEnv(fmt.Sprintf("${PATH}:%s", v))
@@ -105,19 +111,13 @@ func main() {
 
 	// set data dir
 	setStringFromOpt(&dataDir, args, "--data-dir")
-	dataDir, err = filepath.Abs(dataDir)
-	if err != nil {
-		log.Fatal(err)
-	}
+	resetAbsPath(&dataDir)
 
 	os.MkdirAll(dataDir, 0755)
 
 	// set app log dir
 	setStringFromOpt(&logDir, args, "--log-dir")
-	logDir, err = filepath.Abs(logDir)
-	if err != nil {
-		log.Fatal(err)
-	}
+	resetAbsPath(&logDir)
 
 	os.MkdirAll(logDir, 0755)
 

@@ -6,8 +6,9 @@ package utils
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 
+	"github.com/kardianos/osext"
 	log "github.com/ngaut/logging"
 
 	"github.com/ngaut/zkhelper"
@@ -42,8 +43,8 @@ func GetCoordLock(coordConn zkhelper.Conn, productName string) zkhelper.ZLocker 
 }
 
 func GetExecutorPath() string {
-	filedirectory := filepath.Dir(os.Args[0])
-	execPath, err := filepath.Abs(filedirectory)
+	// we cannot rely on os.Args[0], it may be faked sometimes
+	execPath, err := osext.ExecutableFolder()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -63,4 +64,22 @@ func (s1 Strings) Eq(s2 []string) bool {
 		}
 	}
 	return true
+}
+
+func CreatePidFile(name string) error {
+	if len(name) == 0 {
+		return nil
+	}
+
+	os.MkdirAll(path.Dir(name), 0755)
+	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err = f.WriteString(fmt.Sprintf("%d", os.Getpid())); err != nil {
+		return err
+	}
+	return nil
 }

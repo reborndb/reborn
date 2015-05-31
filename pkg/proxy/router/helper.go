@@ -13,12 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
-	"github.com/reborndb/reborn/pkg/proxy/router/topology"
 
 	log "github.com/ngaut/logging"
 
@@ -266,40 +263,6 @@ type killEvent struct {
 	done chan error
 }
 
-type Conf struct {
-	productName     string
-	f               topology.CoordFactory
-	netTimeout      int    //seconds
-	proto           string //tcp or tcp4
-	coordinatorAddr string
-	coordinator     string
-}
-
-func LoadConf(configFile string) (*Conf, error) {
-	srvConf := &Conf{}
-	conf, err := utils.InitConfigFromFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	srvConf.productName, _ = conf.ReadString("product", "test")
-	if len(srvConf.productName) == 0 {
-		log.Fatalf("invalid config: product entry is missing in %s", configFile)
-	}
-	srvConf.coordinatorAddr, _ = conf.ReadString("coordinator_addr", "")
-	if len(srvConf.coordinatorAddr) == 0 {
-		log.Fatalf("invalid config: need coordinator addr entry is missing in %s", configFile)
-	}
-	srvConf.coordinatorAddr = strings.TrimSpace(srvConf.coordinatorAddr)
-
-	srvConf.netTimeout, _ = conf.ReadInt("net_timeout", 5)
-	srvConf.proto, _ = conf.ReadString("proto", "tcp")
-	srvConf.coordinator, _ = conf.ReadString("coordinator", "zookeeper")
-	log.Infof("%+v", srvConf)
-
-	return srvConf, nil
-}
-
 type Slot struct {
 	slotInfo    *models.Slot
 	groupInfo   *models.ServerGroup
@@ -307,7 +270,7 @@ type Slot struct {
 	migrateFrom *group.Group
 }
 
-type OnSuicideFun func() error
+type onSuicideFun func() error
 
 func needResponse(receivers []string, self models.ProxyInfo) bool {
 	var pi models.ProxyInfo

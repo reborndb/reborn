@@ -19,12 +19,15 @@ import (
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
+	"github.com/ngaut/zkhelper"
 )
 
 // global objects
 var (
 	globalEnv  env.Env
+	globalConn zkhelper.Conn
 	livingNode string
+	pidFile    string
 )
 
 type Command struct {
@@ -37,11 +40,13 @@ type Command struct {
 }
 
 var usage = `usage: reborn-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
-		<command> [<args>...]
+		[--http-addr=<debug_http_addr>] [--pidfile=<file>] <command> [<args>...]
 options:
    -c	set config file
    -L	set output log file, default is stdout
    --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
+   --http-addr=<debug_http_addr>  debug http address
+   --pidfile=<file>  program pidfile
 
 commands:
 	server
@@ -52,12 +57,15 @@ commands:
 `
 
 func Fatal(msg interface{}) {
-	// cleanup
-	releaseDashboardNode()
-	if globalMigrateManager != nil {
-		globalMigrateManager.removeNode()
+	if globalConn != nil {
+		globalConn.Close()
 	}
 
+	if len(pidFile) > 0 {
+		os.Remove(pidFile)
+	}
+
+	// cleanup
 	switch msg.(type) {
 	case string:
 		log.Fatal(msg)
@@ -88,17 +96,13 @@ func runCommand(cmd string, args []string) (err error) {
 func main() {
 	log.SetLevelByString("info")
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-	go func() {
-		<-c
-		Fatal("ctrl-c or SIGTERM found, exit")
-	}()
-
 	args, err := docopt.Parse(usage, nil, true, "reborn config v0.1", true)
 	if err != nil {
 		log.Error(err)
+	}
+
+	if v := args["--pidfile"]; v != nil {
+		pidFile = v.(string)
 	}
 
 	// set config file
@@ -119,6 +123,7 @@ func main() {
 
 	// load global vars
 	globalEnv = env.LoadRebornEnv(config)
+	globalConn = CreateCoordConn()
 
 	// set output log file
 	if args["-L"] != nil {
@@ -133,8 +138,23 @@ func main() {
 	cmd := args["<command>"].(string)
 	cmdArgs := args["<args>"].([]string)
 
+	debugHTTP := ":10086"
+	if v := args["--http-addr"]; v != nil {
+		debugHTTP = v.(string)
+	}
 	//debug var address
-	go http.ListenAndServe("10086", nil)
+	go http.ListenAndServe(debugHTTP, nil)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, os.Interrupt, os.Kill)
+	go func() {
+		<-c
+
+		Fatal("ctrl-c or SIGTERM found, exit")
+	}()
+
+	utils.CreatePidFile(pidFile)
+
 	err = runCommand(cmd, cmdArgs)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))

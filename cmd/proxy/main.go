@@ -24,6 +24,7 @@ var (
 	httpAddr   = ":9001"
 	proxyID    = ""
 	configFile = "config.ini"
+	pidfile    = ""
 )
 
 var usage = `usage: proxy [options]
@@ -36,6 +37,8 @@ options:
    --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
    --id=<proxy_id>                proxy id, global unique, can not be empty 
    --http-addr=<debug_http_addr>  debug vars http server
+   --dump-path=<path>             dump path to log crash error
+   --pidfile=<path>               proxy pid file
 `
 
 var banner string = `
@@ -103,6 +106,13 @@ func main() {
 	}
 
 	dumppath := utils.GetExecutorPath()
+	if args["--dump-path"] != nil {
+		dumppath = args["--dump-path"].(string)
+	}
+
+	if args["--pidfile"] != nil {
+		pidfile = args["--pidfile"].(string)
+	}
 
 	log.Info("dump file path:", dumppath)
 	log.CrashLog(path.Join(dumppath, "reborn-proxy.dump"))
@@ -117,7 +127,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := router.NewServer(addr, httpAddr, proxyID, conf)
+
+	conf.Addr = addr
+	conf.HTTPAddr = httpAddr
+	conf.ProxyID = proxyID
+	conf.PidFile = pidfile
+
+	if err := utils.CreatePidFile(conf.PidFile); err != nil {
+		log.Fatal(err)
+	}
+
+	s := router.NewServer(conf)
 	s.Run()
 	log.Warning("exit")
 }

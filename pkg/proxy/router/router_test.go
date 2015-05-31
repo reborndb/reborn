@@ -10,13 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"strconv"
+
 	"github.com/alicebob/miniredis"
 	"github.com/garyburd/redigo/redis"
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/models"
-	"strconv"
 )
 
 var (
@@ -28,39 +29,39 @@ var (
 	redis1     *miniredis.Miniredis
 	redis2     *miniredis.Miniredis
 	proxyMutex sync.Mutex
-	proxyID    string
 )
 
 func InitEnv() {
 	go once.Do(func() {
-		proxyID = "proxy_test"
-
 		conn = zkhelper.NewConn()
 		conf = &Conf{
-			productName:     "test",
-			coordinatorAddr: "localhost:2181",
-			netTimeout:      5,
+			ProductName:     "test",
+			CoordinatorAddr: "localhost:2181",
+			NetTimeout:      5,
 			f:               func(string) (zkhelper.Conn, error) { return conn, nil },
-			proto:           "tcp4",
+			Proto:           "tcp4",
+			ProxyID:         "proxy_test",
+			Addr:            ":19000",
+			HTTPAddr:        ":11000",
 		}
 
 		//init action path
-		prefix := models.GetWatchActionPath(conf.productName)
+		prefix := models.GetWatchActionPath(conf.ProductName)
 		err := models.CreateActionRootPath(conn, prefix)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		//init slot
-		err = models.InitSlotSet(conn, conf.productName, 1024)
+		err = models.InitSlotSet(conn, conf.ProductName, 1024)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		//init  server group
-		g1 := models.NewServerGroup(conf.productName, 1)
+		g1 := models.NewServerGroup(conf.ProductName, 1)
 		g1.Create(conn)
-		g2 := models.NewServerGroup(conf.productName, 2)
+		g2 := models.NewServerGroup(conf.ProductName, 2)
 		g2.Create(conn)
 
 		redis1, _ = miniredis.Run()
@@ -73,19 +74,19 @@ func InitEnv() {
 		g2.AddServer(conn, s2)
 
 		//set slot range
-		err = models.SetSlotRange(conn, conf.productName, 0, 511, 1, models.SLOT_STATUS_ONLINE)
+		err = models.SetSlotRange(conn, conf.ProductName, 0, 511, 1, models.SLOT_STATUS_ONLINE)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		err = models.SetSlotRange(conn, conf.productName, 512, 1023, 2, models.SLOT_STATUS_ONLINE)
+		err = models.SetSlotRange(conn, conf.ProductName, 512, 1023, 2, models.SLOT_STATUS_ONLINE)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		go func() { //set proxy online
 			time.Sleep(3 * time.Second)
-			err := models.SetProxyStatus(conn, conf.productName, proxyID, models.PROXY_STATE_ONLINE)
+			err := models.SetProxyStatus(conn, conf.ProductName, conf.ProxyID, models.PROXY_STATE_ONLINE)
 			if err != nil {
 				log.Fatal(errors.ErrorStack(err))
 			}
@@ -99,9 +100,7 @@ func InitEnv() {
 		}()
 
 		proxyMutex.Lock()
-		s = NewServer(":19000", ":11000", proxyID,
-			conf,
-		)
+		s = NewServer(conf)
 		proxyMutex.Unlock()
 		s.Run()
 	})
@@ -345,13 +344,13 @@ func TestMarkOffline(t *testing.T) {
 
 	suicide := int64(0)
 	proxyMutex.Lock()
-	s.OnSuicide = func() error {
+	s.onSuicide = func() error {
 		atomic.StoreInt64(&suicide, 1)
 		return nil
 	}
 	proxyMutex.Unlock()
 
-	err := models.SetProxyStatus(conn, conf.productName, proxyID, models.PROXY_STATE_MARK_OFFLINE)
+	err := models.SetProxyStatus(conn, conf.ProductName, conf.ProxyID, models.PROXY_STATE_MARK_OFFLINE)
 	if err != nil {
 		t.Fatal(errors.ErrorStack(err))
 	}

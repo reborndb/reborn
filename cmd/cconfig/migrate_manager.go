@@ -2,12 +2,10 @@ package main
 
 import (
 	"container/list"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/juju/errors"
-	"github.com/ngaut/go-zookeeper/zk"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/models"
@@ -43,23 +41,23 @@ type MigrateManager struct {
 	lck         sync.RWMutex
 }
 
-func getManagerPath(productName string) string {
-	return fmt.Sprintf("/zk/reborn/db_%s/migrate_manager", productName)
-}
+// func getManagerPath(productName string) string {
+// 	return fmt.Sprintf("/zk/reborn/db_%s/migrate_manager", productName)
+// }
 
-func (m *MigrateManager) createNode() error {
-	zkhelper.CreateRecursive(m.coordConn, fmt.Sprintf("/zk/reborn/db_%s/migrate_tasks", m.productName), "", 0, zkhelper.DefaultDirACLs())
-	_, err := m.coordConn.Create(getManagerPath(m.productName),
-		[]byte(""), zk.FlagEphemeral, zkhelper.DefaultFileACLs())
-	if err != nil {
-		log.Error("dashboard already exists! err: ", err)
-	}
-	return nil
-}
+// func (m *MigrateManager) createNode() error {
+// 	zkhelper.CreateRecursive(m.coordConn, fmt.Sprintf("/zk/reborn/db_%s/migrate_tasks", m.productName), "", 0, zkhelper.DefaultDirACLs())
+// 	_, err := m.coordConn.Create(getManagerPath(m.productName),
+// 		[]byte(""), zk.FlagEphemeral, zkhelper.DefaultFileACLs())
+// 	if err != nil {
+// 		log.Error("dashboard already exists! err: ", err)
+// 	}
+// 	return nil
+// }
 
-func (m *MigrateManager) removeNode() error {
-	return zkhelper.DeleteRecursive(m.coordConn, getManagerPath(m.productName), 0)
-}
+// func (m *MigrateManager) removeNode() error {
+// 	return zkhelper.DeleteRecursive(m.coordConn, getManagerPath(m.productName), 0)
+// }
 
 func NewMigrateManager(coordConn zkhelper.Conn, pn string, preTaskCheck MigrateTaskCheckFunc) *MigrateManager {
 	m := &MigrateManager{
@@ -68,10 +66,10 @@ func NewMigrateManager(coordConn zkhelper.Conn, pn string, preTaskCheck MigrateT
 		coordConn:    coordConn,
 		productName:  pn,
 	}
-	err := m.createNode()
-	if err != nil {
-		Fatal("another reborn-config exists? shut it down and try again")
-	}
+	// err := m.createNode()
+	// if err != nil {
+	// 	Fatal("another reborn-config exists? shut it down and try again")
+	// }
 	go m.loop()
 	return m
 }

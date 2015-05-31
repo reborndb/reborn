@@ -42,16 +42,13 @@ type Server struct {
 	lastActionSeq int
 	pi            models.ProxyInfo
 	startAt       time.Time
-	addr          string
 
 	moper       *MultiOperator
 	pools       *cachepool.CachePool
 	counter     *stats.Counters
-	OnSuicide   OnSuicideFun
+	onSuicide   onSuicideFun
 	bufferedReq *list.List
 	conf        *Conf
-
-	proxyID string
 
 	pipeConns map[string]*taskRunner //redis->taskrunner
 }
@@ -133,7 +130,7 @@ func (s *Server) fillSlot(i int, force bool) {
 func (s *Server) createTaskRunner(slot *Slot) error {
 	dst := slot.dst.Master()
 	if _, ok := s.pipeConns[dst]; !ok {
-		tr, err := NewTaskRunner(dst, s.conf.netTimeout)
+		tr, err := NewTaskRunner(dst, s.conf.NetTimeout)
 		if err != nil {
 			return errors.Errorf("create task runner failed, %v,  %+v, %+v", err, slot.dst, slot.slotInfo)
 		} else {
@@ -232,7 +229,7 @@ func (s *Server) redisTunnel(c *session) error {
 	k := keys[0]
 
 	opstr := strings.ToUpper(string(op))
-	buf, next, err := filter(opstr, keys, c, s.conf.netTimeout)
+	buf, next, err := filter(opstr, keys, c, s.conf.NetTimeout)
 	if err != nil {
 		if len(buf) > 0 { //quit command or error message
 			s.sendBack(c, op, keys, resp, buf)
@@ -370,8 +367,8 @@ func (s *Server) registerSignal() {
 }
 
 func (s *Server) Run() {
-	log.Infof("listening %s on %s", s.conf.proto, s.addr)
-	listener, err := net.Listen(s.conf.proto, s.addr)
+	log.Infof("listening %s on %s", s.conf.Proto, s.conf.Addr)
+	listener, err := net.Listen(s.conf.Proto, s.conf.Addr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -451,14 +448,16 @@ func (s *Server) checkAndDoTopoChange(seq int) bool {
 
 func (s *Server) handleMarkOffline() {
 	s.top.Close(s.pi.Id)
-	if s.OnSuicide == nil {
-		s.OnSuicide = func() error {
-			log.Fatalf("suicide %+v, %s", s.pi, s.counter)
+	if s.onSuicide == nil {
+		s.onSuicide = func() error {
+			log.Errorf("suicide %+v, %s", s.pi, s.counter)
+			os.Remove(s.conf.PidFile)
+			os.Exit(0)
 			return nil
 		}
 	}
 
-	s.OnSuicide()
+	s.onSuicide()
 }
 
 func (s *Server) handleProxyCommand() {
@@ -584,7 +583,7 @@ func (s *Server) handleTopoEvent() {
 
 				evtPath := GetEventPath(e)
 				log.Infof("got event %s, %v, lastActionSeq %d", s.pi.Id, e, s.lastActionSeq)
-				if strings.Index(evtPath, models.GetActionResponsePath(s.conf.productName)) == 0 {
+				if strings.Index(evtPath, models.GetActionResponsePath(s.conf.ProductName)) == 0 {
 					seq, err := strconv.Atoi(path.Base(evtPath))
 					if err != nil {
 						log.Warning(err)
@@ -665,31 +664,26 @@ func (s *Server) RegisterAndWait(wait bool) {
 	}
 }
 
-func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Server {
-	if len(proxyID) == 0 {
-		log.Fatalf("invalid empty proxy id")
-	}
-
+func NewServer(conf *Conf) *Server {
 	log.Infof("start with configuration: %+v", conf)
 	s := &Server{
 		conf:          conf,
 		evtbus:        make(chan interface{}, 1000),
-		top:           topo.NewTopo(conf.productName, conf.coordinatorAddr, conf.f, conf.coordinator),
+		top:           topo.NewTopo(conf.ProductName, conf.CoordinatorAddr, conf.f, conf.Coordinator),
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),
-		addr:          addr,
-		moper:         NewMultiOperator(addr),
+		moper:         NewMultiOperator(conf.Addr),
 		reqCh:         make(chan *PipelineRequest, 1000),
 		pools:         cachepool.NewCachePool(),
 		pipeConns:     make(map[string]*taskRunner),
 		bufferedReq:   list.New(),
-		proxyID:       proxyID,
 	}
 
-	s.pi.Id = proxyID
+	s.pi.Id = conf.ProxyID
 	s.pi.State = models.PROXY_STATE_OFFLINE
 
+	addr := conf.Addr
 	addrs := strings.Split(addr, ":")
 	if len(addrs) != 2 {
 		log.Fatalf("bad addr %s", addr)
@@ -702,6 +696,7 @@ func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Se
 
 	s.pi.Addr = hname + ":" + addrs[1]
 
+	debugVarAddr := conf.HTTPAddr
 	debugVarAddrs := strings.Split(debugVarAddr, ":")
 	if len(debugVarAddrs) != 2 {
 		log.Fatalf("bad debugVarAddr %s", debugVarAddr)
@@ -723,7 +718,7 @@ func NewServer(addr string, debugVarAddr string, proxyID string, conf *Conf) *Se
 	s.RegisterAndWait(true)
 	s.registerSignal()
 
-	_, err = s.top.WatchChildren(models.GetWatchActionPath(conf.productName), s.evtbus)
+	_, err = s.top.WatchChildren(models.GetWatchActionPath(conf.ProductName), s.evtbus)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}

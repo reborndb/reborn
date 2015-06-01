@@ -15,7 +15,8 @@ import (
 
 type SimpleConnectionPool struct {
 	createTs time.Time
-	sync.Mutex
+
+	mu    sync.Mutex // guards fact and conns
 	fact  redispool.CreateConnectionFunc
 	conns *list.List
 }
@@ -27,39 +28,43 @@ func NewSimpleConnectionPool() *SimpleConnectionPool {
 }
 
 func (s *SimpleConnectionPool) Put(conn redispool.PoolConnection) {
-	if conn != nil {
-		s.Lock()
-		s.conns.PushBack(conn)
-		s.Unlock()
+	if conn == nil {
+		return
 	}
 
+	s.mu.Lock()
+	s.conns.PushBack(conn)
+	s.mu.Unlock()
 }
 
 func (s *SimpleConnectionPool) Get() (redispool.PoolConnection, error) {
-	s.Lock()
+	s.mu.Lock()
+
 	if s.conns.Len() == 0 {
 		c, err := s.fact(s)
-		s.Unlock()
+		s.mu.Unlock()
 		return c, err
 	}
 
 	e := s.conns.Front()
 	s.conns.Remove(e)
 
-	s.Unlock()
+	s.mu.Unlock()
 	return e.Value.(redispool.PoolConnection), nil
 }
 
 func (s *SimpleConnectionPool) Open(fact redispool.CreateConnectionFunc) {
-	s.Lock()
-	defer s.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.fact = fact
 	s.conns = list.New()
 }
 
 func (s *SimpleConnectionPool) Close() {
-	s.Lock()
-	defer s.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	for e := s.conns.Front(); e != nil; e = e.Next() {
 		e.Value.(redispool.PoolConnection).Close()
 	}
@@ -70,7 +75,7 @@ type LivePool struct {
 }
 
 type CachePool struct {
-	mu    sync.RWMutex
+	mu    sync.RWMutex // guard pools
 	pools map[string]*LivePool
 }
 
@@ -86,7 +91,7 @@ func (cp *CachePool) GetConn(key string) (redispool.PoolConnection, error) {
 	pool, ok := cp.pools[key]
 	if !ok {
 		cp.mu.RUnlock()
-		return nil, errors.Errorf("pool %s not exist", key)
+		return nil, errors.Errorf("cachepool: pool %s does not exist", key)
 	}
 
 	cp.mu.RUnlock()
@@ -125,11 +130,13 @@ func (cp *CachePool) RemovePool(key string) error {
 	pool, ok := cp.pools[key]
 	if !ok {
 		cp.mu.Unlock()
-		return errors.Errorf("pool %s not exist", key)
+		return errors.Errorf("cachepool: pool %s does not exist", key)
 	}
+
 	delete(cp.pools, key)
 	cp.mu.Unlock()
 
 	go pool.pool.Close()
+
 	return nil
 }

@@ -26,9 +26,8 @@ func NewGroup(groupInfo models.ServerGroup) *Group {
 	for _, server := range groupInfo.Servers {
 		if server.Type == models.SERVER_TYPE_MASTER {
 			if len(g.master) > 0 {
-				log.Fatalf("two master not allowed: %+v", groupInfo)
+				log.Fatalf("two masters are not allowed: %+v", groupInfo)
 			}
-
 			g.master = server.Addr
 		}
 		g.redisServers[server.Addr] = server

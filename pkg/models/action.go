@@ -90,7 +90,7 @@ func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, act
 	proxyIds := make(map[string]struct{})
 	var offlineProxyIds []string
 	for _, p := range proxies {
-		proxyIds[p.Id] = struct{}{}
+		proxyIds[p.ID] = struct{}{}
 	}
 
 	checkTimes := timeoutInMs / 500

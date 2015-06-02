@@ -4,13 +4,13 @@
 package cachepool
 
 import (
+	"container/list"
 	"sync"
 	"time"
 
-	"container/list"
+	"github.com/reborndb/reborn/pkg/proxy/redispool"
 
 	"github.com/juju/errors"
-	"github.com/reborndb/reborn/pkg/proxy/redispool"
 )
 
 type SimpleConnectionPool struct {

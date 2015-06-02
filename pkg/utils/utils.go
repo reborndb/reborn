@@ -8,12 +8,10 @@ import (
 	"os"
 	"path"
 
+	"github.com/c4pt0r/cfg"
 	"github.com/kardianos/osext"
 	log "github.com/ngaut/logging"
-
 	"github.com/ngaut/zkhelper"
-
-	"github.com/c4pt0r/cfg"
 )
 
 func InitConfig() (*cfg.Cfg, error) {

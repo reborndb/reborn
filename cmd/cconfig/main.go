@@ -5,17 +5,16 @@ package main
 
 import (
 	"flag"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/c4pt0r/cfg"
 	"github.com/reborndb/reborn/pkg/env"
 	"github.com/reborndb/reborn/pkg/utils"
 
-	"net/http"
-	_ "net/http/pprof"
-
+	"github.com/c4pt0r/cfg"
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"

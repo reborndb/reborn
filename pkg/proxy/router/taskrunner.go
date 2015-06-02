@@ -5,10 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
 	"github.com/reborndb/reborn/pkg/proxy/redisconn"
+
+	"github.com/juju/errors"
+	log "github.com/ngaut/logging"
 )
 
 type taskRunner struct {

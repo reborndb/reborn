@@ -16,11 +16,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/reborndb/go/io/ioutils"
+
 	"github.com/juju/errors"
 	"github.com/mitchellh/go-ps"
 	log "github.com/ngaut/logging"
 	"github.com/nu7hatch/gouuid"
-	"github.com/reborndb/go/io/ioutils"
 )
 
 func genProcID() string {
@@ -90,11 +91,6 @@ func loadProcess(dataPath string) (*process, error) {
 		os.Remove(dataPath)
 		log.Infof("pid file %s is not exist, skip", p.pidPath())
 		return nil, nil
-	}
-
-	data, err = ioutil.ReadFile(p.pidPath())
-	if err != nil {
-		return nil, errors.Trace(err)
 	}
 
 	if p.Pid, err = p.readPid(); err != nil {

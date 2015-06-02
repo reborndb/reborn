@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/reborndb/reborn/pkg/proxy/parser"
+
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
-	"github.com/reborndb/reborn/pkg/proxy/parser"
 )
 
 type session struct {

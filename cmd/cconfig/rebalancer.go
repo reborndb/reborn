@@ -7,12 +7,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
+
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 	"github.com/nu7hatch/gouuid"
-	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/utils"
 )
 
 type NodeInfo struct {

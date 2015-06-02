@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/ngaut/zkhelper"
-
 	"github.com/juju/errors"
+	"github.com/ngaut/zkhelper"
 )
 
 type SlotStatus string

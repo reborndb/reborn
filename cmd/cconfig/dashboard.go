@@ -125,7 +125,7 @@ func getAllProxyDebugVars() map[string]map[string]interface{} {
 		if err != nil {
 			log.Warning(err)
 		}
-		ret[p.Id] = m
+		ret[p.ID] = m
 	}
 	return ret
 }

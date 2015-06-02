@@ -60,7 +60,7 @@ func TestProxy(t *testing.T) {
 	}
 
 	pi := &ProxyInfo{
-		Id:    "proxy_1",
+		ID:    "proxy_1",
 		Addr:  "localhost:1234",
 		State: PROXY_STATE_OFFLINE,
 	}
@@ -75,16 +75,16 @@ func TestProxy(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(ps) != 1 || ps[0].Id != "proxy_1" {
+	if len(ps) != 1 || ps[0].ID != "proxy_1" {
 		t.Error("create proxy error")
 	}
 
-	err = SetProxyStatus(fakeCoordConn, productName, pi.Id, PROXY_STATE_ONLINE)
+	err = SetProxyStatus(fakeCoordConn, productName, pi.ID, PROXY_STATE_ONLINE)
 	if err != nil {
 		t.Error(err)
 	}
 
-	p, err := GetProxyInfo(fakeCoordConn, productName, pi.Id)
+	p, err := GetProxyInfo(fakeCoordConn, productName, pi.ID)
 	if err != nil {
 		t.Error(err)
 	}

@@ -444,7 +444,7 @@ func (s *Server) checkAndDoTopoChange(seq int) bool {
 }
 
 func (s *Server) handleMarkOffline() {
-	s.top.Close(s.pi.Id)
+	s.top.Close(s.pi.ID)
 	if s.onSuicide == nil {
 		s.onSuicide = func() error {
 			log.Errorf("suicide %+v, %s", s.pi, s.counter)
@@ -458,7 +458,7 @@ func (s *Server) handleMarkOffline() {
 }
 
 func (s *Server) handleProxyCommand() {
-	pi, err := s.top.GetProxyInfo(s.pi.Id)
+	pi, err := s.top.GetProxyInfo(s.pi.ID)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
@@ -505,7 +505,7 @@ func (s *Server) processAction(e interface{}) {
 
 	actions := seqs[index:]
 	for _, seq := range actions {
-		exist, err := s.top.Exist(path.Join(s.top.GetActionResponsePath(seq), s.pi.Id))
+		exist, err := s.top.Exist(path.Join(s.top.GetActionResponsePath(seq), s.pi.ID))
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}
@@ -579,7 +579,7 @@ func (s *Server) handleTopoEvent() {
 				}
 
 				evtPath := GetEventPath(e)
-				log.Infof("got event %s, %v, lastActionSeq %d", s.pi.Id, e, s.lastActionSeq)
+				log.Infof("got event %s, %v, lastActionSeq %d", s.pi.ID, e, s.lastActionSeq)
 				if strings.Index(evtPath, models.GetActionResponsePath(s.conf.ProductName)) == 0 {
 					seq, err := strconv.Atoi(path.Base(evtPath))
 					if err != nil {
@@ -601,7 +601,7 @@ func (s *Server) handleTopoEvent() {
 
 func (s *Server) waitOnline() {
 	for {
-		pi, err := s.top.GetProxyInfo(s.pi.Id)
+		pi, err := s.top.GetProxyInfo(s.pi.ID)
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}
@@ -612,9 +612,9 @@ func (s *Server) waitOnline() {
 
 		if pi.State == models.PROXY_STATE_ONLINE {
 			s.pi.State = pi.State
-			println("good, we are on line", s.pi.Id)
-			log.Info("we are online", s.pi.Id)
-			_, err := s.top.WatchNode(path.Join(models.GetProxyPath(s.top.ProductName), s.pi.Id), s.evtbus)
+			println("good, we are on line", s.pi.ID)
+			log.Info("we are online", s.pi.ID)
+			_, err := s.top.WatchNode(path.Join(models.GetProxyPath(s.top.ProductName), s.pi.ID), s.evtbus)
 			if err != nil {
 				log.Fatal(errors.ErrorStack(err))
 			}
@@ -632,8 +632,8 @@ func (s *Server) waitOnline() {
 		default: //otherwise ignore it
 		}
 
-		println("wait to be online ", s.pi.Id)
-		log.Warning(s.pi.Id, "wait to be online")
+		println("wait to be online ", s.pi.ID)
+		log.Warning(s.pi.ID, "wait to be online")
 
 		time.Sleep(3 * time.Second)
 	}
@@ -677,7 +677,7 @@ func NewServer(conf *Conf) *Server {
 		bufferedReq:   list.New(),
 	}
 
-	s.pi.Id = conf.ProxyID
+	s.pi.ID = conf.ProxyID
 	s.pi.State = models.PROXY_STATE_OFFLINE
 
 	addr := conf.Addr

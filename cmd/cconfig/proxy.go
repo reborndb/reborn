@@ -51,7 +51,7 @@ func runProxyList() error {
 
 func runSetProxyStatus(proxyName, status string) error {
 	info := models.ProxyInfo{
-		Id:    proxyName,
+		ID:    proxyName,
 		State: status,
 	}
 	var v interface{}

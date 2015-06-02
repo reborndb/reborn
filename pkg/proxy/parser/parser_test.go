@@ -11,6 +11,17 @@ import (
 	"github.com/juju/errors"
 )
 
+func testParser(t *testing.T, str string) *Resp {
+	buf := bytes.NewBuffer([]byte(str))
+	r := bufio.NewReader(buf)
+
+	resp, err := Parse(r)
+	if err != nil {
+		t.Fatal(errors.ErrorStack(err))
+	}
+	return resp
+}
+
 func TestBtoi(t *testing.T) {
 	tbl := map[string]int{
 		"-1": -1,
@@ -27,13 +38,7 @@ func TestBtoi(t *testing.T) {
 
 func TestParserBulk(t *testing.T) {
 	sample := "*2\r\n$4\r\nLLEN\r\n$6\r\nmylist\r\n"
-	buf := bytes.NewBuffer([]byte(sample))
-	r := bufio.NewReader(buf)
-
-	resp, err := Parse(r)
-	if err != nil {
-		t.Error(errors.ErrorStack(err))
-	}
+	resp := testParser(t, sample)
 	b, err := resp.Bytes()
 	if err != nil {
 		t.Error(err)
@@ -62,13 +67,8 @@ func TestKeys(t *testing.T) {
 	}
 
 	for _, s := range table {
-		buf := bytes.NewBuffer([]byte(s))
-		r := bufio.NewReader(buf)
+		resp := testParser(t, s)
 
-		resp, err := Parse(r)
-		if err != nil {
-			t.Error(errors.ErrorStack(err))
-		}
 		b, err := resp.Bytes()
 		if err != nil {
 			t.Error(err)
@@ -95,13 +95,8 @@ func TestMulOpKeys(t *testing.T) {
 	}
 
 	for _, s := range table {
-		buf := bytes.NewBuffer([]byte(s))
-		r := bufio.NewReader(buf)
+		resp := testParser(t, s)
 
-		resp, err := Parse(r)
-		if err != nil {
-			t.Error(errors.ErrorStack(err))
-		}
 		b, err := resp.Bytes()
 		if err != nil {
 			t.Error(err)
@@ -139,15 +134,9 @@ func TestParser(t *testing.T) {
 	}
 
 	for _, s := range table {
-		buf := bytes.NewBuffer([]byte(s))
-		r := bufio.NewReader(buf)
+		resp := testParser(t, s)
 
-		resp, err := Parse(r)
-		if err != nil {
-			t.Fatal(errors.ErrorStack(err))
-		}
-
-		_, err = resp.Bytes()
+		_, err := resp.Bytes()
 		if err != nil {
 			t.Error(err)
 		}
@@ -163,19 +152,24 @@ func TestParser(t *testing.T) {
 	}
 }
 
+func TestTelnet(t *testing.T) {
+	resp := testParser(t, "echo   abc\r\n")
+	b, err := resp.Bytes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testParser(t, string(b))
+}
+
 func TestEval(t *testing.T) {
 	table := []string{
 		"*3\r\n$4\r\nEVAL\r\n$31\r\nreturn {1,2,{3,'Hello World!'}}\r\n$1\r\n0\r\n",
 	}
 
 	for _, s := range table {
-		buf := bytes.NewBuffer([]byte(s))
-		r := bufio.NewReader(buf)
+		resp := testParser(t, s)
 
-		resp, err := Parse(r)
-		if err != nil {
-			t.Fatal(errors.ErrorStack(err))
-		}
 		op, keys, err := resp.GetOpKeys()
 		if err != nil {
 			t.Fatal(err)

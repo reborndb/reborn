@@ -175,13 +175,17 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 	}
 
 	resp := &Resp{}
-	if line[0] == '$' || line[0] == '*' {
-		resp.Raw = make([]byte, 0, len(line)+64)
-	} else {
-		resp.Raw = make([]byte, 0, len(line))
-	}
+	// if line[0] == '$' || line[0] == '*' {
+	// 	resp.Raw = make([]byte, 0, len(line)+64)
+	// } else {
+	// 	resp.Raw = make([]byte, 0, len(line))
+	// }
 
-	resp.Raw = append(resp.Raw, line...)
+	switch line[0] {
+	case '-', '+', ':', '*':
+		// we will store bulk string and telnet raw later separately
+		resp.Raw = append(resp.Raw, line...)
+	}
 
 	switch line[0] {
 	case '-':
@@ -199,6 +203,8 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
+		resp.Raw = make([]byte, 0, len(line)+size+2)
+		resp.Raw = append(resp.Raw, line...)
 		err = ReadBulk(r, size, &resp.Raw)
 		if err != nil {
 			return nil, errors.Trace(err)
@@ -228,21 +234,19 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 		}
 
 		resp.Type = MultiResp
-		strs := strings.Split(string(line), " ")
+		strs := strings.Fields(string(line))
 
 		resp.Raw = make([]byte, 0, 20)
 		resp.Raw = append(resp.Raw, '*')
 		resp.Raw = append(resp.Raw, []byte(strconv.Itoa(len(strs)))...)
 		resp.Raw = append(resp.Raw, NEW_LINE...)
 		for i := 0; i < len(strs); i++ { //last element is \r\n
-			if str := strings.TrimSpace(strs[i]); len(str) > 0 {
-				b, err := respcoding.Marshal(str)
-				if err != nil {
-					return nil, errors.New("redis protocol error, " + string(line))
-				}
-
-				resp.Multi = append(resp.Multi, &Resp{Type: BulkResp, Raw: b})
+			b, err := respcoding.Marshal(strs[i])
+			if err != nil {
+				return nil, errors.New("redis protocol error, " + string(line))
 			}
+
+			resp.Multi = append(resp.Multi, &Resp{Type: BulkResp, Raw: b})
 		}
 		return resp, nil
 	}

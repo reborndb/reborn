@@ -37,6 +37,11 @@ func (tr *taskRunner) readloop() {
 	}
 }
 
+func (tr *taskRunner) doFlush() error {
+	tr.c.SetWriteDeadline(time.Now().Add(time.Duration(tr.netTimeout) * time.Second))
+	return errors.Trace(tr.c.Flush())
+}
+
 func (tr *taskRunner) dowrite(r *PipelineRequest, flush bool) error {
 	err := r.req.WriteTo(tr.c)
 	if err != nil {
@@ -44,15 +49,15 @@ func (tr *taskRunner) dowrite(r *PipelineRequest, flush bool) error {
 	}
 
 	if flush {
-		return errors.Trace(tr.c.Flush())
+		err = tr.doFlush()
 	}
 
-	return nil
+	return err
 }
 
 func (tr *taskRunner) handleTask(r *PipelineRequest, flush bool) error {
 	if r == nil && flush { //just flush
-		return tr.c.Flush()
+		return tr.doFlush()
 	}
 
 	tr.tasks.PushBack(r)

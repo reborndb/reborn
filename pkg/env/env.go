@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/c4pt0r/cfg"
-	errors "github.com/juju/errors"
+	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 )
@@ -25,7 +25,7 @@ type RebornEnv struct {
 
 func LoadRebornEnv(cfg *cfg.Cfg) Env {
 	if cfg == nil {
-		log.Fatal("config error")
+		log.Fatal("unexpected empty config")
 	}
 
 	productName, err := cfg.ReadString("product", "test")
@@ -38,7 +38,11 @@ func LoadRebornEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
-	hostname, _ := os.Hostname()
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	dashboardAddr, err := cfg.ReadString("dashboard_addr", hostname+":18087")
 	if err != nil {
 		log.Fatal(err)

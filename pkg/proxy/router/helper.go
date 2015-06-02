@@ -17,12 +17,10 @@ import (
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
 
-	log "github.com/ngaut/logging"
-
 	"github.com/juju/errors"
 	topo "github.com/ngaut/go-zookeeper/zk"
 	stats "github.com/ngaut/gostats"
-
+	log "github.com/ngaut/logging"
 	respcoding "github.com/ngaut/resp"
 )
 

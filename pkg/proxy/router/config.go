@@ -6,9 +6,10 @@ package router
 import (
 	"strings"
 
-	log "github.com/ngaut/logging"
 	"github.com/reborndb/reborn/pkg/proxy/router/topology"
 	"github.com/reborndb/reborn/pkg/utils"
+
+	log "github.com/ngaut/logging"
 )
 
 type Conf struct {

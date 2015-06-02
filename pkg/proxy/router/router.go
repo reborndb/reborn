@@ -5,6 +5,8 @@ package router
 
 import (
 	"bufio"
+	"bytes"
+	"container/list"
 	"io"
 	"net"
 	"os"
@@ -16,17 +18,12 @@ import (
 	"syscall"
 	"time"
 
-	topo "github.com/reborndb/reborn/pkg/proxy/router/topology"
-
-	"bytes"
-
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/proxy/cachepool"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
 	"github.com/reborndb/reborn/pkg/proxy/redispool"
-
-	"container/list"
+	topo "github.com/reborndb/reborn/pkg/proxy/router/topology"
 
 	"github.com/juju/errors"
 	stats "github.com/ngaut/gostats"

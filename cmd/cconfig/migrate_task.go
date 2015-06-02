@@ -9,7 +9,6 @@ import (
 	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/juju/errors"
-
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
 )
@@ -39,7 +38,7 @@ func (p SlotMigrateProgress) String() string {
 type MigrateTask struct {
 	MigrateTaskInfo
 	stopChan     chan struct{}
-	coordConn       zkhelper.Conn
+	coordConn    zkhelper.Conn
 	productName  string
 	slotMigrator SlotMigrator
 	progressChan chan SlotMigrateProgress

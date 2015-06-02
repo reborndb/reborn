@@ -7,13 +7,12 @@ import (
 	"encoding/json"
 	"path"
 
-	"github.com/ngaut/zkhelper"
-
 	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/juju/errors"
 	topo "github.com/ngaut/go-zookeeper/zk"
 	log "github.com/ngaut/logging"
+	"github.com/ngaut/zkhelper"
 )
 
 type TopoUpdate interface {

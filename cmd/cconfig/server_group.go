@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/reborndb/reborn/pkg/models"
+
 	"github.com/docopt/docopt-go"
 	log "github.com/ngaut/logging"
-	"github.com/reborndb/reborn/pkg/models"
 )
 
 // reborn redis instance manage tool

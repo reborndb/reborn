@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/juju/errors"
-
 	docopt "github.com/docopt/docopt-go"
+	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 )
 

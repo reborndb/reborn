@@ -4,20 +4,20 @@
 package router
 
 import (
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"strconv"
+	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/alicebob/miniredis"
 	"github.com/garyburd/redigo/redis"
 	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
-	"github.com/reborndb/reborn/pkg/models"
 )
 
 var (

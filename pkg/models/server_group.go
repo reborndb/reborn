@@ -9,12 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/ngaut/logging"
-	"github.com/ngaut/zkhelper"
-
 	"github.com/reborndb/reborn/pkg/utils"
 
 	"github.com/juju/errors"
+	log "github.com/ngaut/logging"
+	"github.com/ngaut/zkhelper"
 )
 
 const (

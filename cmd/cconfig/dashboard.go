@@ -7,28 +7,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	stdlog "log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"time"
 
-	"github.com/juju/errors"
-	"github.com/ngaut/go-zookeeper/zk"
-	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/utils"
-
-	"sync/atomic"
-
-	stdlog "log"
 
 	"github.com/codegangsta/martini-contrib/binding"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/docopt/docopt-go"
 	"github.com/go-martini/martini"
+	"github.com/juju/errors"
 	"github.com/martini-contrib/cors"
-
+	"github.com/ngaut/go-zookeeper/zk"
 	log "github.com/ngaut/logging"
+	"github.com/ngaut/zkhelper"
 )
 
 func cmdDashboard(argv []string) (err error) {

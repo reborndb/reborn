@@ -23,7 +23,7 @@ const (
 )
 
 type ProxyInfo struct {
-	Id           string `json:"id"`
+	ID           string `json:"id"`
 	Addr         string `json:"addr"`
 	LastEvent    string `json:"last_event"`
 	LastEventTs  int64  `json:"last_event_ts"`
@@ -92,7 +92,7 @@ func CreateProxyInfo(coordConn zkhelper.Conn, productName string, pi *ProxyInfo)
 	}
 	dir := GetProxyPath(productName)
 	zkhelper.CreateRecursive(coordConn, dir, "", 0, zkhelper.DefaultDirACLs())
-	return coordConn.Create(path.Join(dir, pi.Id), data, zk.FlagEphemeral, zkhelper.DefaultFileACLs())
+	return coordConn.Create(path.Join(dir, pi.ID), data, zk.FlagEphemeral, zkhelper.DefaultFileACLs())
 }
 
 func GetProxyFencePath(productName string) string {

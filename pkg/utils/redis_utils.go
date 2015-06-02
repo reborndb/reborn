@@ -22,15 +22,17 @@ func SlotsInfo(addr string, fromSlot, toSlot int) (map[int]int, error) {
 	}
 	defer c.Close()
 
-	var reply []interface{}
-	var val []interface{}
+	var (
+		reply []interface{}
+		val   []interface{}
+	)
 
 	reply, err = redis.Values(c.Do("SLOTSINFO", fromSlot, toSlot-fromSlot+1))
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make(map[int]int)
+	ret := map[int]int{}
 	for {
 		if reply == nil || len(reply) == 0 {
 			break
@@ -45,6 +47,7 @@ func SlotsInfo(addr string, fromSlot, toSlot int) (map[int]int, error) {
 		}
 		ret[slot] = keyCount
 	}
+
 	return ret, nil
 }
 
@@ -54,11 +57,13 @@ func GetRedisStat(addr string) (map[string]string, error) {
 		return nil, err
 	}
 	defer c.Close()
+
 	ret, err := redis.String(c.Do("INFO"))
 	if err != nil {
 		return nil, err
 	}
-	m := make(map[string]string)
+
+	m := map[string]string{}
 	lines := strings.Split(ret, "\n")
 	for _, line := range lines {
 		kv := strings.SplitN(line, ":", 2)
@@ -74,6 +79,7 @@ func GetRedisStat(addr string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// we got result
 	if len(reply) == 2 {
 		if reply[1] != "0" {
@@ -92,13 +98,16 @@ func GetRedisConfig(addr string, configName string) (string, error) {
 		return "", err
 	}
 	defer c.Close()
+
 	ret, err := redis.Strings(c.Do("config", "get", configName))
 	if err != nil {
 		return "", err
 	}
+
 	if len(ret) == 2 {
 		return ret[1], nil
 	}
+
 	return "", nil
 }
 
@@ -132,9 +141,11 @@ func SlaveNoOne(addr string) error {
 		return errors.Trace(err)
 	}
 	defer c.Close()
+
 	_, err = c.Do("SLAVEOF", "NO", "ONE")
 	if err != nil {
 		return errors.Trace(err)
 	}
+
 	return nil
 }

@@ -6,6 +6,7 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -337,4 +338,39 @@ func (r *Resp) Bytes() ([]byte, error) {
 	b := &bytes.Buffer{}
 	err := r.WriteTo(b)
 	return b.Bytes(), err
+}
+
+func formatCommandArg(arg interface{}) []byte {
+	switch arg := arg.(type) {
+	case []byte:
+		return arg
+	case string:
+		return []byte(arg)
+	case int:
+		return Itoa(arg)
+	default:
+		return []byte(fmt.Sprintf("%v", arg))
+	}
+}
+
+func writeBulkArg(w io.Writer, arg []byte) error {
+	w.Write([]byte{'$'})
+	w.Write(Itoa(len(arg)))
+	w.Write(NEW_LINE)
+	w.Write(arg)
+	_, err := w.Write(NEW_LINE)
+	return err
+}
+
+func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
+	w.Write([]byte{'*'})
+	w.Write(Itoa(len(args) + 1))
+	w.Write(NEW_LINE)
+
+	err := writeBulkArg(w, []byte(cmd))
+
+	for _, arg := range args {
+		err = writeBulkArg(w, formatCommandArg(arg))
+	}
+	return err
 }

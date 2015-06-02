@@ -37,7 +37,7 @@ func TestProxyOfflineInWaitActionReceiver(t *testing.T) {
 
 	for i := 1; i <= 4; i++ {
 		CreateProxyInfo(fakeCoordConn, productName, &ProxyInfo{
-			Id:    strconv.Itoa(i),
+			ID:    strconv.Itoa(i),
 			State: PROXY_STATE_ONLINE,
 		})
 		go waitForProxyMarkOffline(fakeCoordConn, strconv.Itoa(i))

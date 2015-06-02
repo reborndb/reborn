@@ -463,7 +463,7 @@ func apiRemoveServerFromGroup(server models.Server, param martini.Params) (int, 
 func apiSetProxyStatus(proxy models.ProxyInfo, param martini.Params) (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
-	err := models.SetProxyStatus(conn, globalEnv.ProductName(), proxy.Id, proxy.State)
+	err := models.SetProxyStatus(conn, globalEnv.ProductName(), proxy.ID, proxy.State)
 	if err != nil {
 		// if this proxy is not online, just return success
 		if proxy.State == models.PROXY_STATE_MARK_OFFLINE && zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {

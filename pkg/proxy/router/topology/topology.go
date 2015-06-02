@@ -139,7 +139,7 @@ func (top *Topology) DoResponse(seq int, pi *models.ProxyInfo) error {
 		return errors.Trace(err)
 	}
 
-	_, err = top.coordConn.Create(path.Join(actionPath, pi.Id), data,
+	_, err = top.coordConn.Create(path.Join(actionPath, pi.ID), data,
 		0, zkhelper.DefaultFileACLs())
 
 	return err

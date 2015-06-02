@@ -276,13 +276,13 @@ func needResponse(receivers []string, self models.ProxyInfo) bool {
 		err := json.Unmarshal([]byte(v), &pi)
 		if err != nil {
 			//is it old version of dashboard
-			if v == self.Id {
+			if v == self.ID {
 				return true
 			}
 			return false
 		}
 
-		if pi.Id == self.Id && pi.Pid == self.Pid && pi.StartAt == self.StartAt {
+		if pi.ID == self.ID && pi.Pid == self.Pid && pi.StartAt == self.StartAt {
 			return true
 		}
 	}

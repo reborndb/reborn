@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"net"
 	"time"
-
-	"github.com/ngaut/deadline"
 )
 
 //not thread-safe
@@ -35,7 +33,7 @@ func NewConnectionWithSize(addr string, netTimeout int, readSize int, writeSize 
 		nc:         conn,
 		closed:     false,
 		r:          bufio.NewReaderSize(conn, readSize),
-		w:          bufio.NewWriterSize(deadline.NewDeadlineWriter(conn, time.Duration(netTimeout)*time.Second), writeSize),
+		w:          bufio.NewWriterSize(conn, writeSize),
 		netTimeout: netTimeout,
 	}, nil
 }
@@ -70,6 +68,9 @@ func (c *Conn) SetDeadline(t time.Time) error {
 }
 
 func (c *Conn) Close() {
+	if c.closed {
+		return
+	}
 	c.closed = true
 	c.nc.Close()
 }

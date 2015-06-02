@@ -19,10 +19,12 @@ func InitConfig() (*cfg.Cfg, error) {
 	if len(configFile) == 0 {
 		configFile = "config.ini"
 	}
+
 	ret := cfg.NewCfg(configFile)
 	if err := ret.Load(); err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
 
@@ -69,7 +71,11 @@ func CreatePidFile(name string) error {
 		return nil
 	}
 
-	os.MkdirAll(path.Dir(name), 0755)
+	err := os.MkdirAll(path.Dir(name), 0755)
+	if err != nil {
+		return err
+	}
+
 	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

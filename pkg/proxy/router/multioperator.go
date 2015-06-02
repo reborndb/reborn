@@ -45,7 +45,7 @@ func getSlotMap(keys [][]byte) map[int][]*pair {
 	return slotmap
 }
 
-func NewMultiOperator(server string) *MultiOperator {
+func newMultiOperator(server string) *MultiOperator {
 	oper := &MultiOperator{q: make(chan *MulOp, 128)}
 	oper.pool = newPool(server, "")
 	for i := 0; i < 64; i++ {

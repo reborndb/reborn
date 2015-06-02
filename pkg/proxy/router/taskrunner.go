@@ -83,11 +83,13 @@ func (tr *taskRunner) cleanupOutgoingTasks(err error) {
 	}
 }
 
+const pipelineBufSize = 512 * 1024
+
 func (tr *taskRunner) tryRecover(err error) error {
 	log.Warning("try recover from ", err)
 	tr.cleanupOutgoingTasks(err)
 	//try to recover
-	c, err := redisconn.NewConnection(tr.redisAddr, tr.netTimeout)
+	c, err := redisconn.NewConnectionWithSize(tr.redisAddr, tr.netTimeout, pipelineBufSize, pipelineBufSize)
 	if err != nil {
 		tr.cleanupQueueTasks() //do not block dispatcher
 		log.Warning(err)
@@ -202,7 +204,7 @@ func NewTaskRunner(addr string, netTimeout int) (*taskRunner, error) {
 		netTimeout: netTimeout,
 	}
 
-	c, err := redisconn.NewConnection(addr, netTimeout)
+	c, err := redisconn.NewConnectionWithSize(addr, netTimeout, pipelineBufSize, pipelineBufSize)
 	if err != nil {
 		return nil, err
 	}

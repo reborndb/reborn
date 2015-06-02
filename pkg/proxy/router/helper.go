@@ -5,6 +5,7 @@ package router
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
+	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 
 	"github.com/juju/errors"
 	topo "github.com/ngaut/go-zookeeper/zk"
@@ -66,20 +68,49 @@ func validSlot(i int) bool {
 	return true
 }
 
-func WriteMigrateKeyCmd(w io.Writer, addr string, timeoutMs int, keys ...[]byte) error {
+func writeCommand(c *redisconn.Conn, cmd string, args ...interface{}) error {
+	return parser.WriteCommand(c, cmd, args...)
+}
+
+func doCommand(c *redisconn.Conn, cmd string, args ...interface{}) (*parser.Resp, error) {
+	writeCommand(c, cmd, args...)
+	if err := c.Flush(); err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	resp, err := parser.Parse(c.BufioReader())
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return resp, nil
+}
+
+func doCommandMustOK(c *redisconn.Conn, cmd string, args ...interface{}) error {
+	resp, err := doCommand(c, cmd, args...)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	if !bytes.Equal(resp.Raw, OK_BYTES) {
+		return errors.Errorf("resp returns raw %s, not OK", resp.Raw)
+	}
+	return nil
+}
+
+func writeMigrateKeyCmd(c *redisconn.Conn, addr string, timeoutMs int, keys ...[]byte) error {
 	hostPort := strings.Split(addr, ":")
 	if len(hostPort) != 2 {
 		return errors.Errorf("invalid address " + addr)
 	}
-	respW := respcoding.NewRESPWriter(w)
+
 	for _, key := range keys {
-		err := respW.WriteCommand("slotsmgrttagone", hostPort[0], hostPort[1], strconv.Itoa(int(timeoutMs)), string(key))
+		err := writeCommand(c, "slotsmgrttagone", hostPort[0], hostPort[1], int(timeoutMs), key)
 		if err != nil {
 			return errors.Trace(err)
 		}
 	}
 
-	return errors.Trace(respW.Flush())
+	return errors.Trace(c.Flush())
 }
 
 type DeadlineReadWriter interface {

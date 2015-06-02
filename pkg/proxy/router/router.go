@@ -19,10 +19,9 @@ import (
 	"time"
 
 	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/proxy/cachepool"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
-	"github.com/reborndb/reborn/pkg/proxy/redispool"
+	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 	topo "github.com/reborndb/reborn/pkg/proxy/router/topology"
 
 	"github.com/juju/errors"
@@ -41,7 +40,7 @@ type Server struct {
 	startAt       time.Time
 
 	moper       *MultiOperator
-	pools       *cachepool.CachePool
+	pools       *redisconn.Pools
 	counter     *stats.Counters
 	onSuicide   onSuicideFun
 	bufferedReq *list.List
@@ -106,9 +105,7 @@ func (s *Server) fillSlot(i int, force bool) {
 		groupInfo: groupInfo,
 	}
 
-	log.Infof("fill slot %d, force %v, %+v", i, force, slot.dst)
-
-	s.pools.AddPool(slot.dst.Master())
+	//	log.Infof("fill slot %d, force %v, %+v", i, force, slot.dst)
 
 	if slot.slotInfo.State.Status == models.SLOT_STATUS_MIGRATE {
 		//get migrate src group and fill it
@@ -117,7 +114,6 @@ func (s *Server) fillSlot(i int, force bool) {
 			log.Fatal(err)
 		}
 		slot.migrateFrom = group.NewGroup(*from)
-		s.pools.AddPool(slot.migrateFrom.Master())
 	}
 
 	s.slots[i] = slot
@@ -166,22 +162,24 @@ func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 		return errors.Trace(err)
 	}
 
-	defer s.pools.ReleaseConn(redisConn)
+	defer s.pools.PutConn(redisConn)
 
-	redisReader := redisConn.(*redispool.PooledConn).BufioReader()
-
-	err = WriteMigrateKeyCmd(redisConn.(*redispool.PooledConn), shd.dst.Master(), 30*1000, keys...)
+	err = writeMigrateKeyCmd(redisConn, shd.dst.Master(), 30*1000, keys...)
 	if err != nil {
 		redisConn.Close()
-		log.Warningf("migrate key %s error, from %s to %s",
-			string(keys[0]), shd.migrateFrom.Master(), shd.dst.Master())
+		log.Errorf("migrate key %s error, from %s to %s, err:%v",
+			string(keys[0]), shd.migrateFrom.Master(), shd.dst.Master(), err)
 		return errors.Trace(err)
 	}
+
+	redisReader := redisConn.BufioReader()
 
 	//handle migrate result
 	for i := 0; i < len(keys); i++ {
 		resp, err := parser.Parse(redisReader)
 		if err != nil {
+			log.Errorf("migrate key %s error, from %s to %s, err:%v",
+				string(keys[i]), shd.migrateFrom.Master(), shd.dst.Master(), err)
 			redisConn.Close()
 			return errors.Trace(err)
 		}
@@ -663,6 +661,11 @@ func (s *Server) RegisterAndWait(wait bool) {
 
 func NewServer(conf *Conf) *Server {
 	log.Infof("start with configuration: %+v", conf)
+
+	f := func(addr string) (*redisconn.Conn, error) {
+		return redisconn.NewConnectionWithSize(addr, conf.NetTimeout, 16*1024, 16*1024)
+	}
+
 	s := &Server{
 		conf:          conf,
 		evtbus:        make(chan interface{}, 1000),
@@ -670,9 +673,9 @@ func NewServer(conf *Conf) *Server {
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),
-		moper:         NewMultiOperator(conf.Addr),
+		moper:         newMultiOperator(conf.Addr),
 		reqCh:         make(chan *PipelineRequest, 1000),
-		pools:         cachepool.NewCachePool(),
+		pools:         redisconn.NewPools(16, f),
 		pipeConns:     make(map[string]*taskRunner),
 		bufferedReq:   list.New(),
 	}

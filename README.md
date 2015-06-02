@@ -19,7 +19,7 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 
 ## Build and Install
 
-* Install go & ZooKeeper
+* Install go(we recommend go 1.3.3) & ZooKeeper
 * go get github.com/reborndb/reborn
 * cd reborn
 * ./bootstrap.sh

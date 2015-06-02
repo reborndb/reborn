@@ -37,6 +37,8 @@ go get -u github.com/nu7hatch/gouuid
 go get -u github.com/docopt/docopt-go
 go get -u github.com/cupcake/rdb
 go get -u github.com/alicebob/miniredis
+go get -u github.com/kardianos/osext
+go get -u github.com/mitchellh/go-ps
 
 make || exit $?
 make gotest

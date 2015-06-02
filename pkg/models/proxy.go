@@ -6,7 +6,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"path"
 
@@ -35,19 +34,7 @@ type ProxyInfo struct {
 }
 
 func (p *ProxyInfo) Ops() (int64, error) {
-	resp, err := http.Get("http://" + p.DebugVarAddr + "/debug/vars")
-	if err != nil {
-		return -1, errors.Trace(err)
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return -1, errors.Trace(err)
-	}
-
-	m := make(map[string]interface{})
-	err = json.Unmarshal(body, &m)
+	m, err := p.DebugVars()
 	if err != nil {
 		return -1, errors.Trace(err)
 	}
@@ -68,16 +55,11 @@ func (p *ProxyInfo) DebugVars() (map[string]interface{}, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	m := map[string]interface{}{}
+	if err = json.NewDecoder(resp.Body).Decode(m); err != nil {
 		return nil, errors.Trace(err)
 	}
 
-	m := make(map[string]interface{})
-	err = json.Unmarshal(body, &m)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
 	return m, nil
 }
 

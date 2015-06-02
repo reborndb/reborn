@@ -31,6 +31,8 @@ func (p *Pool) GetConn() (*Conn, error) {
 	conn, err := p.p.Get()
 	if err != nil {
 		return nil, errors.Trace(err)
+	} else if conn == nil {
+		return nil, errors.Errorf("create nil connection")
 	} else {
 		return conn.(*Conn), nil
 	}
@@ -70,7 +72,8 @@ func (p *Pools) GetConn(addr string) (*Conn, error) {
 	p.m.Lock()
 	pool, ok := p.mpools[addr]
 	if !ok {
-		p.mpools[addr] = NewPool(addr, p.capability, p.f)
+		pool = NewPool(addr, p.capability, p.f)
+		p.mpools[addr] = pool
 	}
 	p.m.Unlock()
 
@@ -78,6 +81,10 @@ func (p *Pools) GetConn(addr string) (*Conn, error) {
 }
 
 func (p *Pools) PutConn(c *Conn) {
+	if c == nil || c.closed {
+		return
+	}
+
 	p.m.Lock()
 	pool, ok := p.mpools[c.addr]
 	p.m.Unlock()

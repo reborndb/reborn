@@ -2,9 +2,10 @@ package redisconn
 
 import (
 	"bufio"
-	"github.com/ngaut/deadline"
 	"net"
 	"time"
+
+	"github.com/ngaut/deadline"
 )
 
 const (

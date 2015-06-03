@@ -6,9 +6,12 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/reborndb/go/io/ioutils"
 
 	"github.com/juju/errors"
 	respcoding "github.com/ngaut/resp"
@@ -22,6 +25,8 @@ var (
 	NEW_LINE   = []byte("\r\n")
 	EMPTY_LINE []byte
 )
+
+const MappingTableNum = 10000
 
 const (
 	ErrorResp = iota
@@ -45,8 +50,8 @@ var (
 		"SLOTSCHECK": "fakeKey",
 	}
 
-	keyFun    = make(map[string]funGetKeys)
-	intBuffer [][]byte
+	keyFun       = make(map[string]funGetKeys)
+	mappingTable [][]byte
 )
 
 func init() {
@@ -54,10 +59,9 @@ func init() {
 		keyFun[v] = thridAsKey
 	}
 
-	cnt := 10000
-	intBuffer = make([][]byte, cnt)
-	for i := 0; i < cnt; i++ {
-		intBuffer[i] = []byte(strconv.Itoa(i))
+	mappingTable = make([][]byte, MappingTableNum)
+	for i := 0; i < MappingTableNum; i++ {
+		mappingTable[i] = []byte(strconv.Itoa(i))
 	}
 }
 
@@ -66,8 +70,8 @@ func Itoa(i int) []byte {
 		return []byte(strconv.Itoa(i))
 	}
 
-	if i < len(intBuffer) {
-		return intBuffer[i]
+	if i < len(mappingTable) {
+		return mappingTable[i]
 	}
 
 	return []byte(strconv.Itoa(i))
@@ -337,4 +341,42 @@ func (r *Resp) Bytes() ([]byte, error) {
 	b := &bytes.Buffer{}
 	err := r.WriteTo(b)
 	return b.Bytes(), err
+}
+
+func formatCommandArg(arg interface{}) []byte {
+	switch arg := arg.(type) {
+	case []byte:
+		return arg
+	case string:
+		return []byte(arg)
+	case int:
+		return Itoa(arg)
+	default:
+		return []byte(fmt.Sprintf("%v", arg))
+	}
+}
+
+func writeBulkArg(w io.Writer, arg []byte) error {
+	sw := ioutils.SimpleWriter(w)
+	sw.Write([]byte{'$'})
+	sw.Write(Itoa(len(arg)))
+	sw.Write(NEW_LINE)
+	sw.Write(arg)
+	_, err := sw.Write(NEW_LINE)
+	return err
+}
+
+func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
+	sw := ioutils.SimpleWriter(w)
+
+	sw.Write([]byte{'*'})
+	sw.Write(Itoa(len(args) + 1))
+	sw.Write(NEW_LINE)
+
+	err := writeBulkArg(sw, []byte(cmd))
+
+	for _, arg := range args {
+		err = writeBulkArg(sw, formatCommandArg(arg))
+	}
+	return err
 }

@@ -19,15 +19,29 @@ import (
 	"time"
 
 	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/proxy/cachepool"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
-	"github.com/reborndb/reborn/pkg/proxy/redispool"
+	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 	topo "github.com/reborndb/reborn/pkg/proxy/router/topology"
 
 	"github.com/juju/errors"
 	stats "github.com/ngaut/gostats"
 	log "github.com/ngaut/logging"
+)
+
+const (
+	DefaultReaderSize = 32 * 1024
+	DefaultWiterSize  = 32 * 1024
+
+	RedisConnReaderSize = 16 * 1024
+	RedisConnWiterSize  = 16 * 1024
+
+	PipelineResponseNum = 1000
+	PipelineRequestNum  = 1000
+
+	EventBusNum         = 1000
+	MigrateKeyTimeoutMs = 30 * 1000
+	PoolCapability      = 16
 )
 
 type Server struct {
@@ -41,7 +55,7 @@ type Server struct {
 	startAt       time.Time
 
 	moper       *MultiOperator
-	pools       *cachepool.CachePool
+	pools       *redisconn.Pools
 	counter     *stats.Counters
 	onSuicide   onSuicideFun
 	bufferedReq *list.List
@@ -108,8 +122,6 @@ func (s *Server) fillSlot(i int, force bool) {
 
 	log.Infof("fill slot %d, force %v, %+v", i, force, slot.dst)
 
-	s.pools.AddPool(slot.dst.Master())
-
 	if slot.slotInfo.State.Status == models.SLOT_STATUS_MIGRATE {
 		//get migrate src group and fill it
 		from, err := s.top.GetGroup(slot.slotInfo.State.MigrateStatus.From)
@@ -117,7 +129,6 @@ func (s *Server) fillSlot(i int, force bool) {
 			log.Fatal(err)
 		}
 		slot.migrateFrom = group.NewGroup(*from)
-		s.pools.AddPool(slot.migrateFrom.Master())
 	}
 
 	s.slots[i] = slot
@@ -166,22 +177,24 @@ func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 		return errors.Trace(err)
 	}
 
-	defer s.pools.ReleaseConn(redisConn)
+	defer s.pools.PutConn(redisConn)
 
-	redisReader := redisConn.(*redispool.PooledConn).BufioReader()
-
-	err = WriteMigrateKeyCmd(redisConn.(*redispool.PooledConn), shd.dst.Master(), 30*1000, keys...)
+	err = writeMigrateKeyCmd(redisConn, shd.dst.Master(), MigrateKeyTimeoutMs, keys...)
 	if err != nil {
 		redisConn.Close()
-		log.Warningf("migrate key %s error, from %s to %s",
-			string(keys[0]), shd.migrateFrom.Master(), shd.dst.Master())
+		log.Errorf("migrate key %s error, from %s to %s, err:%v",
+			string(keys[0]), shd.migrateFrom.Master(), shd.dst.Master(), err)
 		return errors.Trace(err)
 	}
+
+	redisReader := redisConn.BufioReader()
 
 	//handle migrate result
 	for i := 0; i < len(keys); i++ {
 		resp, err := parser.Parse(redisReader)
 		if err != nil {
+			log.Errorf("migrate key %s error, from %s to %s, err:%v",
+				string(keys[i]), shd.migrateFrom.Master(), shd.dst.Master(), err)
 			redisConn.Close()
 			return errors.Trace(err)
 		}
@@ -285,10 +298,10 @@ func (s *Server) handleConn(c net.Conn) {
 	s.counter.Add("connections", 1)
 	client := &session{
 		Conn:        c,
-		r:           bufio.NewReaderSize(c, 32*1024),
-		w:           bufio.NewWriterSize(c, 32*1024),
+		r:           bufio.NewReaderSize(c, DefaultReaderSize),
+		w:           bufio.NewWriterSize(c, DefaultWiterSize),
 		CreateAt:    time.Now(),
-		backQ:       make(chan *PipelineResponse, 1000),
+		backQ:       make(chan *PipelineResponse, PipelineResponseNum),
 		closeSignal: &sync.WaitGroup{},
 	}
 	client.closeSignal.Add(1)
@@ -663,16 +676,21 @@ func (s *Server) RegisterAndWait(wait bool) {
 
 func NewServer(conf *Conf) *Server {
 	log.Infof("start with configuration: %+v", conf)
+
+	f := func(addr string) (*redisconn.Conn, error) {
+		return redisconn.NewConnectionWithSize(addr, conf.NetTimeout, RedisConnReaderSize, RedisConnWiterSize)
+	}
+
 	s := &Server{
 		conf:          conf,
-		evtbus:        make(chan interface{}, 1000),
+		evtbus:        make(chan interface{}, EventBusNum),
 		top:           topo.NewTopo(conf.ProductName, conf.CoordinatorAddr, conf.f, conf.Coordinator),
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),
-		moper:         NewMultiOperator(conf.Addr),
-		reqCh:         make(chan *PipelineRequest, 1000),
-		pools:         cachepool.NewCachePool(),
+		moper:         newMultiOperator(conf.Addr),
+		reqCh:         make(chan *PipelineRequest, PipelineRequestNum),
+		pools:         redisconn.NewPools(PoolCapability, f),
 		pipeConns:     make(map[string]*taskRunner),
 		bufferedReq:   list.New(),
 	}

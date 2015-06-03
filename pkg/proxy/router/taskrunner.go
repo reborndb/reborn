@@ -12,6 +12,12 @@ import (
 	log "github.com/ngaut/logging"
 )
 
+const (
+	TaskRunnerInNum  = 1000
+	TaskRunnerOutNum = 1000
+	PipelineBufSize  = 512 * 1024
+)
+
 type taskRunner struct {
 	evtbus     chan interface{}
 	in         chan interface{} //*PipelineRequest
@@ -37,6 +43,11 @@ func (tr *taskRunner) readloop() {
 	}
 }
 
+func (tr *taskRunner) doFlush() error {
+	tr.c.SetWriteDeadline(time.Now().Add(time.Duration(tr.netTimeout) * time.Second))
+	return errors.Trace(tr.c.Flush())
+}
+
 func (tr *taskRunner) dowrite(r *PipelineRequest, flush bool) error {
 	err := r.req.WriteTo(tr.c)
 	if err != nil {
@@ -44,15 +55,15 @@ func (tr *taskRunner) dowrite(r *PipelineRequest, flush bool) error {
 	}
 
 	if flush {
-		return errors.Trace(tr.c.Flush())
+		err = tr.doFlush()
 	}
 
-	return nil
+	return err
 }
 
 func (tr *taskRunner) handleTask(r *PipelineRequest, flush bool) error {
 	if r == nil && flush { //just flush
-		return tr.c.Flush()
+		return tr.doFlush()
 	}
 
 	tr.tasks.PushBack(r)
@@ -87,7 +98,7 @@ func (tr *taskRunner) tryRecover(err error) error {
 	log.Warning("try recover from ", err)
 	tr.cleanupOutgoingTasks(err)
 	//try to recover
-	c, err := redisconn.NewConnection(tr.redisAddr, tr.netTimeout)
+	c, err := redisconn.NewConnectionWithSize(tr.redisAddr, tr.netTimeout, PipelineBufSize, PipelineBufSize)
 	if err != nil {
 		tr.cleanupQueueTasks() //do not block dispatcher
 		log.Warning(err)
@@ -195,14 +206,14 @@ func (tr *taskRunner) writeloop() {
 
 func NewTaskRunner(addr string, netTimeout int) (*taskRunner, error) {
 	tr := &taskRunner{
-		in:         make(chan interface{}, 1000),
-		out:        make(chan interface{}, 1000),
+		in:         make(chan interface{}, TaskRunnerInNum),
+		out:        make(chan interface{}, TaskRunnerOutNum),
 		redisAddr:  addr,
 		tasks:      list.New(),
 		netTimeout: netTimeout,
 	}
 
-	c, err := redisconn.NewConnection(addr, netTimeout)
+	c, err := redisconn.NewConnectionWithSize(addr, netTimeout, PipelineBufSize, PipelineBufSize)
 	if err != nil {
 		return nil, err
 	}

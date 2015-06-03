@@ -237,3 +237,11 @@ func TestParserInvalid(t *testing.T) {
 		}
 	}
 }
+
+func TestWriteCommand(t *testing.T) {
+	var buf bytes.Buffer
+
+	WriteCommand(&buf, "SET", "a", 1)
+
+	testParser(t, buf.String())
+}

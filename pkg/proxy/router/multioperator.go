@@ -12,6 +12,13 @@ import (
 	respcoding "github.com/ngaut/resp"
 )
 
+const (
+	RedisPoolMaxIdleNum        = 5
+	RedisPoolIdleTimeoutSecond = 2400
+
+	MultiOperatorNum = 128
+)
+
 type MultiOperator struct {
 	q    chan *MulOp
 	pool *redis.Pool
@@ -45,10 +52,10 @@ func getSlotMap(keys [][]byte) map[int][]*pair {
 	return slotmap
 }
 
-func NewMultiOperator(server string) *MultiOperator {
-	oper := &MultiOperator{q: make(chan *MulOp, 128)}
+func newMultiOperator(server string) *MultiOperator {
+	oper := &MultiOperator{q: make(chan *MulOp, MultiOperatorNum)}
 	oper.pool = newPool(server, "")
-	for i := 0; i < 64; i++ {
+	for i := 0; i < MultiOperatorNum/2; i++ {
 		go oper.work()
 	}
 
@@ -57,8 +64,8 @@ func NewMultiOperator(server string) *MultiOperator {
 
 func newPool(server, password string) *redis.Pool {
 	return &redis.Pool{
-		MaxIdle:     5,
-		IdleTimeout: 2400 * time.Second,
+		MaxIdle:     RedisPoolMaxIdleNum,
+		IdleTimeout: RedisPoolIdleTimeoutSecond * time.Second,
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", server)
 			if err != nil {

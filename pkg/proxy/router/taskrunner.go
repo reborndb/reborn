@@ -44,7 +44,6 @@ func (tr *taskRunner) readloop() {
 }
 
 func (tr *taskRunner) doFlush() error {
-	tr.c.SetWriteDeadline(time.Now().Add(time.Duration(tr.netTimeout) * time.Second))
 	return errors.Trace(tr.c.Flush())
 }
 

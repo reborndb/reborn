@@ -105,7 +105,7 @@ func (s *Server) fillSlot(i int, force bool) {
 		groupInfo: groupInfo,
 	}
 
-	//	log.Infof("fill slot %d, force %v, %+v", i, force, slot.dst)
+	log.Infof("fill slot %d, force %v, %+v", i, force, slot.dst)
 
 	if slot.slotInfo.State.Status == models.SLOT_STATUS_MIGRATE {
 		//get migrate src group and fill it

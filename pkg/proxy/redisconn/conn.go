@@ -2,6 +2,7 @@ package redisconn
 
 import (
 	"bufio"
+	"github.com/ngaut/deadline"
 	"net"
 	"time"
 )
@@ -35,7 +36,7 @@ func NewConnectionWithSize(addr string, netTimeout int, readSize int, writeSize 
 		nc:         conn,
 		closed:     false,
 		r:          bufio.NewReaderSize(conn, readSize),
-		w:          bufio.NewWriterSize(conn, writeSize),
+		w:          bufio.NewWriterSize(deadline.NewDeadlineWriter(conn, time.Duration(netTimeout)*time.Second), writeSize),
 		netTimeout: netTimeout,
 	}, nil
 }

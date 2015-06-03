@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/reborndb/go/io/ioutils"
+
 	"github.com/juju/errors"
 	respcoding "github.com/ngaut/resp"
 )
@@ -354,23 +356,26 @@ func formatCommandArg(arg interface{}) []byte {
 }
 
 func writeBulkArg(w io.Writer, arg []byte) error {
-	w.Write([]byte{'$'})
-	w.Write(Itoa(len(arg)))
-	w.Write(NEW_LINE)
-	w.Write(arg)
-	_, err := w.Write(NEW_LINE)
+	sw := ioutils.SimpleWriter(w)
+	sw.Write([]byte{'$'})
+	sw.Write(Itoa(len(arg)))
+	sw.Write(NEW_LINE)
+	sw.Write(arg)
+	_, err := sw.Write(NEW_LINE)
 	return err
 }
 
 func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
-	w.Write([]byte{'*'})
-	w.Write(Itoa(len(args) + 1))
-	w.Write(NEW_LINE)
+	sw := ioutils.SimpleWriter(w)
 
-	err := writeBulkArg(w, []byte(cmd))
+	sw.Write([]byte{'*'})
+	sw.Write(Itoa(len(args) + 1))
+	sw.Write(NEW_LINE)
+
+	err := writeBulkArg(sw, []byte(cmd))
 
 	for _, arg := range args {
-		err = writeBulkArg(w, formatCommandArg(arg))
+		err = writeBulkArg(sw, formatCommandArg(arg))
 	}
 	return err
 }

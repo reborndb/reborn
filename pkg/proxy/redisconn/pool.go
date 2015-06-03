@@ -11,6 +11,8 @@ import (
 	"github.com/ngaut/pools"
 )
 
+const PoolIdleTimeoutSecond = 120
+
 type CreateConnFunc func(addr string) (*Conn, error)
 
 type Pool struct {
@@ -23,7 +25,7 @@ func NewPool(addr string, capability int, f CreateConnFunc) *Pool {
 	}
 
 	p := new(Pool)
-	p.p = pools.NewResourcePool(poolFunc, capability, capability, 120*time.Second)
+	p.p = pools.NewResourcePool(poolFunc, capability, capability, PoolIdleTimeoutSecond*time.Second)
 	return p
 }
 

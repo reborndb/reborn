@@ -29,6 +29,21 @@ import (
 	log "github.com/ngaut/logging"
 )
 
+const (
+	DefaultReaderSize = 32 * 1024
+	DefaultWiterSize  = 32 * 1024
+
+	RedisConnReaderSize = 16 * 1024
+	RedisConnWiterSize  = 16 * 1024
+
+	PipelineResponseNum = 1000
+	PipelineRequestNum  = 1000
+
+	EventBusNum         = 1000
+	MigrateKeyTimeoutMs = 30 * 1000
+	PoolCapability      = 16
+)
+
 type Server struct {
 	slots  [models.DEFAULT_SLOT_NUM]*Slot
 	top    *topo.Topology
@@ -164,7 +179,7 @@ func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 
 	defer s.pools.PutConn(redisConn)
 
-	err = writeMigrateKeyCmd(redisConn, shd.dst.Master(), 30*1000, keys...)
+	err = writeMigrateKeyCmd(redisConn, shd.dst.Master(), MigrateKeyTimeoutMs, keys...)
 	if err != nil {
 		redisConn.Close()
 		log.Errorf("migrate key %s error, from %s to %s, err:%v",
@@ -283,10 +298,10 @@ func (s *Server) handleConn(c net.Conn) {
 	s.counter.Add("connections", 1)
 	client := &session{
 		Conn:        c,
-		r:           bufio.NewReaderSize(c, 32*1024),
-		w:           bufio.NewWriterSize(c, 32*1024),
+		r:           bufio.NewReaderSize(c, DefaultReaderSize),
+		w:           bufio.NewWriterSize(c, DefaultWiterSize),
 		CreateAt:    time.Now(),
-		backQ:       make(chan *PipelineResponse, 1000),
+		backQ:       make(chan *PipelineResponse, PipelineResponseNum),
 		closeSignal: &sync.WaitGroup{},
 	}
 	client.closeSignal.Add(1)
@@ -663,19 +678,19 @@ func NewServer(conf *Conf) *Server {
 	log.Infof("start with configuration: %+v", conf)
 
 	f := func(addr string) (*redisconn.Conn, error) {
-		return redisconn.NewConnectionWithSize(addr, conf.NetTimeout, 16*1024, 16*1024)
+		return redisconn.NewConnectionWithSize(addr, conf.NetTimeout, RedisConnReaderSize, RedisConnWiterSize)
 	}
 
 	s := &Server{
 		conf:          conf,
-		evtbus:        make(chan interface{}, 1000),
+		evtbus:        make(chan interface{}, EventBusNum),
 		top:           topo.NewTopo(conf.ProductName, conf.CoordinatorAddr, conf.f, conf.Coordinator),
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),
 		moper:         newMultiOperator(conf.Addr),
-		reqCh:         make(chan *PipelineRequest, 1000),
-		pools:         redisconn.NewPools(16, f),
+		reqCh:         make(chan *PipelineRequest, PipelineRequestNum),
+		pools:         redisconn.NewPools(PoolCapability, f),
 		pipeConns:     make(map[string]*taskRunner),
 		bufferedReq:   list.New(),
 	}

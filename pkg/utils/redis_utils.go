@@ -12,11 +12,11 @@ import (
 	"github.com/juju/errors"
 )
 
-var defaultTimeout = 1 * time.Second
+const RedisConnTimeoutSecond = 1
 
 // get redis's slot size
 func SlotsInfo(addr string, fromSlot, toSlot int) (map[int]int, error) {
-	c, err := redis.DialTimeout("tcp", addr, defaultTimeout, defaultTimeout, defaultTimeout)
+	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func SlotsInfo(addr string, fromSlot, toSlot int) (map[int]int, error) {
 }
 
 func GetRedisStat(addr string) (map[string]string, error) {
-	c, err := redis.DialTimeout("tcp", addr, defaultTimeout, defaultTimeout, defaultTimeout)
+	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func GetRedisStat(addr string) (map[string]string, error) {
 }
 
 func GetRedisConfig(addr string, configName string) (string, error) {
-	c, err := redis.DialTimeout("tcp", addr, defaultTimeout, defaultTimeout, defaultTimeout)
+	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
 	if err != nil {
 		return "", err
 	}
@@ -107,7 +107,7 @@ func SlaveOf(slave, master string) error {
 		return errors.New("can not slave of itself")
 	}
 
-	c, err := redis.DialTimeout("tcp", slave, defaultTimeout, defaultTimeout, defaultTimeout)
+	c, err := redis.DialTimeout("tcp", slave, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -127,7 +127,7 @@ func SlaveOf(slave, master string) error {
 }
 
 func SlaveNoOne(addr string) error {
-	c, err := redis.DialTimeout("tcp", addr, defaultTimeout, defaultTimeout, defaultTimeout)
+	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
 	if err != nil {
 		return errors.Trace(err)
 	}

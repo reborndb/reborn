@@ -26,6 +26,8 @@ var (
 	EMPTY_LINE []byte
 )
 
+const MappingTableNum = 10000
+
 const (
 	ErrorResp = iota
 	SimpleString
@@ -48,8 +50,8 @@ var (
 		"SLOTSCHECK": "fakeKey",
 	}
 
-	keyFun    = make(map[string]funGetKeys)
-	intBuffer [][]byte
+	keyFun       = make(map[string]funGetKeys)
+	mappingTable [][]byte
 )
 
 func init() {
@@ -57,10 +59,9 @@ func init() {
 		keyFun[v] = thridAsKey
 	}
 
-	cnt := 10000
-	intBuffer = make([][]byte, cnt)
-	for i := 0; i < cnt; i++ {
-		intBuffer[i] = []byte(strconv.Itoa(i))
+	mappingTable = make([][]byte, MappingTableNum)
+	for i := 0; i < MappingTableNum; i++ {
+		mappingTable[i] = []byte(strconv.Itoa(i))
 	}
 }
 
@@ -69,8 +70,8 @@ func Itoa(i int) []byte {
 		return []byte(strconv.Itoa(i))
 	}
 
-	if i < len(intBuffer) {
-		return intBuffer[i]
+	if i < len(mappingTable) {
+		return mappingTable[i]
 	}
 
 	return []byte(strconv.Itoa(i))

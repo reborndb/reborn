@@ -29,6 +29,10 @@ const (
 	ACTION_TYPE_MULTI_SLOT_CHANGED   ActionType = "multi_slot_changed"
 	ACTION_TYPE_SLOT_MIGRATE         ActionType = "slot_migrate"
 	ACTION_TYPE_SLOT_PREMIGRATE      ActionType = "slot_premigrate"
+
+	ActionTimeoutMs     = 30 * 1000
+	CheckTimeIntervalMs = 500
+	MaxKeepActionsNum   = 500
 )
 
 const (
@@ -93,10 +97,9 @@ func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, act
 		proxyIds[p.Id] = struct{}{}
 	}
 
-	checkTimes := timeoutInMs / 500
-	// check every 500ms
+	checkTimes := timeoutInMs / CheckTimeIntervalMs
 	for times < checkTimes {
-		if times >= 6 && (times*500)%1000 == 0 {
+		if times >= 6 && (times*CheckTimeIntervalMs)%1000 == 0 {
 			log.Warning("abnormal waiting time for receivers", actionCoordPath, offlineProxyIds)
 		}
 		// get confirm ids
@@ -126,7 +129,7 @@ func WaitForReceiverWithTimeout(coordConn zkhelper.Conn, productName string, act
 			offlineProxyIds = notMatchList
 		}
 		times += 1
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(CheckTimeIntervalMs * time.Millisecond)
 	}
 	if len(offlineProxyIds) > 0 {
 		log.Error("proxies didn't responed: ", offlineProxyIds)
@@ -191,11 +194,10 @@ func ActionGC(coordConn zkhelper.Conn, productName string, gcType int, keep int)
 
 	if gcType == GC_TYPE_N {
 		sort.Strings(actions)
-		// keep last 500 actions
-		if len(actions)-500 <= keep {
+		if len(actions)-MaxKeepActionsNum <= keep {
 			return nil
 		}
-		for _, action := range actions[:len(actions)-keep-500] {
+		for _, action := range actions[:len(actions)-keep-MaxKeepActionsNum] {
 			if err := zkhelper.DeleteRecursive(coordConn, path.Join(prefix, action), -1); err != nil {
 				return errors.Trace(err)
 			}
@@ -252,8 +254,7 @@ func CreateActionRootPath(coordConn zkhelper.Conn, path string) error {
 }
 
 func NewAction(coordConn zkhelper.Conn, productName string, actionType ActionType, target interface{}, desc string, needConfirm bool) error {
-	// new action with default timeout: 30s
-	return NewActionWithTimeout(coordConn, productName, actionType, target, desc, needConfirm, 30*1000)
+	return NewActionWithTimeout(coordConn, productName, actionType, target, desc, needConfirm, ActionTimeoutMs)
 }
 
 func NewActionWithTimeout(coordConn zkhelper.Conn, productName string, actionType ActionType, target interface{}, desc string, needConfirm bool, timeoutInMs int) error {

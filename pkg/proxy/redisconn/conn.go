@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+const (
+	DefaultBufSize = 4 * 1024
+)
+
 //not thread-safe
 type Conn struct {
 	addr       string
@@ -16,10 +20,8 @@ type Conn struct {
 	netTimeout int //second
 }
 
-const defaultBufSize = 4096
-
 func NewConnection(addr string, netTimeout int) (*Conn, error) {
-	return NewConnectionWithSize(addr, netTimeout, defaultBufSize, defaultBufSize)
+	return NewConnectionWithSize(addr, netTimeout, DefaultBufSize, DefaultBufSize)
 }
 
 func NewConnectionWithSize(addr string, netTimeout int, readSize int, writeSize int) (*Conn, error) {

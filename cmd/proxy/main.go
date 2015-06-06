@@ -39,8 +39,8 @@ options:
    --http-addr=<debug_http_addr>  debug vars http server
    --dump-path=<path>             dump path to log crash error
    --pidfile=<path>               proxy pid file
-   --proxy-pass=PASSWORD          proxy password
-   --server-pass=PASSWORD         backend server password
+   --proxy-auth=PASSWORD          proxy password
+   --server-auth=PASSWORD         backend server password
 `
 
 var banner string = `
@@ -141,8 +141,8 @@ func main() {
 	conf.ProxyID = proxyID
 	conf.PidFile = pidfile
 
-	setStringFromOpt(&conf.ProxyPassword, args, "--proxy-pass")
-	setStringFromOpt(&conf.ServerPassword, args, "--server-pass")
+	setStringFromOpt(&conf.ProxyPassword, args, "--proxy-auth")
+	setStringFromOpt(&conf.ServerPassword, args, "--server-auth")
 
 	if err := utils.CreatePidFile(conf.PidFile); err != nil {
 		log.Fatal(err)

@@ -138,7 +138,7 @@ func (s *Server) fillSlot(i int, force bool) {
 func (s *Server) createTaskRunner(slot *Slot) error {
 	dst := slot.dst.Master()
 	if _, ok := s.pipeConns[dst]; !ok {
-		tr, err := NewTaskRunner(dst, s.conf.NetTimeout)
+		tr, err := NewTaskRunner(dst, s.conf.NetTimeout, s.conf.ServerPassword)
 		if err != nil {
 			return errors.Errorf("create task runner failed, %v,  %+v, %+v", err, slot.dst, slot.slotInfo)
 		} else {
@@ -239,6 +239,7 @@ func (s *Server) redisTunnel(c *session) error {
 	k := keys[0]
 
 	opstr := strings.ToUpper(string(op))
+
 	buf, next, err := filter(opstr, keys, c, s.conf.NetTimeout)
 	if err != nil {
 		if len(buf) > 0 { //quit command or error message
@@ -674,11 +675,25 @@ func (s *Server) RegisterAndWait(wait bool) {
 	}
 }
 
+func newRedisConn(addr string, timeout int, readSize int, writeSize int, password string) (*redisconn.Conn, error) {
+	c, err := redisconn.NewConnectionWithSize(addr, timeout, readSize, writeSize)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = doAuth(c, password); err != nil {
+		c.Close()
+		return nil, err
+	}
+
+	return c, nil
+}
+
 func NewServer(conf *Conf) *Server {
 	log.Infof("start with configuration: %+v", conf)
 
 	f := func(addr string) (*redisconn.Conn, error) {
-		return redisconn.NewConnectionWithSize(addr, conf.NetTimeout, RedisConnReaderSize, RedisConnWiterSize)
+		return newRedisConn(addr, conf.NetTimeout, RedisConnReaderSize, RedisConnWiterSize, conf.ServerPassword)
 	}
 
 	s := &Server{

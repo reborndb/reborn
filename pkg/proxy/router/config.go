@@ -62,8 +62,8 @@ func LoadConf(configFile string) (*Conf, error) {
 	srvConf.ProxyID, _ = conf.ReadString("proxy_id", "")
 	srvConf.PidFile, _ = conf.ReadString("pidfile", "")
 
-	srvConf.ProxyPassword, _ = conf.ReadString("proxy_pass", "")
-	srvConf.ServerPassword, _ = conf.ReadString("server_pass", "")
+	srvConf.ProxyPassword, _ = conf.ReadString("proxy_auth", "")
+	srvConf.ServerPassword, _ = conf.ReadString("server_auth", "")
 
 	return srvConf, nil
 }

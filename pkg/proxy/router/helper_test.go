@@ -192,7 +192,7 @@ func TestHandleSpecCommand(t *testing.T) {
 		"PING":   "+PONG\r\n",
 		"QUIT":   string(OK_BYTES),
 		"SELECT": string(OK_BYTES),
-		"AUTH":   string(OK_BYTES),
+		//		"AUTH":   string(OK_BYTES),
 	}
 
 	for k, v := range tbl {

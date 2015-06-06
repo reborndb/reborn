@@ -97,6 +97,14 @@ func doCommandMustOK(c *redisconn.Conn, cmd string, args ...interface{}) error {
 	return nil
 }
 
+func doAuth(c *redisconn.Conn, password string) error {
+	if len(password) == 0 {
+		return nil
+	}
+
+	return doCommandMustOK(c, "AUTH", password)
+}
+
 func writeMigrateKeyCmd(c *redisconn.Conn, addr string, timeoutMs int, keys ...[]byte) error {
 	hostPort := strings.Split(addr, ":")
 	if len(hostPort) != 2 {
@@ -130,8 +138,8 @@ func handleSpecCommand(cmd string, keys [][]byte, timeout int) ([]byte, bool, bo
 		shouldClose = true
 	case "SELECT":
 		b = OK_BYTES
-	case "AUTH":
-		b = OK_BYTES
+	// case "AUTH":
+	// 	b = OK_BYTES
 	case "ECHO":
 		if len(keys) > 0 {
 			var err error

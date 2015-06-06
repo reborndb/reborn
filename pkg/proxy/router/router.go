@@ -231,6 +231,14 @@ func (s *Server) sendBack(c *session, op []byte, keys [][]byte, resp *parser.Res
 	c.backQ <- &PipelineResponse{ctx: pr, err: err, resp: resp}
 }
 
+func (s *Server) handleAuthCommand(opstr string, password []byte) ([]byte, error) {
+	if string(password) != s.conf.ProxyPassword {
+		return []byte("-ERR invalid password"), errors.Errorf("invalid password")
+	}
+
+	return OK_BYTES, nil
+}
+
 func (s *Server) redisTunnel(c *session) error {
 	resp, op, keys, err := getRespOpKeys(c)
 	if err != nil {
@@ -239,6 +247,17 @@ func (s *Server) redisTunnel(c *session) error {
 	k := keys[0]
 
 	opstr := strings.ToUpper(string(op))
+
+	if opstr == "AUTH" {
+		buf, err := s.handleAuthCommand(opstr, k)
+		s.sendBack(c, op, keys, resp, buf)
+		c.authenticated = (err == nil)
+		return errors.Trace(err)
+	} else if len(s.conf.ProxyPassword) > 0 && !c.authenticated {
+		buf := []byte("-ERR NOAUTH Authentication required")
+		s.sendBack(c, op, keys, resp, buf)
+		return errors.Errorf("NOAUTH Authentication required")
+	}
 
 	buf, next, err := filter(opstr, keys, c, s.conf.NetTimeout)
 	if err != nil {
@@ -298,12 +317,13 @@ func (s *Server) handleConn(c net.Conn) {
 
 	s.counter.Add("connections", 1)
 	client := &session{
-		Conn:        c,
-		r:           bufio.NewReaderSize(c, DefaultReaderSize),
-		w:           bufio.NewWriterSize(c, DefaultWiterSize),
-		CreateAt:    time.Now(),
-		backQ:       make(chan *PipelineResponse, PipelineResponseNum),
-		closeSignal: &sync.WaitGroup{},
+		Conn:          c,
+		r:             bufio.NewReaderSize(c, DefaultReaderSize),
+		w:             bufio.NewWriterSize(c, DefaultWiterSize),
+		CreateAt:      time.Now(),
+		backQ:         make(chan *PipelineResponse, PipelineResponseNum),
+		closeSignal:   &sync.WaitGroup{},
+		authenticated: false,
 	}
 	client.closeSignal.Add(1)
 
@@ -703,7 +723,7 @@ func NewServer(conf *Conf) *Server {
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),
-		moper:         newMultiOperator(conf.Addr),
+		moper:         newMultiOperator(conf.Addr, conf.ProxyPassword),
 		reqCh:         make(chan *PipelineRequest, PipelineRequestNum),
 		pools:         redisconn.NewPools(PoolCapability, f),
 		pipeConns:     make(map[string]*taskRunner),

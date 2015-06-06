@@ -19,7 +19,7 @@ func TestMgetResults(t *testing.T) {
 	}
 	defer redisrv.Close()
 
-	moper := newMultiOperator(redisrv.Addr())
+	moper := newMultiOperator(redisrv.Addr(), "")
 	redisrv.Set("a", "a")
 	redisrv.Set("b", "b")
 	redisrv.Set("c", "c")
@@ -61,7 +61,7 @@ func TestMsetResults(t *testing.T) {
 	defer redisrv.Close()
 
 	// for mset x y z bad case test
-	moper := newMultiOperator(redisrv.Addr())
+	moper := newMultiOperator(redisrv.Addr(), "")
 	_, err = moper.msetResults(&MulOp{
 		op: "mset",
 		keys: [][]byte{[]byte("x"),
@@ -82,7 +82,7 @@ func TestDeltResults(t *testing.T) {
 	}
 	defer redisrv.Close()
 
-	moper := newMultiOperator(redisrv.Addr())
+	moper := newMultiOperator(redisrv.Addr(), "")
 	redisrv.Set("a", "a")
 	redisrv.Set("b", "b")
 	redisrv.Set("c", "c")

@@ -138,8 +138,6 @@ func handleSpecCommand(cmd string, keys [][]byte, timeout int) ([]byte, bool, bo
 		shouldClose = true
 	case "SELECT":
 		b = OK_BYTES
-	// case "AUTH":
-	// 	b = OK_BYTES
 	case "ECHO":
 		if len(keys) > 0 {
 			var err error

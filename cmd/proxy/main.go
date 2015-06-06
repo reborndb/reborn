@@ -39,6 +39,8 @@ options:
    --http-addr=<debug_http_addr>  debug vars http server
    --dump-path=<path>             dump path to log crash error
    --pidfile=<path>               proxy pid file
+   --proxy-pass=PASSWORD          proxy password
+   --server-pass=PASSWORD         backend server password
 `
 
 var banner string = `
@@ -55,6 +57,12 @@ func handleSetLogLevel(w http.ResponseWriter, r *http.Request) {
 	level := r.Form.Get("level")
 	log.SetLevelByString(level)
 	log.Info("set log level to", level)
+}
+
+func setStringFromOpt(dest *string, args map[string]interface{}, key string) {
+	if s, ok := args[key].(string); ok && len(s) != 0 {
+		*dest = s
+	}
 }
 
 func main() {
@@ -132,6 +140,9 @@ func main() {
 	conf.HTTPAddr = httpAddr
 	conf.ProxyID = proxyID
 	conf.PidFile = pidfile
+
+	setStringFromOpt(&conf.ProxyPassword, args, "--proxy-pass")
+	setStringFromOpt(&conf.ServerPassword, args, "--server-pass")
 
 	if err := utils.CreatePidFile(conf.PidFile); err != nil {
 		log.Fatal(err)

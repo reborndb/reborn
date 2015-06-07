@@ -24,6 +24,14 @@ type Conf struct {
 	ProxyID  string
 	PidFile  string
 
+	// for client <-> proxy
+	ProxyPassword string
+
+	// for proxy <-> server(redis/qdb)
+	// if you want to use password, you must be sure that
+	// all the backend servers have the same password
+	ServerPassword string
+
 	// unexport
 	f topology.CoordFactory
 }
@@ -53,6 +61,9 @@ func LoadConf(configFile string) (*Conf, error) {
 	srvConf.HTTPAddr, _ = conf.ReadString("http_addr", "")
 	srvConf.ProxyID, _ = conf.ReadString("proxy_id", "")
 	srvConf.PidFile, _ = conf.ReadString("pidfile", "")
+
+	srvConf.ProxyPassword, _ = conf.ReadString("proxy_auth", "")
+	srvConf.ServerPassword, _ = conf.ReadString("server_auth", "")
 
 	return srvConf, nil
 }

@@ -29,6 +29,7 @@ type taskRunner struct {
 	closed     bool
 	wgClose    *sync.WaitGroup
 	latest     time.Time //latest request time stamp
+	password   string
 }
 
 func (tr *taskRunner) readloop() {
@@ -97,7 +98,7 @@ func (tr *taskRunner) tryRecover(err error) error {
 	log.Warning("try recover from ", err)
 	tr.cleanupOutgoingTasks(err)
 	//try to recover
-	c, err := redisconn.NewConnectionWithSize(tr.redisAddr, tr.netTimeout, PipelineBufSize, PipelineBufSize)
+	c, err := newRedisConn(tr.redisAddr, tr.netTimeout, PipelineBufSize, PipelineBufSize, tr.password)
 	if err != nil {
 		tr.cleanupQueueTasks() //do not block dispatcher
 		log.Warning(err)
@@ -203,16 +204,17 @@ func (tr *taskRunner) writeloop() {
 	}
 }
 
-func NewTaskRunner(addr string, netTimeout int) (*taskRunner, error) {
+func NewTaskRunner(addr string, netTimeout int, password string) (*taskRunner, error) {
 	tr := &taskRunner{
 		in:         make(chan interface{}, TaskRunnerInNum),
 		out:        make(chan interface{}, TaskRunnerOutNum),
 		redisAddr:  addr,
 		tasks:      list.New(),
 		netTimeout: netTimeout,
+		password:   password,
 	}
 
-	c, err := redisconn.NewConnectionWithSize(addr, netTimeout, PipelineBufSize, PipelineBufSize)
+	c, err := newRedisConn(addr, netTimeout, PipelineBufSize, PipelineBufSize, password)
 	if err != nil {
 		return nil, err
 	}

@@ -28,6 +28,8 @@ type session struct {
 	lastUnsentResponseSeq int64
 	closed                bool
 	closeSignal           *sync.WaitGroup
+
+	authenticated bool
 }
 
 type PipelineRequest struct {

@@ -21,18 +21,21 @@ import (
 )
 
 var (
-	conf       *Conf
-	s          *Server
-	once       sync.Once
-	waitonce   sync.Once
-	conn       zkhelper.Conn
-	redis1     *miniredis.Miniredis
-	redis2     *miniredis.Miniredis
-	proxyMutex sync.Mutex
+	conf           *Conf
+	s              *Server
+	once           sync.Once
+	waitonce       sync.Once
+	conn           zkhelper.Conn
+	redis1         *miniredis.Miniredis
+	redis2         *miniredis.Miniredis
+	proxyMutex     sync.Mutex
+	proxyPassword  = "123"
+	serverPassword = "abc"
 )
 
 func InitEnv() {
 	go once.Do(func() {
+		log.SetLevelByString("error")
 		conn = zkhelper.NewConn()
 		conf = &Conf{
 			ProductName:     "test",
@@ -43,6 +46,8 @@ func InitEnv() {
 			ProxyID:         "proxy_test",
 			Addr:            ":19000",
 			HTTPAddr:        ":11000",
+			ProxyPassword:   proxyPassword,
+			ServerPassword:  serverPassword,
 		}
 
 		//init action path
@@ -66,6 +71,8 @@ func InitEnv() {
 
 		redis1, _ = miniredis.Run()
 		redis2, _ = miniredis.Run()
+		redis1.RequireAuth(conf.ServerPassword)
+		redis2.RequireAuth(conf.ServerPassword)
 
 		s1 := models.NewServer(models.SERVER_TYPE_MASTER, redis1.Addr())
 		s2 := models.NewServer(models.SERVER_TYPE_MASTER, redis2.Addr())
@@ -110,9 +117,28 @@ func InitEnv() {
 	})
 }
 
+func testDialProxy(addr string) (redis.Conn, error) {
+	c, err := redis.Dial("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(proxyPassword) > 0 {
+		if ok, err := redis.String(c.Do("AUTH", proxyPassword)); err != nil {
+			c.Close()
+			return nil, errors.Trace(err)
+		} else if ok != "OK" {
+			c.Close()
+			return nil, errors.Errorf("not got ok but %s", ok)
+		}
+	}
+
+	return c, nil
+}
+
 func TestSingleKeyRedisCmd(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +165,7 @@ func TestSingleKeyRedisCmd(t *testing.T) {
 
 func TestMget(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +207,7 @@ func TestMget(t *testing.T) {
 
 func TestMultiKeyRedisCmd(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -260,7 +286,7 @@ func TestMultiKeyRedisCmd(t *testing.T) {
 
 func TestInvalidRedisCmdUnknown(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,7 +299,7 @@ func TestInvalidRedisCmdUnknown(t *testing.T) {
 
 func TestNotAllowedCmd(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,7 +317,7 @@ func TestNotAllowedCmd(t *testing.T) {
 
 func TestInvalidRedisCmdPing(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,7 +332,7 @@ func TestInvalidRedisCmdPing(t *testing.T) {
 
 func TestInvalidRedisCmdQuit(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +346,7 @@ func TestInvalidRedisCmdQuit(t *testing.T) {
 
 func TestInvalidRedisCmdEcho(t *testing.T) {
 	InitEnv()
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -365,7 +391,7 @@ func TestMarkOffline(t *testing.T) {
 func TestRedisRestart(t *testing.T) {
 	InitEnv()
 
-	c, err := redis.Dial("tcp", "localhost:19000")
+	c, err := testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,6 +421,9 @@ func TestRedisRestart(t *testing.T) {
 	//restart redis
 	redis1.Restart()
 	redis2.Restart()
+	redis1.RequireAuth(serverPassword)
+	redis2.RequireAuth(serverPassword)
+
 	time.Sleep(3 * time.Second)
 	//proxy should closed our connection
 	_, err = c.Do("SET", "key1", "value1")
@@ -403,7 +432,7 @@ func TestRedisRestart(t *testing.T) {
 	}
 
 	//now, proxy should recovered from connection error
-	c, err = redis.Dial("tcp", "localhost:19000")
+	c, err = testDialProxy("localhost:19000")
 	if err != nil {
 		t.Fatal(err)
 	}

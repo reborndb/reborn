@@ -52,9 +52,9 @@ func getSlotMap(keys [][]byte) map[int][]*pair {
 	return slotmap
 }
 
-func newMultiOperator(server string) *MultiOperator {
+func newMultiOperator(server string, password string) *MultiOperator {
 	oper := &MultiOperator{q: make(chan *MulOp, MultiOperatorNum)}
-	oper.pool = newPool(server, "")
+	oper.pool = newPool(server, password)
 	for i := 0; i < MultiOperatorNum/2; i++ {
 		go oper.work()
 	}
@@ -71,10 +71,12 @@ func newPool(server, password string) *redis.Pool {
 			if err != nil {
 				return nil, err
 			}
-			//if _, err := c.Do("AUTH", password); err != nil {
-			//	c.Close()
-			//	return nil, err
-			//}
+			if len(password) > 0 {
+				if _, err := c.Do("AUTH", password); err != nil {
+					c.Close()
+					return nil, err
+				}
+			}
 			return c, err
 		},
 		//	TestOnBorrow: func(c redis.Conn, t time.Time) error {

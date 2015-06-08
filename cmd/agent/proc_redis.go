@@ -54,9 +54,11 @@ func startRedis(args *redisArgs) (*process, error) {
 	return p, nil
 }
 
-const connectTimeout = 3 * time.Second
-const readTimeout = 3 * time.Second
-const writeTimeout = 3 * time.Second
+const (
+	connectTimeout = 3 * time.Second
+	readTimeout    = 3 * time.Second
+	writeTimeout   = 3 * time.Second
+)
 
 func newRedisConn(ctx map[string]string) (redis.Conn, error) {
 	c, err := redis.DialTimeout("tcp", ctx["addr"], connectTimeout, readTimeout, writeTimeout)

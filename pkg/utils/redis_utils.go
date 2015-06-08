@@ -14,9 +14,25 @@ import (
 
 const RedisConnTimeoutSecond = 1
 
+func newRedisConn(addr string, connectTimeout time.Duration, readTimeout time.Duration, writeTimeout time.Duration, password string) (redis.Conn, error) {
+	c, err := redis.DialTimeout("tcp", addr, connectTimeout, readTimeout, writeTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(password) > 0 {
+		if _, err = c.Do("AUTH", password); err != nil {
+			c.Close()
+			return nil, err
+		}
+	}
+
+	return c, nil
+}
+
 // get redis's slot size
-func SlotsInfo(addr string, fromSlot, toSlot int) (map[int]int, error) {
-	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
+func SlotsInfo(addr string, fromSlot int, toSlot int, password string) (map[int]int, error) {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +67,8 @@ func SlotsInfo(addr string, fromSlot, toSlot int) (map[int]int, error) {
 	return ret, nil
 }
 
-func GetRedisStat(addr string) (map[string]string, error) {
-	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
+func GetRedisStat(addr string, password string) (map[string]string, error) {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +91,7 @@ func GetRedisStat(addr string) (map[string]string, error) {
 
 	var reply []string
 
-	reply, err = redis.Strings(c.Do("config", "get", "maxmemory"))
+	reply, err = redis.Strings(c.Do("CONFIG", "GET", "MAXMEMORY"))
 	if err != nil {
 		return nil, err
 	}
@@ -92,14 +108,14 @@ func GetRedisStat(addr string) (map[string]string, error) {
 	return m, nil
 }
 
-func GetRedisConfig(addr string, configName string) (string, error) {
-	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
+func GetRedisConfig(addr string, configName string, password string) (string, error) {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
 	if err != nil {
 		return "", err
 	}
 	defer c.Close()
 
-	ret, err := redis.Strings(c.Do("config", "get", configName))
+	ret, err := redis.Strings(c.Do("CONFIG", "GET", configName))
 	if err != nil {
 		return "", err
 	}
@@ -111,12 +127,12 @@ func GetRedisConfig(addr string, configName string) (string, error) {
 	return "", nil
 }
 
-func SlaveOf(slave, master string) error {
+func SlaveOf(slave string, master string, password string, masterPassword string) error {
 	if master == slave {
 		return errors.New("can not slave of itself")
 	}
 
-	c, err := redis.DialTimeout("tcp", slave, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
+	c, err := newRedisConn(slave, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -127,6 +143,9 @@ func SlaveOf(slave, master string) error {
 		return errors.Trace(err)
 	}
 
+	// Todo
+	// Maybe we should set master password for slave
+
 	_, err = c.Do("SLAVEOF", host, port)
 	if err != nil {
 		return errors.Trace(err)
@@ -135,8 +154,8 @@ func SlaveOf(slave, master string) error {
 	return nil
 }
 
-func SlaveNoOne(addr string) error {
-	c, err := redis.DialTimeout("tcp", addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second)
+func SlaveNoOne(addr string, password string) error {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
 	if err != nil {
 		return errors.Trace(err)
 	}

@@ -15,8 +15,10 @@ import (
 )
 
 var (
-	once sync.Once
-	conn zkhelper.Conn
+	once           sync.Once
+	conn           zkhelper.Conn
+	password       = ""
+	masterPassword = ""
 )
 
 func runFakeRedisSrv(addr string) {
@@ -53,7 +55,7 @@ func TestAddSlaveToEmptyGroup(t *testing.T) {
 	g.Create(conn)
 
 	s1 := NewServer(SERVER_TYPE_SLAVE, "127.0.0.1:1111")
-	err := g.AddServer(conn, s1)
+	err := g.AddServer(conn, s1, password, masterPassword)
 	if err != nil {
 		t.Error(err)
 	}
@@ -101,7 +103,7 @@ func TestServerGroup(t *testing.T) {
 	s1 := NewServer(SERVER_TYPE_MASTER, "127.0.0.1:1111")
 	s2 := NewServer(SERVER_TYPE_MASTER, "127.0.0.1:2222")
 
-	err = g.AddServer(conn, s1)
+	err = g.AddServer(conn, s1, password, masterPassword)
 
 	servers, err := g.GetServers(conn)
 	if err != nil {
@@ -113,20 +115,20 @@ func TestServerGroup(t *testing.T) {
 		return
 	}
 
-	g.AddServer(conn, s2)
+	g.AddServer(conn, s2, password, masterPassword)
 	if len(g.Servers) != 1 {
 		t.Error("add server error, cannot add 2 masters")
 		return
 	}
 
 	s2.Type = SERVER_TYPE_SLAVE
-	g.AddServer(conn, s2)
+	g.AddServer(conn, s2, password, masterPassword)
 	if len(g.Servers) != 2 {
 		t.Error("add slave server error")
 		return
 	}
 
-	if err := g.Promote(conn, s2.Addr); err != nil {
+	if err := g.Promote(conn, s2.Addr, password, masterPassword); err != nil {
 		t.Error(errors.ErrorStack(err))
 		return
 	}

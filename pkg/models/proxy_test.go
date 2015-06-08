@@ -33,7 +33,7 @@ func TestProxy(t *testing.T) {
 
 	s1 := NewServer(SERVER_TYPE_MASTER, "localhost:1111")
 
-	g.AddServer(fakeCoordConn, s1)
+	g.AddServer(fakeCoordConn, s1, password, masterPassword)
 
 	err = InitSlotSet(fakeCoordConn, productName, 1024)
 	if err != nil {

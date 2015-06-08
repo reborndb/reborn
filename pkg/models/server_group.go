@@ -200,7 +200,7 @@ func (self *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) erro
 	return errors.Trace(err)
 }
 
-func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
+func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string, password string, masterPassword string) error {
 	var s *Server
 	exists := false
 	for i := 0; i < len(self.Servers); i++ {
@@ -215,7 +215,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 		return errors.NotFoundf("no such addr %s", addr)
 	}
 
-	err := utils.SlaveNoOne(s.Addr)
+	err := utils.SlaveNoOne(s.Addr, password)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -229,7 +229,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 	// old master may be nil
 	if master != nil {
 		master.Type = SERVER_TYPE_OFFLINE
-		err = self.AddServer(conn, master)
+		err = self.AddServer(conn, master, password, masterPassword)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -237,7 +237,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 
 	// promote new server to master
 	s.Type = SERVER_TYPE_MASTER
-	err = self.AddServer(conn, s)
+	err = self.AddServer(conn, s, password, masterPassword)
 	return errors.Trace(err)
 }
 
@@ -275,7 +275,7 @@ func (self *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
 
 var ErrNodeExists = errors.New("node already exists")
 
-func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
+func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, password string, masterPassword string) error {
 	s.GroupId = self.Id
 
 	servers, err := self.GetServers(coordConn)
@@ -321,7 +321,7 @@ func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
 		}
 	} else if s.Type == SERVER_TYPE_SLAVE && len(masterAddr) > 0 {
 		// send command slaveof to slave
-		err := utils.SlaveOf(s.Addr, masterAddr)
+		err := utils.SlaveOf(s.Addr, masterAddr, password, masterPassword)
 		if err != nil {
 			return errors.Trace(err)
 		}

@@ -250,7 +250,7 @@ func TestHandleSpecCommand(t *testing.T) {
 
 	//test not specific command
 	{
-		_, _, handled, err := handleSpecCommand("get", nil, 5)
+		_, _, handled, err := handleSpecCommand("GET", nil, 5)
 		if handled {
 			t.Error(errors.ErrorStack(err))
 		}

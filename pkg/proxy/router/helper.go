@@ -112,7 +112,7 @@ func writeMigrateKeyCmd(c *redisconn.Conn, addr string, timeoutMs int, keys ...[
 	}
 
 	for _, key := range keys {
-		err := writeCommand(c, "slotsmgrttagone", hostPort[0], hostPort[1], int(timeoutMs), key)
+		err := writeCommand(c, "SLOTSMGRTTAGONE", hostPort[0], hostPort[1], int(timeoutMs), key)
 		if err != nil {
 			return errors.Trace(err)
 		}

@@ -27,7 +27,7 @@ var (
 	pidfile    = ""
 )
 
-var usage = `usage: proxy [options]
+var usage = `usage: reborn-proxy [options]
 
 options:
    -c <config_file>               set config file

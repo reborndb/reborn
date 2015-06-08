@@ -23,10 +23,11 @@ import (
 
 // global objects
 var (
-	globalEnv  env.Env
-	globalConn zkhelper.Conn
-	livingNode string
-	pidFile    string
+	globalEnv      env.Env
+	globalConn     zkhelper.Conn
+	livingNode     string
+	pidFile        string
+	serverPassword string
 )
 
 type Command struct {
@@ -38,14 +39,15 @@ type Command struct {
 	Ctx   interface{}
 }
 
-var usage = `usage: reborn-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
-		[--http-addr=<debug_http_addr>] [--pidfile=<file>] <command> [<args>...]
+var usage = `usage: reborn-config [options]
+
 options:
-   -c	set config file
-   -L	set output log file, default is stdout
-   --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
-   --http-addr=<debug_http_addr>  debug http address
-   --pidfile=<file>  program pidfile
+   -c								set config file
+   -L								set output log file, default is stdout
+   --log-level=<loglevel>			set log level: info, warn, error, debug [default: info]
+   --http-addr=<debug_http_addr>	debug http address
+   --pidfile=<file>					program pidfile
+   --server-auth=PASSWORD			backend server password
 
 commands:
 	server
@@ -102,6 +104,10 @@ func main() {
 
 	if v := args["--pidfile"]; v != nil {
 		pidFile = v.(string)
+	}
+
+	if v := args["--server-auth"]; v != nil {
+		serverPassword = v.(string)
 	}
 
 	// set config file

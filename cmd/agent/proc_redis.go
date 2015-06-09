@@ -13,8 +13,8 @@ import (
 )
 
 type redisArgs struct {
-	Port string `json:"port"`
-
+	Port     string `json:"port"`
+	Password string `json:"password"`
 	// add customized args later
 }
 
@@ -32,6 +32,7 @@ func startRedis(args *redisArgs) (*process, error) {
 		return nil, fmt.Errorf("redis must have a specail port, not empty")
 	}
 	p.Ctx["addr"] = fmt.Sprintf(":%s", args.Port)
+	p.Ctx["password"] = args.Password
 
 	p.addCmdArgs("--port", args.Port)
 	p.addCmdArgs("--daemonize", "yes")
@@ -53,13 +54,41 @@ func startRedis(args *redisArgs) (*process, error) {
 	return p, nil
 }
 
+const (
+	connectTimeout = 3 * time.Second
+	readTimeout    = 3 * time.Second
+	writeTimeout   = 3 * time.Second
+)
+
+func newRedisConn(ctx map[string]string) (redis.Conn, error) {
+	c, err := redis.DialTimeout("tcp", ctx["addr"], connectTimeout, readTimeout, writeTimeout)
+	if err != nil {
+		return nil, err
+	}
+
+	auth := ctx["password"]
+	if len(auth) > 0 {
+		if ok, err := redis.String(c.Do("AUTH", auth)); err != nil {
+			c.Close()
+			return nil, err
+		} else if ok != "OK" {
+			c.Close()
+			return nil, fmt.Errorf("auth err, need OK but got %s", ok)
+		}
+	}
+
+	return c, nil
+}
+
 func bindRedisProcHandler(p *process) {
 	postStart := func(p *process) error {
-		c, err := redis.DialTimeout("tcp", p.Ctx["addr"], 3*time.Second, 3*time.Second, 3*time.Second)
+		c, err := newRedisConn(p.Ctx)
 		if err != nil {
 			return err
 		}
+
 		defer c.Close()
+
 		if _, err := c.Do("PING"); err != nil {
 			return err
 		}
@@ -67,7 +96,7 @@ func bindRedisProcHandler(p *process) {
 	}
 
 	stop := func(p *process) error {
-		c, err := redis.Dial("tcp", p.Ctx["addr"])
+		c, err := newRedisConn(p.Ctx)
 		if err != nil {
 			return err
 		}

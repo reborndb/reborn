@@ -36,13 +36,13 @@ type ServerGroup struct {
 	Servers     []*Server `json:"servers"`
 }
 
-func (self *Server) String() string {
-	b, _ := json.MarshalIndent(self, "", "  ")
+func (s *Server) String() string {
+	b, _ := json.MarshalIndent(s, "", "  ")
 	return string(b)
 }
 
-func (self *ServerGroup) String() string {
-	b, _ := json.MarshalIndent(self, "", "  ")
+func (sg *ServerGroup) String() string {
+	b, _ := json.MarshalIndent(sg, "", "  ")
 	return string(b) + "\n"
 }
 
@@ -129,8 +129,8 @@ func ServerGroups(coordConn zkhelper.Conn, productName string) ([]*ServerGroup, 
 	return ret, nil
 }
 
-func (self *ServerGroup) Master(coordConn zkhelper.Conn) (*Server, error) {
-	servers, err := self.GetServers(coordConn)
+func (sg *ServerGroup) Master(coordConn zkhelper.Conn) (*Server, error) {
+	servers, err := sg.GetServers(coordConn)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -143,30 +143,30 @@ func (self *ServerGroup) Master(coordConn zkhelper.Conn) (*Server, error) {
 	return nil, nil
 }
 
-func (self *ServerGroup) Remove(coordConn zkhelper.Conn) error {
+func (sg *ServerGroup) Remove(coordConn zkhelper.Conn) error {
 	// check if this group is not used by any slot
-	slots, err := Slots(coordConn, self.ProductName)
+	slots, err := Slots(coordConn, sg.ProductName)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	for _, slot := range slots {
-		if slot.GroupId == self.Id {
+		if slot.GroupId == sg.Id {
 			return errors.AlreadyExistsf("group %d is using by slot %d", slot.GroupId, slot.Id)
 		}
 	}
 
 	// do delete
-	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", sg.ProductName, sg.Id)
 	err = zkhelper.DeleteRecursive(coordConn, coordPath, -1)
 
 	// we know that there's no slots affected, so this action doesn't need proxy confirm
-	err = NewAction(coordConn, self.ProductName, ACTION_TYPE_SERVER_GROUP_REMOVE, self, "", false)
+	err = NewAction(coordConn, sg.ProductName, ACTION_TYPE_SERVER_GROUP_REMOVE, sg, "", false)
 	return errors.Trace(err)
 }
 
-func (self *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) error {
-	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, addr)
+func (sg *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) error {
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", sg.ProductName, sg.Id, addr)
 	data, _, err := coordConn.Get(coordPath)
 	if err != nil {
 		return errors.Trace(err)
@@ -188,24 +188,24 @@ func (self *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) erro
 	}
 
 	// update server list
-	for i := 0; i < len(self.Servers); i++ {
-		if self.Servers[i].Addr == s.Addr {
-			self.Servers = append(self.Servers[:i], self.Servers[i+1:]...)
+	for i := 0; i < len(sg.Servers); i++ {
+		if sg.Servers[i].Addr == s.Addr {
+			sg.Servers = append(sg.Servers[:i], sg.Servers[i+1:]...)
 			break
 		}
 	}
 
 	// remove slave won't need proxy confirm
-	err = NewAction(coordConn, self.ProductName, ACTION_TYPE_SERVER_GROUP_CHANGED, self, "", false)
+	err = NewAction(coordConn, sg.ProductName, ACTION_TYPE_SERVER_GROUP_CHANGED, sg, "", false)
 	return errors.Trace(err)
 }
 
-func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
+func (sg *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 	var s *Server
 	exists := false
-	for i := 0; i < len(self.Servers); i++ {
-		if self.Servers[i].Addr == addr {
-			s = self.Servers[i]
+	for i := 0; i < len(sg.Servers); i++ {
+		if sg.Servers[i].Addr == addr {
+			s = sg.Servers[i]
 			exists = true
 			break
 		}
@@ -221,7 +221,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 	}
 
 	// set origin master offline
-	master, err := self.Master(conn)
+	master, err := sg.Master(conn)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -229,7 +229,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 	// old master may be nil
 	if master != nil {
 		master.Type = SERVER_TYPE_OFFLINE
-		err = self.AddServer(conn, master)
+		err = sg.AddServer(conn, master)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -237,35 +237,35 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 
 	// promote new server to master
 	s.Type = SERVER_TYPE_MASTER
-	err = self.AddServer(conn, s)
+	err = sg.AddServer(conn, s)
 	return errors.Trace(err)
 }
 
-func (self *ServerGroup) Create(coordConn zkhelper.Conn) error {
-	if self.Id < 0 {
-		return errors.NotSupportedf("invalid server group id %d", self.Id)
+func (sg *ServerGroup) Create(coordConn zkhelper.Conn) error {
+	if sg.Id < 0 {
+		return errors.NotSupportedf("invalid server group id %d", sg.Id)
 	}
-	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", sg.ProductName, sg.Id)
 	_, err := zkhelper.CreateOrUpdate(coordConn, coordPath, "", 0, zkhelper.DefaultDirACLs(), true)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	err = NewAction(coordConn, self.ProductName, ACTION_TYPE_SERVER_GROUP_CHANGED, self, "", false)
+	err = NewAction(coordConn, sg.ProductName, ACTION_TYPE_SERVER_GROUP_CHANGED, sg, "", false)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	// set no server slots' group id to this server group, no need to return error
-	slots, err := NoGroupSlots(coordConn, self.ProductName)
+	slots, err := NoGroupSlots(coordConn, sg.ProductName)
 	if err == nil && len(slots) > 0 {
-		SetSlots(coordConn, self.ProductName, slots, self.Id, SLOT_STATUS_ONLINE)
+		SetSlots(coordConn, sg.ProductName, slots, sg.Id, SLOT_STATUS_ONLINE)
 	}
 
 	return nil
 }
 
-func (self *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
-	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+func (sg *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", sg.ProductName, sg.Id)
 	b, err := zkhelper.NodeExists(coordConn, coordPath)
 	if err != nil {
 		return false, errors.Trace(err)
@@ -275,10 +275,10 @@ func (self *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
 
 var ErrNodeExists = errors.New("node already exists")
 
-func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
-	s.GroupId = self.Id
+func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
+	s.GroupId = sg.Id
 
-	servers, err := self.GetServers(coordConn)
+	servers, err := sg.GetServers(coordConn)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -304,18 +304,18 @@ func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
 		return errors.Trace(err)
 	}
 
-	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", self.ProductName, self.Id, s.Addr)
+	coordPath := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d/%s", sg.ProductName, sg.Id, s.Addr)
 	_, err = zkhelper.CreateOrUpdate(coordConn, coordPath, string(val), 0, zkhelper.DefaultFileACLs(), true)
 
 	// update servers
-	servers, err = self.GetServers(coordConn)
+	servers, err = sg.GetServers(coordConn)
 	if err != nil {
 		return errors.Trace(err)
 	}
-	self.Servers = servers
+	sg.Servers = servers
 
 	if s.Type == SERVER_TYPE_MASTER {
-		err = NewAction(coordConn, self.ProductName, ACTION_TYPE_SERVER_GROUP_CHANGED, self, "", true)
+		err = NewAction(coordConn, sg.ProductName, ACTION_TYPE_SERVER_GROUP_CHANGED, sg, "", true)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -330,9 +330,9 @@ func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
 	return nil
 }
 
-func (self *ServerGroup) GetServers(coordConn zkhelper.Conn) ([]*Server, error) {
+func (sg *ServerGroup) GetServers(coordConn zkhelper.Conn) ([]*Server, error) {
 	var ret []*Server
-	root := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", self.ProductName, self.Id)
+	root := fmt.Sprintf("/zk/reborn/db_%s/servers/group_%d", sg.ProductName, sg.Id)
 	nodes, _, err := coordConn.Children(root)
 	if err != nil {
 		return nil, errors.Trace(err)

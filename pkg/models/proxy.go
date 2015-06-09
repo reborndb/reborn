@@ -33,6 +33,13 @@ type ProxyInfo struct {
 	StartAt      string `json:"start_at"`
 }
 
+func (p *ProxyInfo) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[ProxyInfo](%+v)", *p)
+}
+
 func (p *ProxyInfo) Ops() (int64, error) {
 	m, err := p.DebugVars()
 	if err != nil {
@@ -72,6 +79,7 @@ func CreateProxyInfo(coordConn zkhelper.Conn, productName string, pi *ProxyInfo)
 	if err != nil {
 		return "", errors.Trace(err)
 	}
+
 	dir := GetProxyPath(productName)
 	zkhelper.CreateRecursive(coordConn, dir, "", 0, zkhelper.DefaultDirACLs())
 	return coordConn.Create(path.Join(dir, pi.ID), data, zk.FlagEphemeral, zkhelper.DefaultFileACLs())
@@ -99,6 +107,7 @@ func ProxyList(coordConn zkhelper.Conn, productName string, filter func(*ProxyIn
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
+
 		if filter == nil || filter(pi) == true {
 			ret = append(ret, *pi)
 		}
@@ -116,10 +125,12 @@ func GetFenceProxyMap(coordConn zkhelper.Conn, productName string) (map[string]b
 			return nil, err
 		}
 	}
+
 	m := make(map[string]bool, len(children))
 	for _, fenceNode := range children {
 		m[fenceNode] = true
 	}
+
 	return m, nil
 }
 
@@ -141,6 +152,7 @@ func SetProxyStatus(coordConn zkhelper.Conn, productName string, proxyName strin
 		if err != nil {
 			return errors.Trace(err)
 		}
+
 		for _, slot := range slots {
 			if slot.State.Status != SLOT_STATUS_ONLINE {
 				return errors.Errorf("slot %v is not online", slot)
@@ -168,7 +180,9 @@ func SetProxyStatus(coordConn zkhelper.Conn, productName string, proxyName strin
 			} else if err != nil {
 				return errors.Trace(err)
 			}
+
 			<-c
+
 			info, err := GetProxyInfo(coordConn, productName, proxyName)
 			log.Info("mark_offline, check proxy status:", proxyName, info, err)
 			if zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
@@ -177,6 +191,7 @@ func SetProxyStatus(coordConn zkhelper.Conn, productName string, proxyName strin
 			} else if err != nil {
 				return errors.Trace(err)
 			}
+
 			if info.State == PROXY_STATE_OFFLINE {
 				log.Info("proxy:", proxyName, "offline success!")
 				return nil

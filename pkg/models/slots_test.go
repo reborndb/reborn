@@ -4,73 +4,53 @@
 package models
 
 import (
-	"testing"
-
+	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
+	. "gopkg.in/check.v1"
 )
 
-func TestSlots(t *testing.T) {
+func (s *testModelSuite) TestSlots(c *C) {
+	log.Info("[TestSlots][start]")
 	fakeCoordConn := zkhelper.NewConn()
+
 	path := GetSlotBasePath(productName)
 	children, _, _ := fakeCoordConn.Children(path)
-	if len(children) != 0 {
-		t.Error("slot is no empty")
-	}
+	c.Assert(len(children), Equals, 0)
 
 	err := InitSlotSet(fakeCoordConn, productName, 1024)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
-	children, _, _ = fakeCoordConn.Children(path)
-	if len(children) != 1024 {
-		t.Error("init slots error")
-	}
+	children, _, err = fakeCoordConn.Children(path)
+	c.Assert(err, IsNil)
+	c.Assert(len(children), Equals, 1024)
 
-	s, err := GetSlot(fakeCoordConn, productName, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if s.GroupId != -1 {
-		t.Error("init slots error")
-	}
+	sl, err := GetSlot(fakeCoordConn, productName, 1)
+	c.Assert(err, IsNil)
+	c.Assert(sl.GroupId, Equals, -1)
 
 	g := NewServerGroup(productName, 1)
 	g.Create(fakeCoordConn)
 
 	// test create new group
 	_, err = ServerGroups(fakeCoordConn, productName)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	ok, err := g.Exists(fakeCoordConn)
-	if !ok || err != nil {
-		t.Error("create group error")
-	}
+	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, true)
 
 	err = SetSlotRange(fakeCoordConn, productName, 0, 1023, 1, SLOT_STATUS_ONLINE)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
-	s, err = GetSlot(fakeCoordConn, productName, 1)
-	if err != nil {
-		t.Error(err)
-	}
+	sl, err = GetSlot(fakeCoordConn, productName, 1)
+	c.Assert(err, IsNil)
+	c.Assert(sl.GroupId, Equals, 1)
 
-	if s.GroupId != 1 {
-		t.Error("range set error")
-	}
+	err = sl.SetMigrateStatus(fakeCoordConn, 1, 2)
+	c.Assert(err, IsNil)
+	c.Assert(sl.GroupId, Equals, 2)
+	c.Assert(sl.State.Status, Equals, SLOT_STATUS_MIGRATE)
 
-	err = s.SetMigrateStatus(fakeCoordConn, 1, 2)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if s.GroupId != 2 || s.State.Status != SLOT_STATUS_MIGRATE {
-		t.Error("migrate error")
-	}
-
+	fakeCoordConn.Close()
+	log.Info("[TestSlots][end]")
 }

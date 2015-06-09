@@ -5,18 +5,16 @@ package router
 
 import (
 	"strings"
-	"testing"
 
 	"github.com/alicebob/miniredis"
+	. "gopkg.in/check.v1"
 )
 
 var redisrv *miniredis.Miniredis
 
-func TestMgetResults(t *testing.T) {
+func (s *testProxyRouterSuite) TestMgetResults(c *C) {
 	redisrv, err := miniredis.Run()
-	if err != nil {
-		t.Fatal("can not run miniredis")
-	}
+	c.Assert(err, IsNil)
 	defer redisrv.Close()
 
 	moper := newMultiOperator(redisrv.Addr(), "")
@@ -27,37 +25,29 @@ func TestMgetResults(t *testing.T) {
 		op: "mget",
 		keys: [][]byte{[]byte("a"),
 			[]byte("b"), []byte("c"), []byte("x")}})
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	res := string(buf)
-	if !strings.Contains(res, "a") || !strings.Contains(res, "b") || !strings.Contains(res, "c") {
-		t.Error("not match", res)
-	}
+	c.Assert(strings.Contains(res, "a"), Equals, true)
+	c.Assert(strings.Contains(res, "b"), Equals, true)
+	c.Assert(strings.Contains(res, "c"), Equals, true)
 
 	buf, err = moper.mgetResults(&MulOp{
 		op: "mget",
 		keys: [][]byte{[]byte("x"),
 			[]byte("c"), []byte("x")}})
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	buf, err = moper.mgetResults(&MulOp{
 		op: "mget",
 		keys: [][]byte{[]byte("x"),
 			[]byte("y"), []byte("x")}})
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 }
 
-func TestMsetResults(t *testing.T) {
+func (s *testProxyRouterSuite) TestMsetResults(c *C) {
 	redisrv, err := miniredis.Run()
-	if err != nil {
-		t.Fatal("can not run miniredis")
-	}
+	c.Assert(err, IsNil)
 	defer redisrv.Close()
 
 	// for mset x y z bad case test
@@ -66,20 +56,13 @@ func TestMsetResults(t *testing.T) {
 		op: "mset",
 		keys: [][]byte{[]byte("x"),
 			[]byte("y"), []byte("z")}})
-	if err != nil {
-		if !strings.Contains(err.Error(), "bad number of keys for mset command") {
-			t.Error(err)
-		}
-	} else {
-		t.Error("unkown error - should not get here")
-	}
+	c.Assert(err, NotNil)
+	c.Assert(strings.Contains(err.Error(), "bad number of keys for mset command"), Equals, true)
 }
 
-func TestDeltResults(t *testing.T) {
+func (s *testProxyRouterSuite) TestDeltResults(c *C) {
 	redisrv, err := miniredis.Run()
-	if err != nil {
-		t.Fatal("can not run miniredis")
-	}
+	c.Assert(err, IsNil)
 	defer redisrv.Close()
 
 	moper := newMultiOperator(redisrv.Addr(), "")
@@ -90,12 +73,8 @@ func TestDeltResults(t *testing.T) {
 		op: "del",
 		keys: [][]byte{[]byte("a"),
 			[]byte("b"), []byte("c")}})
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	res := string(buf)
-	if !strings.Contains(res, "3") {
-		t.Error("not match", res)
-	}
+	c.Assert(strings.Contains(res, "3"), Equals, true)
 }

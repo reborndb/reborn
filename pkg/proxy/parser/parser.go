@@ -77,7 +77,7 @@ func Itoa(i int) []byte {
 	return []byte(strconv.Itoa(i))
 }
 
-//todo: overflow
+// Todo: overflow
 func Btoi(b []byte) (int, error) {
 	n := 0
 	sign := 1
@@ -179,12 +179,6 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 	}
 
 	resp := &Resp{}
-	// if line[0] == '$' || line[0] == '*' {
-	// 	resp.Raw = make([]byte, 0, len(line)+64)
-	// } else {
-	// 	resp.Raw = make([]byte, 0, len(line))
-	// }
-
 	switch line[0] {
 	case '-', '+', ':', '*':
 		// we will store bulk string and telnet raw later separately
@@ -252,6 +246,7 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 
 			resp.Multi = append(resp.Multi, &Resp{Type: BulkResp, Raw: b})
 		}
+
 		return resp, nil
 	}
 }
@@ -282,7 +277,7 @@ func ReadBulk(r *bufio.Reader, size int, raw *[]byte) error {
 		*raw = append(*raw, old...)
 	}
 
-	//avoid copy
+	// avoid copy
 	if _, err := io.ReadFull(r, (*raw)[n:n+size]); err != nil {
 		return err
 	}
@@ -378,5 +373,6 @@ func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
 	for _, arg := range args {
 		err = writeBulkArg(sw, formatCommandArg(arg))
 	}
+
 	return err
 }

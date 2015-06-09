@@ -21,16 +21,16 @@ import (
 )
 
 var (
-	conf           *Conf
-	s              *Server
-	once           sync.Once
-	waitonce       sync.Once
-	conn           zkhelper.Conn
-	redis1         *miniredis.Miniredis
-	redis2         *miniredis.Miniredis
-	proxyMutex     sync.Mutex
-	proxyPassword  = "123"
-	serverPassword = "abc"
+	conf       *Conf
+	s          *Server
+	once       sync.Once
+	waitonce   sync.Once
+	conn       zkhelper.Conn
+	redis1     *miniredis.Miniredis
+	redis2     *miniredis.Miniredis
+	proxyMutex sync.Mutex
+	proxyAuth  = "123"
+	storeAuth  = "abc"
 )
 
 func InitEnv() {
@@ -46,8 +46,8 @@ func InitEnv() {
 			ProxyID:         "proxy_test",
 			Addr:            ":19000",
 			HTTPAddr:        ":11000",
-			ProxyPassword:   proxyPassword,
-			ServerPassword:  serverPassword,
+			ProxyAuth:       proxyAuth,
+			StoreAuth:       storeAuth,
 		}
 
 		//init action path
@@ -71,14 +71,14 @@ func InitEnv() {
 
 		redis1, _ = miniredis.Run()
 		redis2, _ = miniredis.Run()
-		redis1.RequireAuth(conf.ServerPassword)
-		redis2.RequireAuth(conf.ServerPassword)
+		redis1.RequireAuth(storeAuth)
+		redis2.RequireAuth(storeAuth)
 
 		s1 := models.NewServer(models.SERVER_TYPE_MASTER, redis1.Addr())
 		s2 := models.NewServer(models.SERVER_TYPE_MASTER, redis2.Addr())
 
-		g1.AddServer(conn, s1, serverPassword, serverPassword)
-		g2.AddServer(conn, s2, serverPassword, serverPassword)
+		g1.AddServer(conn, s1, storeAuth, storeAuth)
+		g2.AddServer(conn, s2, storeAuth, storeAuth)
 
 		//set slot range
 		err = models.SetSlotRange(conn, conf.ProductName, 0, 511, 1, models.SLOT_STATUS_ONLINE)
@@ -123,8 +123,8 @@ func testDialProxy(addr string) (redis.Conn, error) {
 		return nil, err
 	}
 
-	if len(proxyPassword) > 0 {
-		if ok, err := redis.String(c.Do("AUTH", proxyPassword)); err != nil {
+	if len(proxyAuth) > 0 {
+		if ok, err := redis.String(c.Do("AUTH", proxyAuth)); err != nil {
 			c.Close()
 			return nil, errors.Trace(err)
 		} else if ok != "OK" {
@@ -421,8 +421,8 @@ func TestRedisRestart(t *testing.T) {
 	//restart redis
 	redis1.Restart()
 	redis2.Restart()
-	redis1.RequireAuth(serverPassword)
-	redis2.RequireAuth(serverPassword)
+	redis1.RequireAuth(storeAuth)
+	redis2.RequireAuth(storeAuth)
 
 	time.Sleep(3 * time.Second)
 	//proxy should closed our connection

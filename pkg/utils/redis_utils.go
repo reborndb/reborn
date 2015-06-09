@@ -12,16 +12,16 @@ import (
 	"github.com/juju/errors"
 )
 
-const RedisConnTimeoutSecond = 1
+const RedisConnTimeoutSecond = 1 * time.Second
 
-func newRedisConn(addr string, connectTimeout time.Duration, readTimeout time.Duration, writeTimeout time.Duration, password string) (redis.Conn, error) {
+func newRedisConn(addr string, connectTimeout time.Duration, readTimeout time.Duration, writeTimeout time.Duration, auth string) (redis.Conn, error) {
 	c, err := redis.DialTimeout("tcp", addr, connectTimeout, readTimeout, writeTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(password) > 0 {
-		if _, err = c.Do("AUTH", password); err != nil {
+	if len(auth) > 0 {
+		if _, err = c.Do("AUTH", auth); err != nil {
 			c.Close()
 			return nil, err
 		}
@@ -31,8 +31,8 @@ func newRedisConn(addr string, connectTimeout time.Duration, readTimeout time.Du
 }
 
 // get redis's slot size
-func SlotsInfo(addr string, fromSlot int, toSlot int, password string) (map[int]int, error) {
-	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
+func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int, error) {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond, RedisConnTimeoutSecond, RedisConnTimeoutSecond, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +67,8 @@ func SlotsInfo(addr string, fromSlot int, toSlot int, password string) (map[int]
 	return ret, nil
 }
 
-func GetRedisStat(addr string, password string) (map[string]string, error) {
-	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
+func GetRedisStat(addr string, auth string) (map[string]string, error) {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond, RedisConnTimeoutSecond, RedisConnTimeoutSecond, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -99,17 +99,17 @@ func GetRedisStat(addr string, password string) (map[string]string, error) {
 	// we got result
 	if len(reply) == 2 {
 		if reply[1] != "0" {
-			m["maxmemory"] = reply[1]
+			m["MAXMEMORY"] = reply[1]
 		} else {
-			m["maxmemory"] = "∞"
+			m["MAXMEMORY"] = "∞"
 		}
 	}
 
 	return m, nil
 }
 
-func GetRedisConfig(addr string, configName string, password string) (string, error) {
-	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
+func GetRedisConfig(addr string, configName string, auth string) (string, error) {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond, RedisConnTimeoutSecond, RedisConnTimeoutSecond, auth)
 	if err != nil {
 		return "", err
 	}
@@ -127,12 +127,12 @@ func GetRedisConfig(addr string, configName string, password string) (string, er
 	return "", nil
 }
 
-func SlaveOf(slave string, master string, password string, masterPassword string) error {
+func SlaveOf(slave string, master string, auth string, masterAuth string) error {
 	if master == slave {
 		return errors.New("can not slave of itself")
 	}
 
-	c, err := newRedisConn(slave, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
+	c, err := newRedisConn(slave, RedisConnTimeoutSecond, RedisConnTimeoutSecond, RedisConnTimeoutSecond, auth)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -144,7 +144,7 @@ func SlaveOf(slave string, master string, password string, masterPassword string
 	}
 
 	// Todo
-	// Maybe we should set master password for slave
+	// Maybe we should set master auth for slave
 
 	_, err = c.Do("SLAVEOF", host, port)
 	if err != nil {
@@ -154,8 +154,8 @@ func SlaveOf(slave string, master string, password string, masterPassword string
 	return nil
 }
 
-func SlaveNoOne(addr string, password string) error {
-	c, err := newRedisConn(addr, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, RedisConnTimeoutSecond*time.Second, password)
+func SlaveNoOne(addr string, auth string) error {
+	c, err := newRedisConn(addr, RedisConnTimeoutSecond, RedisConnTimeoutSecond, RedisConnTimeoutSecond, auth)
 	if err != nil {
 		return errors.Trace(err)
 	}

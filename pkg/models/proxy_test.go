@@ -9,6 +9,11 @@ import (
 	"github.com/ngaut/zkhelper"
 )
 
+var (
+	auth       = ""
+	masterAuth = ""
+)
+
 func TestProxy(t *testing.T) {
 	fakeCoordConn := zkhelper.NewConn()
 	path := GetSlotBasePath(productName)
@@ -33,7 +38,7 @@ func TestProxy(t *testing.T) {
 
 	s1 := NewServer(SERVER_TYPE_MASTER, "localhost:1111")
 
-	g.AddServer(fakeCoordConn, s1, password, masterPassword)
+	g.AddServer(fakeCoordConn, s1, auth, masterAuth)
 
 	err = InitSlotSet(fakeCoordConn, productName, 1024)
 	if err != nil {

@@ -74,7 +74,7 @@ func apiOverview() (int, string) {
 
 	if len(instances) > 0 {
 		for _, instance := range instances {
-			info, err := utils.GetRedisStat(instance, serverPassword)
+			info, err := utils.GetRedisStat(instance, globalEnv.StoreAuth())
 			if err != nil {
 				log.Error(err)
 			}
@@ -129,7 +129,7 @@ func apiInitSlots(r *http.Request) (int, string) {
 
 func apiRedisStat(param martini.Params) (int, string) {
 	addr := param["addr"]
-	info, err := utils.GetRedisStat(addr, serverPassword)
+	info, err := utils.GetRedisStat(addr, globalEnv.StoreAuth())
 	if err != nil {
 		return 500, err.Error()
 	}
@@ -267,7 +267,7 @@ func apiGetRedisSlotInfo(param martini.Params) (int, string) {
 		return 500, err.Error()
 	}
 
-	slotInfo, err := utils.SlotsInfo(addr, slotId, slotId, serverPassword)
+	slotInfo, err := utils.SlotsInfo(addr, slotId, slotId, globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
@@ -313,7 +313,7 @@ func apiGetRedisSlotInfoFromGroupId(param martini.Params) (int, string) {
 		return 500, "master not found"
 	}
 
-	slotInfo, err := utils.SlotsInfo(s.Addr, slotId, slotId, serverPassword)
+	slotInfo, err := utils.SlotsInfo(s.Addr, slotId, slotId, globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
@@ -421,7 +421,7 @@ func apiAddServerToGroup(server models.Server, param martini.Params) (int, strin
 		}
 	}
 
-	if err := serverGroup.AddServer(conn, &server, serverPassword, serverPassword); err != nil {
+	if err := serverGroup.AddServer(conn, &server, globalEnv.StoreAuth(), globalEnv.StoreAuth()); err != nil {
 		log.Warning(errors.ErrorStack(err))
 		return 500, err.Error()
 	}
@@ -447,7 +447,7 @@ func apiPromoteServer(server models.Server, param martini.Params) (int, string) 
 		log.Warning(err)
 		return 500, err.Error()
 	}
-	err = group.Promote(conn, server.Addr, serverPassword, serverPassword)
+	err = group.Promote(conn, server.Addr, globalEnv.StoreAuth(), globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(errors.ErrorStack(err))
 		log.Warning(err)

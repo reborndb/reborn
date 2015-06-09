@@ -1,6 +1,7 @@
 package env
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -23,6 +24,13 @@ type RebornEnv struct {
 	coordinator     string
 	coordinatorAddr string
 	storeAuth       string
+}
+
+func (e *RebornEnv) String() string {
+	if e == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[RebornEnv](%+v)", *e)
 }
 
 func LoadRebornEnv(cfg *cfg.Cfg) Env {
@@ -55,10 +63,7 @@ func LoadRebornEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
-	storeAuth, err := cfg.ReadString("storeAuth", "")
-	if err != nil {
-		log.Fatal(err)
-	}
+	storeAuth, _ := cfg.ReadString("storeAuth", "")
 
 	return &RebornEnv{
 		dashboardAddr:   dashboardAddr,

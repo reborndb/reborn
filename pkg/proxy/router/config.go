@@ -4,6 +4,7 @@
 package router
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/reborndb/reborn/pkg/proxy/router/topology"
@@ -34,6 +35,13 @@ type Conf struct {
 
 	// unexport
 	f topology.CoordFactory
+}
+
+func (c *Conf) String() string {
+	if c == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[Conf](%+v)", *c)
 }
 
 func LoadConf(configFile string) (*Conf, error) {

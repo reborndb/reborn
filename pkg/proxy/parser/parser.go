@@ -179,12 +179,6 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 	}
 
 	resp := &Resp{}
-	// if line[0] == '$' || line[0] == '*' {
-	// 	resp.Raw = make([]byte, 0, len(line)+64)
-	// } else {
-	// 	resp.Raw = make([]byte, 0, len(line))
-	// }
-
 	switch line[0] {
 	case '-', '+', ':', '*':
 		// we will store bulk string and telnet raw later separately
@@ -252,7 +246,7 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 
 			resp.Multi = append(resp.Multi, &Resp{Type: BulkResp, Raw: b})
 		}
-		
+
 		return resp, nil
 	}
 }
@@ -379,6 +373,6 @@ func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
 	for _, arg := range args {
 		err = writeBulkArg(sw, formatCommandArg(arg))
 	}
-	
+
 	return err
 }

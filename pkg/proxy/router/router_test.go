@@ -15,14 +15,29 @@ import (
 
 	"github.com/alicebob/miniredis"
 	"github.com/garyburd/redigo/redis"
-	"github.com/juju/errors"
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
+	. "gopkg.in/check.v1"
 )
+
+func TestT(t *testing.T) {
+	TestingT(t)
+}
+
+var _ = Suite(&testProxyRouterSuite{})
+
+type testProxyRouterSuite struct {
+}
+
+func (s *testProxyRouterSuite) SetUpSuite(c *C) {
+}
+
+func (s *testProxyRouterSuite) TearDownSuite(c *C) {
+}
 
 var (
 	conf           *Conf
-	s              *Server
+	ss             *Server
 	once           sync.Once
 	waitonce       sync.Once
 	conn           zkhelper.Conn
@@ -33,7 +48,7 @@ var (
 	serverPassword = "abc"
 )
 
-func InitEnv() {
+func (s *testProxyRouterSuite) InitEnv(c *C) {
 	go once.Do(func() {
 		log.SetLevelByString("error")
 		conn = zkhelper.NewConn()
@@ -50,20 +65,16 @@ func InitEnv() {
 			ServerPassword:  serverPassword,
 		}
 
-		//init action path
+		// init action path
 		prefix := models.GetWatchActionPath(conf.ProductName)
 		err := models.CreateActionRootPath(conn, prefix)
-		if err != nil {
-			log.Fatal(err)
-		}
+		c.Assert(err, IsNil)
 
-		//init slot
+		// init slot
 		err = models.InitSlotSet(conn, conf.ProductName, 1024)
-		if err != nil {
-			log.Fatal(err)
-		}
+		c.Assert(err, IsNil)
 
-		//init  server group
+		// init  server group
 		g1 := models.NewServerGroup(conf.ProductName, 1)
 		g1.Create(conn)
 		g2 := models.NewServerGroup(conf.ProductName, 2)
@@ -80,36 +91,30 @@ func InitEnv() {
 		g1.AddServer(conn, s1)
 		g2.AddServer(conn, s2)
 
-		//set slot range
+		// set slot range
 		err = models.SetSlotRange(conn, conf.ProductName, 0, 511, 1, models.SLOT_STATUS_ONLINE)
-		if err != nil {
-			log.Fatal(err)
-		}
+		c.Assert(err, IsNil)
 
 		err = models.SetSlotRange(conn, conf.ProductName, 512, 1023, 2, models.SLOT_STATUS_ONLINE)
-		if err != nil {
-			log.Fatal(err)
-		}
+		c.Assert(err, IsNil)
 
 		go func() { //set proxy online
 			time.Sleep(3 * time.Second)
 			err := models.SetProxyStatus(conn, conf.ProductName, conf.ProxyID, models.PROXY_STATE_ONLINE)
-			if err != nil {
-				log.Fatal(errors.ErrorStack(err))
-			}
+			c.Assert(err, IsNil)
+
 			time.Sleep(2 * time.Second)
 			proxyMutex.Lock()
 			defer proxyMutex.Unlock()
-			pi := s.getProxyInfo()
-			if pi.State != models.PROXY_STATE_ONLINE {
-				log.Fatalf("should be online, we got %s", pi.State)
-			}
+
+			pi := ss.getProxyInfo()
+			c.Assert(pi.State, Equals, models.PROXY_STATE_ONLINE)
 		}()
 
 		proxyMutex.Lock()
-		s = NewServer(conf)
+		ss = NewServer(conf)
 		proxyMutex.Unlock()
-		s.Run()
+		ss.Run()
 	})
 
 	waitonce.Do(func() {
@@ -117,75 +122,59 @@ func InitEnv() {
 	})
 }
 
-func testDialProxy(addr string) (redis.Conn, error) {
-	c, err := redis.Dial("tcp", addr)
-	if err != nil {
-		return nil, err
-	}
+func (s *testProxyRouterSuite) testDialProxy(c *C, addr string) (redis.Conn, error) {
+	cc, err := redis.Dial("tcp", addr)
+	c.Assert(err, IsNil)
 
 	if len(proxyPassword) > 0 {
-		if ok, err := redis.String(c.Do("AUTH", proxyPassword)); err != nil {
-			c.Close()
-			return nil, errors.Trace(err)
-		} else if ok != "OK" {
-			c.Close()
-			return nil, errors.Errorf("not got ok but %s", ok)
-		}
+		ok, err := redis.String(cc.Do("AUTH", proxyPassword))
+		c.Assert(err, IsNil)
+		c.Assert(ok, Equals, "OK")
 	}
 
-	return c, nil
+	return cc, nil
 }
 
-func TestSingleKeyRedisCmd(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestSingleKeyRedisCmd(c *C) {
+	s.InitEnv(c)
 
-	_, err = c.Do("SET", "foo", "bar")
-	if err != nil {
-		t.Error(err)
-	}
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
 
-	if got, err := redis.String(c.Do("get", "foo")); err != nil || got != "bar" {
-		t.Error("'foo' has the wrong value")
-	}
+	_, err = cc.Do("SET", "foo", "bar")
+	c.Assert(err, IsNil)
 
-	_, err = c.Do("SET", "bar", "foo")
-	if err != nil {
-		t.Error(err)
-	}
+	got, err := redis.String(cc.Do("get", "foo"))
+	c.Assert(err, IsNil)
+	c.Assert(got, Equals, "bar")
 
-	if got, err := redis.String(c.Do("get", "bar")); err != nil || got != "foo" {
-		t.Error("'bar' has the wrong value")
-	}
+	_, err = cc.Do("SET", "bar", "foo")
+	c.Assert(err, IsNil)
+
+	got, err = redis.String(cc.Do("get", "bar"))
+	c.Assert(err, IsNil)
+	c.Assert(got, Equals, "foo")
 }
 
-func TestMget(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestMget(c *C) {
+	s.InitEnv(c)
+
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
 
 	const count = 20480
 	keys := make([]interface{}, count)
 	for i := 0; i < count; i++ {
 		s := strconv.Itoa(i)
 		keys[i] = s
-		_, err := c.Do("SET", s, s)
-		if err != nil {
-			t.Fatal(err)
-		}
+		_, err := cc.Do("SET", s, s)
+		c.Assert(err, IsNil)
 	}
 
-	reply, err := redis.Values(c.Do("MGET", keys...))
-	if err != nil {
-		t.Fatal(err)
-	}
+	reply, err := redis.Values(cc.Do("MGET", keys...))
+	c.Assert(err, IsNil)
 
 	temp := make([]string, count)
 	values := make([]interface{}, count)
@@ -193,253 +182,196 @@ func TestMget(t *testing.T) {
 	for i := 0; i < count; i++ {
 		values[i] = &temp[i]
 	}
-	if _, err := redis.Scan(reply, values...); err != nil {
-		t.Fatal(err)
-	}
+
+	_, err = redis.Scan(reply, values...)
+	c.Assert(err, IsNil)
 
 	for i := 0; i < count; i++ {
-		if keys[i] != temp[i] {
-			t.Fatalf("key, value not match, expect %v, got %v, reply:%+v",
-				keys[i], temp[i], reply)
-		}
+		c.Assert(keys[i], Equals, temp[i])
 	}
 }
 
-func TestMultiKeyRedisCmd(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestMultiKeyRedisCmd(c *C) {
+	s.InitEnv(c)
 
-	_, err = c.Do("SET", "key1", "value1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.Do("SET", "key2", "value2")
-	if err != nil {
-		t.Fatal(err)
-	}
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
+
+	_, err = cc.Do("SET", "key1", "value1")
+	c.Assert(err, IsNil)
+
+	_, err = cc.Do("SET", "key2", "value2")
+	c.Assert(err, IsNil)
 
 	var value1 string
 	var value2 string
 	var value3 string
-	reply, err := redis.Values(c.Do("MGET", "key1", "key2", "key3"))
-	if err != nil {
-		t.Fatal(err)
-	}
 
-	if _, err := redis.Scan(reply, &value1, &value2, &value3); err != nil {
-		t.Fatal(err)
-	}
+	reply, err := redis.Values(cc.Do("MGET", "key1", "key2", "key3"))
+	c.Assert(err, IsNil)
 
-	if value1 != "value1" || value2 != "value2" || len(value3) != 0 {
-		t.Error("value not match")
-	}
+	_, err = redis.Scan(reply, &value1, &value2, &value3)
+	c.Assert(err, IsNil)
+	c.Assert(value1, Equals, "value1")
+	c.Assert(value2, Equals, "value2")
+	c.Assert(len(value3), Equals, 0)
 
-	//test del
-	if _, err := c.Do("del", "key1", "key2", "key3"); err != nil {
-		t.Fatal(err)
-	}
+	// test del
+	_, err = cc.Do("del", "key1", "key2", "key3")
+	c.Assert(err, IsNil)
 
-	//reset
-	value1 = ""
-	value2 = ""
-	value3 = ""
-	reply, err = redis.Values(c.Do("MGET", "key1", "key2", "key3"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if _, err := redis.Scan(reply, &value1, &value2, &value3); err != nil {
-		t.Fatal(err)
-	}
-
-	if len(value1) != 0 || len(value2) != 0 || len(value3) != 0 {
-		t.Error("value not match", value1, value2, value3)
-	}
-
-	//reset
+	// reset
 	value1 = ""
 	value2 = ""
 	value3 = ""
 
-	_, err = c.Do("MSET", "key1", "value1", "key2", "value2", "key3", "")
-	if err != nil {
-		t.Fatal(err)
-	}
+	reply, err = redis.Values(cc.Do("MGET", "key1", "key2", "key3"))
+	c.Assert(err, IsNil)
 
-	reply, err = redis.Values(c.Do("MGET", "key1", "key2", "key3"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, err = redis.Scan(reply, &value1, &value2, &value3)
+	c.Assert(err, IsNil)
+	c.Assert(len(value1), Equals, 0)
+	c.Assert(len(value2), Equals, 0)
+	c.Assert(len(value3), Equals, 0)
 
-	if _, err := redis.Scan(reply, &value1, &value2, &value3); err != nil {
-		t.Fatal(err)
-	}
+	// reset
+	value1 = ""
+	value2 = ""
+	value3 = ""
 
-	if value1 != "value1" || value2 != "value2" || len(value3) != 0 {
-		t.Error("value not match", value1, value2, value3)
-	}
+	_, err = cc.Do("MSET", "key1", "value1", "key2", "value2", "key3", "")
+	c.Assert(err, IsNil)
+
+	reply, err = redis.Values(cc.Do("MGET", "key1", "key2", "key3"))
+	c.Assert(err, IsNil)
+
+	_, err = redis.Scan(reply, &value1, &value2, &value3)
+	c.Assert(err, IsNil)
+	c.Assert(value1, Equals, "value1")
+	c.Assert(value2, Equals, "value2")
+	c.Assert(len(value3), Equals, 0)
 }
 
-func TestInvalidRedisCmdUnknown(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestInvalidRedisCmdUnknown(c *C) {
+	s.InitEnv(c)
 
-	if _, err := c.Do("unknown", "key1", "key2", "key3"); err == nil {
-		t.Fatal(err)
-	}
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
+
+	_, err = cc.Do("unknown", "key1", "key2", "key3")
+	c.Assert(err, NotNil)
 }
 
-func TestNotAllowedCmd(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestNotAllowedCmd(c *C) {
+	s.InitEnv(c)
 
-	_, err = c.Do("save")
-	if err == nil {
-		t.Error("should report error")
-	}
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
 
-	if strings.Index(err.Error(), "not allowed") < 0 {
-		t.Error("should report error")
-	}
+	_, err = cc.Do("save")
+	c.Assert(err, NotNil)
+	c.Assert(strings.Contains(err.Error(), "not allowed"), Equals, true)
 }
 
-func TestInvalidRedisCmdPing(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestInvalidRedisCmdPing(c *C) {
+	s.InitEnv(c)
 
-	reply, err := c.Do("ping")
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
 
-	if reply.(string) != "PONG" {
-		t.Error("should report error", reply)
-	}
+	reply, err := cc.Do("ping")
+	c.Assert(err, IsNil)
+	c.Assert(reply.(string), Equals, "PONG")
 }
 
-func TestInvalidRedisCmdQuit(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestInvalidRedisCmdQuit(c *C) {
+	s.InitEnv(c)
 
-	_, err = c.Do("quit")
-	if err != nil {
-		t.Fatal(err)
-	}
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
+
+	_, err = cc.Do("quit")
+	c.Assert(err, IsNil)
 }
 
-func TestInvalidRedisCmdEcho(t *testing.T) {
-	InitEnv()
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+func (s *testProxyRouterSuite) TestInvalidRedisCmdEcho(c *C) {
+	s.InitEnv(c)
 
-	_, err = c.Do("echo", "xx")
-	if err != nil {
-		t.Fatal(err)
-	}
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
 
-	_, err = c.Do("echo")
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, err = cc.Do("echo", "xx")
+	c.Assert(err, IsNil)
 
+	_, err = cc.Do("echo")
+	c.Assert(err, IsNil)
 }
 
-//this should be the last test
-func TestMarkOffline(t *testing.T) {
-	InitEnv()
+// this should be the last test
+func (s *testProxyRouterSuite) TestMarkOffline(c *C) {
+	s.InitEnv(c)
 
 	suicide := int64(0)
 	proxyMutex.Lock()
-	s.onSuicide = func() error {
+	ss.onSuicide = func() error {
 		atomic.StoreInt64(&suicide, 1)
 		return nil
 	}
 	proxyMutex.Unlock()
 
 	err := models.SetProxyStatus(conn, conf.ProductName, conf.ProxyID, models.PROXY_STATE_MARK_OFFLINE)
-	if err != nil {
-		t.Fatal(errors.ErrorStack(err))
-	}
+	c.Assert(err, IsNil)
 
 	time.Sleep(3 * time.Second)
-
-	if atomic.LoadInt64(&suicide) == 0 {
-		t.Error("shoud be suicided")
-	}
+	c.Assert(atomic.LoadInt64(&suicide), Not(Equals), 0)
 }
 
-func TestRedisRestart(t *testing.T) {
-	InitEnv()
+func (s *testProxyRouterSuite) TestRedisRestart(c *C) {
+	s.InitEnv(c)
 
-	c, err := testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+	cc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer cc.Close()
 
-	_, err = c.Do("SET", "key1", "value1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = c.Do("SET", "key2", "value2")
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, err = cc.Do("SET", "key1", "value1")
+	c.Assert(err, IsNil)
 
-	//close redis
+	_, err = cc.Do("SET", "key2", "value2")
+	c.Assert(err, IsNil)
+
+	// close redis
 	redis1.Close()
 	redis2.Close()
-	_, err = c.Do("SET", "key1", "value1")
-	if err == nil {
-		t.Fatal("should be error")
-	}
-	_, err = c.Do("SET", "key2", "value2")
-	if err == nil {
-		t.Fatal("should be error")
-	}
+	_, err = cc.Do("SET", "key1", "value1")
+	c.Assert(err, NotNil)
 
-	//restart redis
+	_, err = cc.Do("SET", "key2", "value2")
+	c.Assert(err, NotNil)
+
+	// restart redis
 	redis1.Restart()
 	redis2.Restart()
+
 	redis1.RequireAuth(serverPassword)
 	redis2.RequireAuth(serverPassword)
 
 	time.Sleep(3 * time.Second)
-	//proxy should closed our connection
-	_, err = c.Do("SET", "key1", "value1")
-	if err == nil {
-		t.Error("should be error")
-	}
 
-	//now, proxy should recovered from connection error
-	c, err = testDialProxy("localhost:19000")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer c.Close()
+	// proxy should closed our connection
+	_, err = cc.Do("SET", "key1", "value1")
+	c.Assert(err, NotNil)
 
-	_, err = c.Do("SET", "key1", "value1")
-	if err != nil {
-		t.Fatal(err)
-	}
+	// now, proxy should recovered from connection error
+	ccc, err := s.testDialProxy(c, "localhost:19000")
+	c.Assert(err, IsNil)
+	defer ccc.Close()
+
+	_, err = ccc.Do("SET", "key1", "value1")
+	c.Assert(err, IsNil)
 }

@@ -77,7 +77,7 @@ func Itoa(i int) []byte {
 	return []byte(strconv.Itoa(i))
 }
 
-// Todo: overflow
+// TODO: overflow
 func Btoi(b []byte) (int, error) {
 	n := 0
 	sign := 1

@@ -39,7 +39,7 @@ func (s *testModelSuite) runFakeRedisSrv(addr string) {
 	}
 }
 
-// Todo
+// TODO
 // Use qdb later
 func (s *testModelSuite) resetEnv() {
 	conn = zkhelper.NewConn()

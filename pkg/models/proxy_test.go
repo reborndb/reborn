@@ -4,7 +4,14 @@
 package models
 
 import (
+	"fmt"
+	"os"
+	"path"
 	"testing"
+
+	"github.com/reborndb/qdb/pkg/engine/rocksdb"
+	"github.com/reborndb/qdb/pkg/service"
+	"github.com/reborndb/qdb/pkg/store"
 
 	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
@@ -21,13 +28,66 @@ func TestT(t *testing.T) {
 
 var _ = Suite(&testModelSuite{})
 
+type testServer struct {
+	addr  string
+	store *store.Store
+}
+
+func (s *testServer) Close() {
+	if s.store != nil {
+		s.store.Close()
+		s.store = nil
+	}
+}
+
 type testModelSuite struct {
+	s1 *testServer
+	s2 *testServer
 }
 
 func (s *testModelSuite) SetUpSuite(c *C) {
+	s.s1 = s.testCreateServer(c, 26380)
+	c.Assert(s.s1, NotNil)
+
+	s.s2 = s.testCreateServer(c, 26381)
+	c.Assert(s.s2, NotNil)
 }
 
 func (s *testModelSuite) TearDownSuite(c *C) {
+	if s.s1 != nil {
+		s.s1.Close()
+	}
+
+	if s.s2 != nil {
+		s.s2.Close()
+	}
+}
+
+func (s *testModelSuite) testCreateServer(c *C, port int) *testServer {
+	base := fmt.Sprintf("/tmp/test_reborn/test_proxy_models/%d", port)
+	err := os.RemoveAll(base)
+	c.Assert(err, IsNil)
+
+	err = os.MkdirAll(base, 0700)
+	c.Assert(err, IsNil)
+
+	conf := rocksdb.NewDefaultConfig()
+	testdb, err := rocksdb.Open(path.Join(base, "db"), conf, false)
+	c.Assert(err, IsNil)
+
+	cfg := service.NewDefaultConfig()
+	cfg.Listen = fmt.Sprintf("127.0.0.1:%d", port)
+	cfg.DumpPath = path.Join(base, "rdb.dump")
+	cfg.SyncFilePath = path.Join(base, "sync.pipe")
+
+	store := store.New(testdb)
+	go service.Serve(cfg, store)
+
+	ss := new(testServer)
+	ss.addr = cfg.Listen
+	ss.store = store
+
+	return ss
 }
 
 func (s *testModelSuite) TestProxy(c *C) {

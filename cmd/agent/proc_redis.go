@@ -13,8 +13,7 @@ import (
 )
 
 type redisArgs struct {
-	Port     string `json:"port"`
-	Password string `json:"password"`
+	Port string `json:"port"`
 	// add customized args later
 }
 
@@ -32,7 +31,6 @@ func startRedis(args *redisArgs) (*process, error) {
 		return nil, fmt.Errorf("redis must have a specail port, not empty")
 	}
 	p.Ctx["addr"] = fmt.Sprintf(":%s", args.Port)
-	p.Ctx["password"] = args.Password
 
 	p.addCmdArgs("--port", args.Port)
 	p.addCmdArgs("--daemonize", "yes")
@@ -66,7 +64,7 @@ func newRedisConn(ctx map[string]string) (redis.Conn, error) {
 		return nil, err
 	}
 
-	auth := ctx["password"]
+	auth := globalEnv.StoreAuth()
 	if len(auth) > 0 {
 		if ok, err := redis.String(c.Do("AUTH", auth)); err != nil {
 			c.Close()

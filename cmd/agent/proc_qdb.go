@@ -11,9 +11,10 @@ import (
 )
 
 type qdbArgs struct {
-	Addr   string `json:"addr"`
-	DBType string `json:"dbtype"`
-	CPUNum string `json:"cpu_num"`
+	Addr     string `json:"addr"`
+	DBType   string `json:"dbtype"`
+	CPUNum   string `json:"cpu_num"`
+	Password string `json:"password"`
 }
 
 // qdb-server
@@ -29,6 +30,7 @@ func startQDB(args *qdbArgs) (*process, error) {
 	}
 
 	p.Ctx["addr"] = args.Addr
+	p.Ctx["password"] = args.Password
 
 	if len(qdbConfigFile) > 0 {
 		p.addCmdArgs(fmt.Sprintf("--config=%s", qdbConfigFile))

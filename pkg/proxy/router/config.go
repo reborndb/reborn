@@ -4,6 +4,7 @@
 package router
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/reborndb/reborn/pkg/proxy/router/topology"
@@ -25,15 +26,22 @@ type Conf struct {
 	PidFile  string
 
 	// for client <-> proxy
-	ProxyPassword string
+	ProxyAuth string
 
 	// for proxy <-> server(redis/qdb)
-	// if you want to use password, you must be sure that
-	// all the backend servers have the same password
-	ServerPassword string
+	// if you want to use auth, you must be sure that
+	// all the backend servers have the same auth
+	StoreAuth string
 
 	// unexport
 	f topology.CoordFactory
+}
+
+func (c *Conf) String() string {
+	if c == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[Conf](%+v)", *c)
 }
 
 func LoadConf(configFile string) (*Conf, error) {
@@ -62,8 +70,8 @@ func LoadConf(configFile string) (*Conf, error) {
 	srvConf.ProxyID, _ = conf.ReadString("proxy_id", "")
 	srvConf.PidFile, _ = conf.ReadString("pidfile", "")
 
-	srvConf.ProxyPassword, _ = conf.ReadString("proxy_auth", "")
-	srvConf.ServerPassword, _ = conf.ReadString("server_auth", "")
+	srvConf.ProxyAuth, _ = conf.ReadString("proxy_auth", "")
+	srvConf.StoreAuth, _ = conf.ReadString("store_auth", "")
 
 	return srvConf, nil
 }

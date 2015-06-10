@@ -74,7 +74,7 @@ func apiOverview() (int, string) {
 
 	if len(instances) > 0 {
 		for _, instance := range instances {
-			info, err := utils.GetRedisStat(instance)
+			info, err := utils.GetRedisStat(instance, globalEnv.StoreAuth())
 			if err != nil {
 				log.Error(err)
 			}
@@ -90,11 +90,13 @@ func apiOverview() (int, string) {
 func apiGetServerGroupList() (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
+
 	groups, err := models.ServerGroups(conn, globalEnv.ProductName())
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	b, err := json.MarshalIndent(groups, " ", "  ")
 	return 200, string(b)
 }
@@ -127,7 +129,7 @@ func apiInitSlots(r *http.Request) (int, string) {
 
 func apiRedisStat(param martini.Params) (int, string) {
 	addr := param["addr"]
-	info, err := utils.GetRedisStat(addr)
+	info, err := utils.GetRedisStat(addr, globalEnv.StoreAuth())
 	if err != nil {
 		return 500, err.Error()
 	}
@@ -149,8 +151,10 @@ func apiDoMigrate(taskForm MigrateTaskInfo, param martini.Params) (int, string) 
 	return jsonRetSucc()
 }
 
-var isRebalancing bool
-var rebalanceLck = sync.Mutex{}
+var (
+	isRebalancing = false
+	rebalanceLck  = sync.Mutex{}
+)
 
 func changeRebalanceStat(b bool) {
 	rebalanceLck.Lock()
@@ -161,6 +165,7 @@ func changeRebalanceStat(b bool) {
 func isOnRebalancing() bool {
 	rebalanceLck.Lock()
 	defer rebalanceLck.Unlock()
+
 	return isRebalancing
 }
 
@@ -168,6 +173,7 @@ func apiRebalanceStatus(param martini.Params) (int, string) {
 	ret := map[string]interface{}{
 		"is_rebalancing": isRebalancing,
 	}
+
 	b, _ := json.MarshalIndent(ret, " ", "  ")
 	return 200, string(b)
 }
@@ -203,6 +209,7 @@ func apiRemovePendingMigrateTask(param martini.Params) (int, string) {
 	if err := globalMigrateManager.RemovePendingTask(id); err != nil {
 		return 500, "Error removing task: " + err.Error()
 	}
+
 	return jsonRetSucc()
 }
 
@@ -210,6 +217,7 @@ func apiStopMigratingTask(param martini.Params) (int, string) {
 	if err := globalMigrateManager.StopRunningTask(); err != nil {
 		return 500, "Error stopping migrate task: " + err.Error()
 	}
+
 	return jsonRetSucc()
 }
 
@@ -220,13 +228,16 @@ func apiGetServerGroup(param martini.Params) (int, string) {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	conn := CreateCoordConn()
 	defer conn.Close()
+
 	group, err := models.GetGroup(conn, globalEnv.ProductName(), groupId)
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	b, err := json.MarshalIndent(group, " ", "  ")
 	return 200, string(b)
 }
@@ -244,6 +255,7 @@ func apiMigrateStatus() (int, string) {
 		"migrate_slots": migrateSlots,
 		"migrate_task":  globalMigrateManager.runningTask,
 	}, " ", "  ")
+
 	return 200, string(b)
 }
 
@@ -254,15 +266,18 @@ func apiGetRedisSlotInfo(param martini.Params) (int, string) {
 		log.Warning(err)
 		return 500, err.Error()
 	}
-	slotInfo, err := utils.SlotsInfo(addr, slotId, slotId)
+
+	slotInfo, err := utils.SlotsInfo(addr, slotId, slotId, globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	out, _ := json.MarshalIndent(map[string]interface{}{
 		"keys":    slotInfo[slotId],
 		"slot_id": slotId,
 	}, " ", "  ")
+
 	return 200, string(out)
 }
 
@@ -272,11 +287,13 @@ func apiGetRedisSlotInfoFromGroupId(param martini.Params) (int, string) {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	slotId, err := strconv.Atoi(param["slot_id"])
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	conn := CreateCoordConn()
 	defer conn.Close()
 
@@ -296,7 +313,7 @@ func apiGetRedisSlotInfoFromGroupId(param martini.Params) (int, string) {
 		return 500, "master not found"
 	}
 
-	slotInfo, err := utils.SlotsInfo(s.Addr, slotId, slotId)
+	slotInfo, err := utils.SlotsInfo(s.Addr, slotId, slotId, globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(err)
 		return 500, err.Error()
@@ -308,6 +325,7 @@ func apiGetRedisSlotInfoFromGroupId(param martini.Params) (int, string) {
 		"group_id": groupId,
 		"addr":     s.Addr,
 	}, " ", "  ")
+
 	return 200, string(out)
 
 }
@@ -358,9 +376,11 @@ func apiAddServerGroup(newGroup models.ServerGroup) (int, string) {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	if exists {
 		return 500, "group already exists"
 	}
+
 	err = newGroup.Create(conn)
 	if err != nil {
 		log.Warning(err)
@@ -384,6 +404,7 @@ func apiAddServerToGroup(server models.Server, param martini.Params) (int, strin
 			log.Warning(err)
 		}
 	}()
+
 	// check group exists first
 	serverGroup := models.NewServerGroup(globalEnv.ProductName(), groupId)
 
@@ -400,7 +421,7 @@ func apiAddServerToGroup(server models.Server, param martini.Params) (int, strin
 		}
 	}
 
-	if err := serverGroup.AddServer(conn, &server); err != nil {
+	if err := serverGroup.AddServer(conn, &server, globalEnv.StoreAuth()); err != nil {
 		log.Warning(errors.ErrorStack(err))
 		return 500, err.Error()
 	}
@@ -426,7 +447,7 @@ func apiPromoteServer(server models.Server, param martini.Params) (int, string) 
 		log.Warning(err)
 		return 500, err.Error()
 	}
-	err = group.Promote(conn, server.Addr)
+	err = group.Promote(conn, server.Addr, globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(errors.ErrorStack(err))
 		log.Warning(err)
@@ -457,6 +478,7 @@ func apiRemoveServerFromGroup(server models.Server, param martini.Params) (int, 
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	return jsonRetSucc()
 }
 
@@ -472,6 +494,7 @@ func apiSetProxyStatus(proxy models.ProxyInfo, param martini.Params) (int, strin
 		log.Warning(errors.ErrorStack(err))
 		return 500, err.Error()
 	}
+
 	return jsonRetSucc()
 }
 
@@ -484,6 +507,7 @@ func apiGetProxyList(param martini.Params) (int, string) {
 		log.Warning(err)
 		return 500, err.Error()
 	}
+
 	b, err := json.MarshalIndent(proxies, " ", "  ")
 	return 200, string(b)
 }
@@ -509,11 +533,13 @@ func apiGetSingleSlot(param martini.Params) (int, string) {
 func apiGetSlots() (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
+
 	slots, err := models.Slots(conn, globalEnv.ProductName())
 	if err != nil {
 		log.Warning("Error getting slot info, try init slots first? err: ", err)
 		return 500, err.Error()
 	}
+
 	b, err := json.MarshalIndent(slots, " ", "  ")
 	return 200, string(b)
 }
@@ -568,20 +594,24 @@ func apiActionGC(r *http.Request) (int, string) {
 	} else if secs > 0 {
 		err = models.ActionGC(conn, globalEnv.ProductName(), models.GC_TYPE_SEC, secs)
 	}
+
 	if err != nil {
 		return 500, err.Error()
 	}
+
 	return jsonRetSucc()
 }
 
 func apiForceRemoveLocks() (int, string) {
 	conn := CreateCoordConn()
 	defer conn.Close()
+
 	err := models.ForceRemoveLock(conn, globalEnv.ProductName())
 	if err != nil {
 		log.Warning(errors.ErrorStack(err))
 		return 500, err.Error()
 	}
+
 	return jsonRetSucc()
 }
 

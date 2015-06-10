@@ -87,6 +87,7 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int) *testServer {
 }
 
 var (
+
 	conf           *Conf
 	ss             *Server
 	once           sync.Once
@@ -112,8 +113,8 @@ func (s *testProxyRouterSuite) InitEnv(c *C) {
 			ProxyID:         "proxy_test",
 			Addr:            ":19000",
 			HTTPAddr:        ":11000",
-			ProxyPassword:   proxyPassword,
-			ServerPassword:  serverPassword,
+			ProxyAuth:       proxyAuth,
+			StoreAuth:       storeAuth,
 		}
 
 		// init action path
@@ -133,14 +134,14 @@ func (s *testProxyRouterSuite) InitEnv(c *C) {
 
 		redis1, _ = miniredis.Run()
 		redis2, _ = miniredis.Run()
-		redis1.RequireAuth(conf.ServerPassword)
-		redis2.RequireAuth(conf.ServerPassword)
+		redis1.RequireAuth(storeAuth)
+		redis2.RequireAuth(storeAuth)
 
 		s1 := models.NewServer(models.SERVER_TYPE_MASTER, redis1.Addr())
 		s2 := models.NewServer(models.SERVER_TYPE_MASTER, redis2.Addr())
 
-		g1.AddServer(conn, s1)
-		g2.AddServer(conn, s2)
+		g1.AddServer(conn, s1, storeAuth)
+		g2.AddServer(conn, s2, storeAuth)
 
 		// set slot range
 		err = models.SetSlotRange(conn, conf.ProductName, 0, 511, 1, models.SLOT_STATUS_ONLINE)

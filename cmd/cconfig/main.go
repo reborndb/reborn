@@ -38,21 +38,21 @@ type Command struct {
 	Ctx   interface{}
 }
 
-var usage = `usage: reborn-config  [-c <config_file>] [-L <log_file>] [--log-level=<loglevel>]
-		[--http-addr=<debug_http_addr>] [--pidfile=<file>] <command> [<args>...]
+var usage = `usage: reborn-config [options] <command> [<args>...]
+
 options:
-   -c	set config file
-   -L	set output log file, default is stdout
-   --log-level=<loglevel>	set log level: info, warn, error, debug [default: info]
+   -c set config file
+   -L set output log file, default is stdout
+   --log-level=<loglevel> set log level: info, warn, error, debug [default: info]
    --http-addr=<debug_http_addr>  debug http address
-   --pidfile=<file>  program pidfile
+   --pidfile=<file> program pidfile
 
 commands:
-	server
-	slot
-	dashboard
-	action
-	proxy
+    server
+    slot
+    dashboard
+    action
+    proxy
 `
 
 func Fatal(msg interface{}) {

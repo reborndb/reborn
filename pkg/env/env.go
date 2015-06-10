@@ -1,6 +1,7 @@
 package env
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 type Env interface {
 	ProductName() string
 	DashboardAddr() string
+	StoreAuth() string
 	NewCoordConn() (zkhelper.Conn, error)
 }
 
@@ -21,6 +23,14 @@ type RebornEnv struct {
 	productName     string
 	coordinator     string
 	coordinatorAddr string
+	storeAuth       string
+}
+
+func (e *RebornEnv) String() string {
+	if e == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[RebornEnv](%+v)", *e)
 }
 
 func LoadRebornEnv(cfg *cfg.Cfg) Env {
@@ -53,11 +63,14 @@ func LoadRebornEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
+	storeAuth, _ := cfg.ReadString("store_auth", "")
+
 	return &RebornEnv{
 		dashboardAddr:   dashboardAddr,
 		productName:     productName,
 		coordinator:     coordinator,
 		coordinatorAddr: coordinatorAddr,
+		storeAuth:       storeAuth,
 	}
 }
 
@@ -67,6 +80,10 @@ func (e *RebornEnv) ProductName() string {
 
 func (e *RebornEnv) DashboardAddr() string {
 	return e.dashboardAddr
+}
+
+func (e *RebornEnv) StoreAuth() string {
+	return e.storeAuth
 }
 
 func (e *RebornEnv) NewCoordConn() (zkhelper.Conn, error) {

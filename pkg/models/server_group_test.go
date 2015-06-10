@@ -17,7 +17,7 @@ func (s *testModelSuite) TestAddSlaveToEmptyGroup(c *C) {
 	g.Create(fakeCoordConn)
 
 	s1 := NewServer(SERVER_TYPE_SLAVE, s.s1.addr)
-	err := g.AddServer(fakeCoordConn, s1)
+	err := g.AddServer(fakeCoordConn, s1, auth)
 	c.Assert(err, IsNil)
 	c.Assert(g.Servers[0].Type, Equals, SERVER_TYPE_MASTER)
 
@@ -49,18 +49,18 @@ func (s *testModelSuite) TestServerGroup(c *C) {
 	s1 := NewServer(SERVER_TYPE_MASTER, s.s1.addr)
 	s2 := NewServer(SERVER_TYPE_MASTER, s.s2.addr)
 
-	err = g.AddServer(fakeCoordConn, s1)
+	err = g.AddServer(fakeCoordConn, s1, auth)
 	c.Assert(err, IsNil)
 
 	servers, err := g.GetServers(fakeCoordConn)
 	c.Assert(err, IsNil)
 	c.Assert(len(servers), Equals, 1)
 
-	g.AddServer(fakeCoordConn, s2)
+	g.AddServer(fakeCoordConn, s2, auth)
 	c.Assert(len(g.Servers), Equals, 1)
 
 	s2.Type = SERVER_TYPE_SLAVE
-	g.AddServer(fakeCoordConn, s2)
+	g.AddServer(fakeCoordConn, s2, auth)
 	c.Assert(len(g.Servers), Equals, 2)
 
 	err = g.Promote(fakeCoordConn, s2.Addr)

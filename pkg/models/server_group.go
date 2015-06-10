@@ -215,7 +215,7 @@ func (sg *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 		return errors.NotFoundf("no such addr %s", addr)
 	}
 
-	err := utils.SlaveNoOne(s.Addr)
+	err := utils.SlaveNoOne(s.Addr, auth)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -229,6 +229,7 @@ func (sg *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 	// old master may be nil
 	if master != nil {
 		master.Type = SERVER_TYPE_OFFLINE
+
 		err = sg.AddServer(conn, master)
 		if err != nil {
 			return errors.Trace(err)
@@ -237,7 +238,7 @@ func (sg *ServerGroup) Promote(conn zkhelper.Conn, addr string) error {
 
 	// promote new server to master
 	s.Type = SERVER_TYPE_MASTER
-	err = sg.AddServer(conn, s)
+	err = self.AddServer(conn, s, auth)
 	return errors.Trace(err)
 }
 
@@ -275,8 +276,8 @@ func (sg *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
 
 var ErrNodeExists = errors.New("node already exists")
 
-func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
-	s.GroupId = sg.Id
+func (self *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, auth string) error {
+	s.GroupId = self.Id
 
 	servers, err := sg.GetServers(coordConn)
 	if err != nil {
@@ -321,7 +322,7 @@ func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server) error {
 		}
 	} else if s.Type == SERVER_TYPE_SLAVE && len(masterAddr) > 0 {
 		// send command slaveof to slave
-		err := utils.SlaveOf(s.Addr, masterAddr)
+		err := utils.SlaveOf(s.Addr, masterAddr, auth)
 		if err != nil {
 			return errors.Trace(err)
 		}

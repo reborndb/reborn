@@ -111,7 +111,7 @@ func (s *testModelSuite) TestProxy(c *C) {
 
 	s1 := NewServer(SERVER_TYPE_MASTER, "localhost:1111")
 
-	g.AddServer(fakeCoordConn, s1)
+	g.AddServer(fakeCoordConn, s1, auth)
 
 	err = InitSlotSet(fakeCoordConn, productName, 1024)
 	c.Assert(err, IsNil)

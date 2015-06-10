@@ -73,7 +73,7 @@ func apiStopProc(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// /start_redis?port=6379&password=abc
+// /start_redis?port=6379
 func apiStartRedisProc(w http.ResponseWriter, r *http.Request) {
 	port := r.FormValue("port")
 	if len(port) == 0 {
@@ -85,11 +85,8 @@ func apiStartRedisProc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	password := r.FormValue("password")
-
 	args := new(redisArgs)
 	args.Port = port
-	args.Password = password
 
 	p, err := startRedis(args)
 	if err != nil {
@@ -100,12 +97,11 @@ func apiStartRedisProc(w http.ResponseWriter, r *http.Request) {
 	respJson(w, p)
 }
 
-// /start_qdb?addr=addr&dbtype=rocksdb&cpu_num=2&password=abc
+// /start_qdb?addr=addr&dbtype=rocksdb&cpu_num=2
 func apiStartQDBProc(w http.ResponseWriter, r *http.Request) {
 	addr := r.FormValue("addr")
 	dbType := r.FormValue("dbtype")
 	cpuNum := r.FormValue("cpu_num")
-	password := r.FormValue("password")
 
 	if len(addr) == 0 {
 		respError(w, http.StatusBadRequest, "must have an address for qdb, not empty")
@@ -120,7 +116,6 @@ func apiStartQDBProc(w http.ResponseWriter, r *http.Request) {
 	args.Addr = addr
 	args.DBType = dbType
 	args.CPUNum = cpuNum
-	args.Password = password
 
 	p, err := startQDB(args)
 	if err != nil {

@@ -138,7 +138,7 @@ func (s *Server) fillSlot(i int, force bool) {
 func (s *Server) createTaskRunner(slot *Slot) error {
 	dst := slot.dst.Master()
 	if _, ok := s.pipeConns[dst]; !ok {
-		tr, err := NewTaskRunner(dst, s.conf.NetTimeout, s.conf.ServerPassword)
+		tr, err := NewTaskRunner(dst, s.conf.NetTimeout, s.conf.StoreAuth)
 		if err != nil {
 			return errors.Errorf("create task runner failed, %v,  %+v, %+v", err, slot.dst, slot.slotInfo)
 		} else {
@@ -231,9 +231,9 @@ func (s *Server) sendBack(c *session, op []byte, keys [][]byte, resp *parser.Res
 	c.backQ <- &PipelineResponse{ctx: pr, err: err, resp: resp}
 }
 
-func (s *Server) handleAuthCommand(opstr string, password []byte) ([]byte, error) {
-	if string(password) != s.conf.ProxyPassword {
-		return []byte("-ERR invalid password"), errors.Errorf("invalid password")
+func (s *Server) handleAuthCommand(opstr string, auth []byte) ([]byte, error) {
+	if string(auth) != s.conf.ProxyAuth {
+		return []byte("-ERR invalid auth"), errors.Errorf("invalid auth")
 	}
 
 	return OK_BYTES, nil
@@ -253,7 +253,7 @@ func (s *Server) redisTunnel(c *session) error {
 		s.sendBack(c, op, keys, resp, buf)
 		c.authenticated = (err == nil)
 		return errors.Trace(err)
-	} else if len(s.conf.ProxyPassword) > 0 && !c.authenticated {
+	} else if len(s.conf.ProxyAuth) > 0 && !c.authenticated {
 		buf := []byte("-ERR NOAUTH Authentication required")
 		s.sendBack(c, op, keys, resp, buf)
 		return errors.Errorf("NOAUTH Authentication required")
@@ -695,13 +695,13 @@ func (s *Server) RegisterAndWait(wait bool) {
 	}
 }
 
-func newRedisConn(addr string, timeout int, readSize int, writeSize int, password string) (*redisconn.Conn, error) {
+func newRedisConn(addr string, timeout int, readSize int, writeSize int, auth string) (*redisconn.Conn, error) {
 	c, err := redisconn.NewConnectionWithSize(addr, timeout, readSize, writeSize)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = doAuth(c, password); err != nil {
+	if err = doAuth(c, auth); err != nil {
 		c.Close()
 		return nil, err
 	}
@@ -713,7 +713,7 @@ func NewServer(conf *Conf) *Server {
 	log.Infof("start with configuration: %+v", conf)
 
 	f := func(addr string) (*redisconn.Conn, error) {
-		return newRedisConn(addr, conf.NetTimeout, RedisConnReaderSize, RedisConnWiterSize, conf.ServerPassword)
+		return newRedisConn(addr, conf.NetTimeout, RedisConnReaderSize, RedisConnWiterSize, conf.StoreAuth)
 	}
 
 	s := &Server{
@@ -723,7 +723,7 @@ func NewServer(conf *Conf) *Server {
 		counter:       stats.NewCounters("router"),
 		lastActionSeq: -1,
 		startAt:       time.Now(),
-		moper:         newMultiOperator(conf.Addr, conf.ProxyPassword),
+		moper:         newMultiOperator(conf.Addr, conf.ProxyAuth),
 		reqCh:         make(chan *PipelineRequest, PipelineRequestNum),
 		pools:         redisconn.NewPools(PoolCapability, f),
 		pipeConns:     make(map[string]*taskRunner),

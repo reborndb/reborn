@@ -97,12 +97,12 @@ func doCommandMustOK(c *redisconn.Conn, cmd string, args ...interface{}) error {
 	return nil
 }
 
-func doAuth(c *redisconn.Conn, password string) error {
-	if len(password) == 0 {
+func doAuth(c *redisconn.Conn, auth string) error {
+	if len(auth) == 0 {
 		return nil
 	}
 
-	return doCommandMustOK(c, "AUTH", password)
+	return doCommandMustOK(c, "AUTH", auth)
 }
 
 func writeMigrateKeyCmd(c *redisconn.Conn, addr string, timeoutMs int, keys ...[]byte) error {
@@ -112,7 +112,7 @@ func writeMigrateKeyCmd(c *redisconn.Conn, addr string, timeoutMs int, keys ...[
 	}
 
 	for _, key := range keys {
-		err := writeCommand(c, "slotsmgrttagone", hostPort[0], hostPort[1], int(timeoutMs), key)
+		err := writeCommand(c, "SLOTSMGRTTAGONE", hostPort[0], hostPort[1], int(timeoutMs), key)
 		if err != nil {
 			return errors.Trace(err)
 		}

@@ -6,28 +6,40 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"syscall"
 
 	docopt "github.com/docopt/docopt-go"
+	"github.com/juju/errors"
+	"github.com/ngaut/go-zookeeper/zk"
 	log "github.com/ngaut/logging"
+	"github.com/ngaut/zkhelper"
+	"github.com/reborndb/reborn/pkg/env"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 var (
 	cpus            = 2
-	addr            = ":39000"
+	addr            = "127.0.0.1:39000"
 	dataDir         = "./var/data"
 	logDir          = "./var/log"
 	configFile      = "config.ini"
 	qdbConfigFile   = "" // like "qdb.toml"
 	redisConfigFile = "" // like "redis.conf"
+
+	agentID    string
+	globalEnv  env.Env
+	globalConn zkhelper.Conn
 )
 
 var usage = `usage: reborn-agent [options]
 
 options:
-    --addr=<listen_addr>           agent http listen address, example: 0.0.0.0:39000
+    --addr=<listen_addr>           agent http listen address, example: 127.0.0.1:39000
     --data-dir=<data_dir>          directory to store important data
     --log-dir=<app_log_dir>        directory to store log 
     -L <log_file>                  set output log file, default is stdout
@@ -66,6 +78,20 @@ func resetAbsPath(dest *string) {
 	}
 }
 
+func fatal(msg interface{}) {
+	if globalConn != nil {
+		globalConn.Close()
+	}
+
+	// cleanup
+	switch msg.(type) {
+	case string:
+		log.Fatal(msg)
+	case error:
+		log.Fatal(errors.ErrorStack(msg.(error)))
+	}
+}
+
 func main() {
 	log.SetLevelByString("info")
 
@@ -74,8 +100,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	agentID = genProcID()
+
 	setStringFromOpt(&configFile, args, "-c")
 	resetAbsPath(&configFile)
+
+	cfg, err := utils.InitConfigFromFile(configFile)
+	if err != nil {
+		fatal(err)
+	}
+
+	globalEnv = env.LoadRebornEnv(cfg)
+	globalConn, err = globalEnv.NewCoordConn()
+	if err != nil {
+		fatal(err)
+	}
+
+	addAgent()
 
 	setStringFromOpt(&qdbConfigFile, args, "--qdb-config")
 	resetAbsPath(&qdbConfigFile)
@@ -102,7 +143,7 @@ func main() {
 	if v := getStringArg(args, "--cpu"); len(v) > 0 {
 		cpus, err = strconv.Atoi(v)
 		if err != nil {
-			log.Fatal(err)
+			fatal(err)
 		}
 	}
 
@@ -123,6 +164,14 @@ func main() {
 
 	runtime.GOMAXPROCS(cpus)
 
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, os.Interrupt, os.Kill)
+	go func() {
+		<-c
+
+		fatal("ctrl-c or SIGTERM found, exit")
+	}()
+
 	if err := loadSavedProcs(); err != nil {
 		log.Fatalf("restart agent using last saved processes err: %v", err)
 	} else {
@@ -131,4 +180,19 @@ func main() {
 
 	log.Infof("listening %s", addr)
 	runHTTPServer()
+}
+
+func addAgent() {
+	agentPath := fmt.Sprintf("/zk/reborn/db_%s/agent", globalEnv.ProductName())
+
+	zkhelper.CreateRecursive(globalConn, agentPath, "", 0, zkhelper.DefaultDirACLs())
+
+	pid := os.Getpid()
+	contents := fmt.Sprintf(`{"addr": "%s", "pid": %v}`, addr, pid)
+
+	_, err := globalConn.Create(path.Join(agentPath, agentID),
+		[]byte(contents), zk.FlagEphemeral, zkhelper.DefaultFileACLs())
+	if err != nil {
+		fatal(err)
+	}
 }

@@ -4,6 +4,9 @@
 package router
 
 import (
+	"fmt"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -11,6 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/reborndb/qdb/pkg/engine/rocksdb"
+	"github.com/reborndb/qdb/pkg/service"
+	"github.com/reborndb/qdb/pkg/store"
 	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/alicebob/miniredis"
@@ -26,13 +32,58 @@ func TestT(t *testing.T) {
 
 var _ = Suite(&testProxyRouterSuite{})
 
+type testServer struct {
+	addr  string
+	store *store.Store
+}
+
+func (s *testServer) Close() {
+	if s.store != nil {
+		s.store.Close()
+		s.store = nil
+	}
+}
+
 type testProxyRouterSuite struct {
+	s *testServer
 }
 
 func (s *testProxyRouterSuite) SetUpSuite(c *C) {
+	s.s = s.testCreateServer(c, 16380)
+	c.Assert(s.s, NotNil)
 }
 
 func (s *testProxyRouterSuite) TearDownSuite(c *C) {
+	if s.s != nil {
+		s.s.Close()
+	}
+}
+
+func (s *testProxyRouterSuite) testCreateServer(c *C, port int) *testServer {
+	base := fmt.Sprintf("/tmp/test_reborn/test_proxy_router/%d", port)
+	err := os.RemoveAll(base)
+	c.Assert(err, IsNil)
+
+	err = os.MkdirAll(base, 0700)
+	c.Assert(err, IsNil)
+
+	conf := rocksdb.NewDefaultConfig()
+	testdb, err := rocksdb.Open(path.Join(base, "db"), conf, false)
+	c.Assert(err, IsNil)
+
+	cfg := service.NewDefaultConfig()
+	cfg.Listen = fmt.Sprintf("127.0.0.1:%d", port)
+	cfg.DumpPath = path.Join(base, "rdb.dump")
+	cfg.SyncFilePath = path.Join(base, "sync.pipe")
+
+	store := store.New(testdb)
+	go service.Serve(cfg, store)
+
+	ss := new(testServer)
+	ss.addr = cfg.Listen
+	ss.store = store
+
+	return ss
 }
 
 var (

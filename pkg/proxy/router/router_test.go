@@ -77,8 +77,8 @@ func InitEnv() {
 		s1 := models.NewServer(models.SERVER_TYPE_MASTER, redis1.Addr())
 		s2 := models.NewServer(models.SERVER_TYPE_MASTER, redis2.Addr())
 
-		g1.AddServer(conn, s1, storeAuth, storeAuth)
-		g2.AddServer(conn, s2, storeAuth, storeAuth)
+		g1.AddServer(conn, s1, storeAuth)
+		g2.AddServer(conn, s2, storeAuth)
 
 		//set slot range
 		err = models.SetSlotRange(conn, conf.ProductName, 0, 511, 1, models.SLOT_STATUS_ONLINE)

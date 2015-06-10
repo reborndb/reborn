@@ -421,7 +421,7 @@ func apiAddServerToGroup(server models.Server, param martini.Params) (int, strin
 		}
 	}
 
-	if err := serverGroup.AddServer(conn, &server, globalEnv.StoreAuth(), globalEnv.StoreAuth()); err != nil {
+	if err := serverGroup.AddServer(conn, &server, globalEnv.StoreAuth()); err != nil {
 		log.Warning(errors.ErrorStack(err))
 		return 500, err.Error()
 	}
@@ -447,7 +447,7 @@ func apiPromoteServer(server models.Server, param martini.Params) (int, string) 
 		log.Warning(err)
 		return 500, err.Error()
 	}
-	err = group.Promote(conn, server.Addr, globalEnv.StoreAuth(), globalEnv.StoreAuth())
+	err = group.Promote(conn, server.Addr, globalEnv.StoreAuth())
 	if err != nil {
 		log.Warning(errors.ErrorStack(err))
 		log.Warning(err)

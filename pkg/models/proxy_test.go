@@ -10,8 +10,7 @@ import (
 )
 
 var (
-	auth       = ""
-	masterAuth = ""
+	auth = ""
 )
 
 func TestProxy(t *testing.T) {
@@ -38,7 +37,7 @@ func TestProxy(t *testing.T) {
 
 	s1 := NewServer(SERVER_TYPE_MASTER, "localhost:1111")
 
-	g.AddServer(fakeCoordConn, s1, auth, masterAuth)
+	g.AddServer(fakeCoordConn, s1, auth)
 
 	err = InitSlotSet(fakeCoordConn, productName, 1024)
 	if err != nil {

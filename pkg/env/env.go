@@ -63,7 +63,7 @@ func LoadRebornEnv(cfg *cfg.Cfg) Env {
 		log.Fatal(err)
 	}
 
-	storeAuth, _ := cfg.ReadString("storeAuth", "")
+	storeAuth, _ := cfg.ReadString("store_auth", "")
 
 	return &RebornEnv{
 		dashboardAddr:   dashboardAddr,

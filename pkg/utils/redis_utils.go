@@ -18,8 +18,8 @@ const (
 	RedisConnWriteTimeout   = 1 * time.Second
 )
 
-func newRedisConn(addr string, connectTimeout time.Duration, readTimeout time.Duration, writeTimeout time.Duration, auth string) (redis.Conn, error) {
-	c, err := redis.DialTimeout("tcp", addr, connectTimeout, readTimeout, writeTimeout)
+func newRedisConn(addr string, auth string) (redis.Conn, error) {
+	c, err := redis.DialTimeout("tcp", addr, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func newRedisConn(addr string, connectTimeout time.Duration, readTimeout time.Du
 
 // get redis's slot size
 func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int, error) {
-	c, err := newRedisConn(addr, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout, auth)
+	c, err := newRedisConn(addr, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int,
 }
 
 func GetRedisStat(addr string, auth string) (map[string]string, error) {
-	c, err := newRedisConn(addr, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout, auth)
+	c, err := newRedisConn(addr, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func GetRedisStat(addr string, auth string) (map[string]string, error) {
 }
 
 func GetRedisConfig(addr string, configName string, auth string) (string, error) {
-	c, err := newRedisConn(addr, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout, auth)
+	c, err := newRedisConn(addr, auth)
 	if err != nil {
 		return "", err
 	}
@@ -136,7 +136,7 @@ func SlaveOf(slave string, master string, auth string) error {
 		return errors.New("can not slave of itself")
 	}
 
-	c, err := newRedisConn(slave, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout, auth)
+	c, err := newRedisConn(slave, auth)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -159,7 +159,7 @@ func SlaveOf(slave string, master string, auth string) error {
 }
 
 func SlaveNoOne(addr string, auth string) error {
-	c, err := newRedisConn(addr, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout, auth)
+	c, err := newRedisConn(addr, auth)
 	if err != nil {
 		return errors.Trace(err)
 	}

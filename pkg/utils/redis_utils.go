@@ -172,3 +172,33 @@ func SlaveNoOne(addr string, auth string) error {
 
 	return nil
 }
+
+func Ping(addr string, auth string) error {
+	c, err := newRedisConn(addr, auth)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	defer c.Close()
+
+	pong, err := redis.String(c.Do("PING"))
+	if err != nil {
+		return errors.Trace(err)
+	} else if pong != "PONG" {
+		return errors.Errorf("ping needs pong, but we got %s", pong)
+	}
+	return nil
+}
+
+func GetRedisInfo(addr string, section string, auth string) (string, error) {
+	c, err := newRedisConn(addr, auth)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+	defer c.Close()
+
+	if len(section) > 0 {
+		return redis.String(c.Do("INFO", section))
+	} else {
+		return redis.String(c.Do("INFO"))
+	}
+}

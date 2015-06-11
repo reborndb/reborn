@@ -4,141 +4,72 @@
 package models
 
 import (
-	"bufio"
-	"net"
-	"sync"
-	"testing"
-	"time"
-
-	"github.com/juju/errors"
+	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
+	. "gopkg.in/check.v1"
 )
 
-var (
-	once sync.Once
-	conn zkhelper.Conn
-)
-
-func runFakeRedisSrv(addr string) {
-	l, err := net.Listen("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	for {
-		c, err := l.Accept()
-		if err != nil {
-			continue
-		}
-
-		go func(c net.Conn) {
-			w := bufio.NewWriter(c)
-			w.WriteString("+OK\r\n")
-			w.Flush()
-		}(c)
-	}
-}
-
-func resetEnv() {
-	conn = zkhelper.NewConn()
-	once.Do(func() {
-		go runFakeRedisSrv("127.0.0.1:1111")
-		go runFakeRedisSrv("127.0.0.1:2222")
-		time.Sleep(1 * time.Second)
-	})
-}
-
-func TestAddSlaveToEmptyGroup(t *testing.T) {
-	resetEnv()
-	g := NewServerGroup(productName, 1)
-	g.Create(conn)
-
-	s1 := NewServer(SERVER_TYPE_SLAVE, "127.0.0.1:1111")
-	err := g.AddServer(conn, s1, auth)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if g.Servers[0].Type != SERVER_TYPE_MASTER {
-		t.Error("add a slave to an empty group, this server should become master")
-	}
-}
-
-func TestServerGroup(t *testing.T) {
-	resetEnv()
+func (s *testModelSuite) TestAddSlaveToEmptyGroup(c *C) {
+	log.Info("[TestAddSlaveToEmptyGroup][start]")
+	fakeCoordConn := zkhelper.NewConn()
 
 	g := NewServerGroup(productName, 1)
-	g.Create(conn)
+	g.Create(fakeCoordConn)
+
+	s1 := NewServer(SERVER_TYPE_SLAVE, s.s1.addr)
+	err := g.AddServer(fakeCoordConn, s1, auth)
+	c.Assert(err, IsNil)
+	c.Assert(g.Servers[0].Type, Equals, SERVER_TYPE_MASTER)
+
+	fakeCoordConn.Close()
+	log.Info("[TestAddSlaveToEmptyGroup][end]")
+}
+
+func (s *testModelSuite) TestServerGroup(c *C) {
+	log.Info("[TestServerGroup][start]")
+	fakeCoordConn := zkhelper.NewConn()
+
+	g := NewServerGroup(productName, 1)
+	g.Create(fakeCoordConn)
 
 	// test create new group
-	groups, err := ServerGroups(conn, productName)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	groups, err := ServerGroups(fakeCoordConn, productName)
+	c.Assert(err, IsNil)
+	c.Assert(len(groups), Not(Equals), 0)
 
-	if len(groups) == 0 {
-		t.Error("create group error")
-		return
-	}
+	ok, err := g.Exists(fakeCoordConn)
+	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, true)
 
-	ok, err := g.Exists(conn)
-	if !ok || err != nil {
-		t.Error("create group error")
-		return
-	}
+	gg, err := GetGroup(fakeCoordConn, productName, 1)
+	c.Assert(err, IsNil)
+	c.Assert(gg, NotNil)
+	c.Assert(gg.Id, Equals, g.Id)
 
-	gg, err := GetGroup(conn, productName, 1)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	s1 := NewServer(SERVER_TYPE_MASTER, s.s1.addr)
+	s2 := NewServer(SERVER_TYPE_MASTER, s.s2.addr)
 
-	if gg == nil || gg.Id != g.Id {
-		t.Error("get group error")
-		return
-	}
+	err = g.AddServer(fakeCoordConn, s1, auth)
+	c.Assert(err, IsNil)
 
-	s1 := NewServer(SERVER_TYPE_MASTER, "127.0.0.1:1111")
-	s2 := NewServer(SERVER_TYPE_MASTER, "127.0.0.1:2222")
+	servers, err := g.GetServers(fakeCoordConn)
+	c.Assert(err, IsNil)
+	c.Assert(len(servers), Equals, 1)
 
-	err = g.AddServer(conn, s1, auth)
-
-	servers, err := g.GetServers(conn)
-	if err != nil {
-		t.Error("add server error")
-		return
-	}
-	if len(servers) != 1 {
-		t.Error("add server error", len(servers))
-		return
-	}
-
-	g.AddServer(conn, s2, auth)
-	if len(g.Servers) != 1 {
-		t.Error("add server error, cannot add 2 masters")
-		return
-	}
+	g.AddServer(fakeCoordConn, s2, auth)
+	c.Assert(len(g.Servers), Equals, 1)
 
 	s2.Type = SERVER_TYPE_SLAVE
-	g.AddServer(conn, s2, auth)
-	if len(g.Servers) != 2 {
-		t.Error("add slave server error")
-		return
-	}
+	g.AddServer(fakeCoordConn, s2, auth)
+	c.Assert(len(g.Servers), Equals, 2)
 
-	if err := g.Promote(conn, s2.Addr, auth); err != nil {
-		t.Error(errors.ErrorStack(err))
-		return
-	}
+	err = g.Promote(fakeCoordConn, s2.Addr, auth)
+	c.Assert(err, IsNil)
 
-	s, err := g.Master(conn)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	m, err := g.Master(fakeCoordConn)
+	c.Assert(err, IsNil)
+	c.Assert(m.Addr, Equals, s2.Addr)
 
-	if s.Addr != s2.Addr {
-		t.Error("promote error", s, s1)
-		return
-	}
+	fakeCoordConn.Close()
+	log.Info("[TestServerGroup][stop]")
 }

@@ -111,7 +111,7 @@ func loadSavedProcs() error {
 				log.Warningf("we need proc %s, but got %s", id, p.ID)
 				continue
 			}
-			// todo bind after start func for different type
+			// TODO: bind after start func for different type
 			if err := bindProcHandler(p); err != nil {
 				log.Errorf("bind proc %s err %v, skip", p.Cmd, err)
 				continue
@@ -120,7 +120,7 @@ func loadSavedProcs() error {
 		}
 	}
 
-	//todo remove unnecessary old logs
+	// TODO: remove unnecessary old logs
 	clearOldProcsFiles(dataDir)
 	clearOldProcsFiles(logDir)
 

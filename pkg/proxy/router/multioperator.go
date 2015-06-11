@@ -188,7 +188,7 @@ func (oper *MultiOperator) msetResults(mop *MulOp) ([]byte, error) {
 
 func (oper *MultiOperator) mset(mop *MulOp) {
 	start := time.Now()
-	defer func() { //todo:extra function
+	defer func() { // TODO: extra function
 		if sec := time.Since(start).Seconds(); sec > 2 {
 			log.Warning("too long to do del", sec)
 		}
@@ -206,7 +206,7 @@ func (oper *MultiOperator) mset(mop *MulOp) {
 
 func (oper *MultiOperator) del(mop *MulOp) {
 	start := time.Now()
-	defer func() { //todo:extra function
+	defer func() { // TODO: extra function
 		if sec := time.Since(start).Seconds(); sec > 2 {
 			log.Warning("too long to do del", sec)
 		}

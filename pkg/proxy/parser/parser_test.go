@@ -8,21 +8,35 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/juju/errors"
+	. "gopkg.in/check.v1"
 )
 
-func testParser(t *testing.T, str string) *Resp {
+func TestT(t *testing.T) {
+	TestingT(t)
+}
+
+var _ = Suite(&testProxyParserSuite{})
+
+type testProxyParserSuite struct {
+}
+
+func (s *testProxyParserSuite) SetUpSuite(c *C) {
+}
+
+func (s *testProxyParserSuite) TearDownSuite(c *C) {
+}
+
+func (s *testProxyParserSuite) testParser(c *C, str string) *Resp {
 	buf := bytes.NewBuffer([]byte(str))
 	r := bufio.NewReader(buf)
 
 	resp, err := Parse(r)
-	if err != nil {
-		t.Fatal(errors.ErrorStack(err))
-	}
+	c.Assert(err, IsNil)
+
 	return resp
 }
 
-func TestBtoi(t *testing.T) {
+func (s *testProxyParserSuite) TestBtoi(c *C) {
 	tbl := map[string]int{
 		"-1": -1,
 		"0":  0,
@@ -30,94 +44,65 @@ func TestBtoi(t *testing.T) {
 	}
 
 	for k, v := range tbl {
-		if n, _ := Btoi([]byte(k)); n != v {
-			t.Error("value not match", n, v)
-		}
+		n, _ := Btoi([]byte(k))
+		c.Assert(n, Equals, v)
 	}
 }
 
-func TestParserBulk(t *testing.T) {
+func (s *testProxyParserSuite) TestParserBulk(c *C) {
 	sample := "*2\r\n$4\r\nLLEN\r\n$6\r\nmylist\r\n"
-	resp := testParser(t, sample)
+
+	resp := s.testParser(c, sample)
+	c.Assert(resp, NotNil)
+
 	b, err := resp.Bytes()
-	if err != nil {
-		t.Error(err)
-	}
-	if resp == nil {
-		t.Error("unknown error")
-	}
-	if len(b) != len(sample) {
-		t.Error("to bytes error", string(b),
-			"................", sample)
-	}
+	c.Assert(err, IsNil)
+	c.Assert(len(b), Equals, len(sample))
 
 	op, keys, err := resp.GetOpKeys()
-	if !bytes.Equal(op, []byte("LLEN")) {
-		t.Errorf("get op error, got %s, expect LLEN", string(op))
-	}
-
-	if !bytes.Equal(keys[0], []byte("mylist")) {
-		t.Error("get key error")
-	}
+	c.Assert(string(op), Equals, "LLEN")
+	c.Assert(string(keys[0]), Equals, "mylist")
 }
 
-func TestKeys(t *testing.T) {
+func (s *testProxyParserSuite) TestKeys(c *C) {
 	table := []string{
 		"*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n",
 	}
 
-	for _, s := range table {
-		resp := testParser(t, s)
+	for _, t := range table {
+		resp := s.testParser(c, t)
 
 		b, err := resp.Bytes()
-		if err != nil {
-			t.Error(err)
-		}
-
-		if s != string(b) {
-			t.Fatalf("not match, expect %s, got %s", s, string(b))
-		}
+		c.Assert(err, IsNil)
+		c.Assert(t, Equals, string(b))
 
 		_, keys, err := resp.GetOpKeys()
-		if err != nil {
-			t.Error(err)
-		}
-
-		if len(keys) != 1 || string(keys[0]) != "bar" {
-			t.Error("Keys failed", keys)
-		}
+		c.Assert(err, IsNil)
+		c.Assert(len(keys), Equals, 1)
+		c.Assert(string(keys[0]), Equals, "bar")
 	}
 }
 
-func TestMulOpKeys(t *testing.T) {
+func (s *testProxyParserSuite) TestMulOpKeys(c *C) {
 	table := []string{
 		"*7\r\n$4\r\nmset\r\n$4\r\nkey1\r\n$6\r\nvalue1\r\n$4\r\nkey2\r\n$6\r\nvalue2\r\n$4\r\nkey3\r\n$0\r\n\r\n",
 	}
 
-	for _, s := range table {
-		resp := testParser(t, s)
+	for _, t := range table {
+		resp := s.testParser(c, t)
 
 		b, err := resp.Bytes()
-		if err != nil {
-			t.Error(err)
-		}
-
-		if s != string(b) {
-			t.Fatalf("not match, expect %s, got %s", s, string(b))
-		}
+		c.Assert(err, IsNil)
+		c.Assert(t, Equals, string(b))
 
 		_, keys, err := resp.GetOpKeys()
-		if err != nil {
-			t.Error(err)
-		}
-
-		if len(keys) != 6 || string(keys[5]) != "" {
-			t.Error("Keys failed", string(keys[5]))
-		}
+		c.Assert(err, IsNil)
+		c.Assert(len(keys), Equals, 6)
+		c.Assert(string(keys[5]), Equals, "")
 	}
 }
 
-func TestParser(t *testing.T) {
+func (s *testProxyParserSuite) TestParser(c *C) {
 	table := []string{
 		"$6\r\nfoobar\r\n",
 		"$0\r\n\r\n",
@@ -133,13 +118,11 @@ func TestParser(t *testing.T) {
 		"mget a b c\r\n",
 	}
 
-	for _, s := range table {
-		resp := testParser(t, s)
+	for _, t := range table {
+		resp := s.testParser(c, t)
 
 		_, err := resp.Bytes()
-		if err != nil {
-			t.Error(err)
-		}
+		c.Assert(err, IsNil)
 	}
 
 	//test invalid input
@@ -147,72 +130,47 @@ func TestParser(t *testing.T) {
 	r := bufio.NewReader(buf)
 
 	_, err := Parse(r)
-	if err == nil {
-		t.Error("should return error")
-	}
+	c.Assert(err, NotNil)
 }
 
-func TestTelnet(t *testing.T) {
-	resp := testParser(t, "echo   abc\r\n")
+func (s *testProxyParserSuite) TestTelnet(c *C) {
+	resp := s.testParser(c, "echo   abc\r\n")
 	b, err := resp.Bytes()
-	if err != nil {
-		t.Fatal(err)
-	}
+	c.Assert(err, IsNil)
 
-	testParser(t, string(b))
+	s.testParser(c, string(b))
 }
 
-func TestEval(t *testing.T) {
+func (s *testProxyParserSuite) TestEval(c *C) {
 	table := []string{
 		"*3\r\n$4\r\nEVAL\r\n$31\r\nreturn {1,2,{3,'Hello World!'}}\r\n$1\r\n0\r\n",
 	}
 
-	for _, s := range table {
-		resp := testParser(t, s)
+	for _, t := range table {
+		resp := s.testParser(c, t)
 
 		op, keys, err := resp.GetOpKeys()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if string(op) != "EVAL" {
-			t.Fatalf("op not match, expect %s, got %s", "EVAL", string(op))
-		}
-
-		if len(resp.Multi) != 3 {
-			t.Fatal("argument count not match")
-		}
-
-		if len(keys) != 1 {
-			t.Fatalf("key count not match, expect %d got %d", 1, len(keys))
-		}
+		c.Assert(err, IsNil)
+		c.Assert(string(op), Equals, "EVAL")
+		c.Assert(len(resp.Multi), Equals, 3)
+		c.Assert(len(keys), Equals, 1)
 
 		_, err = resp.Bytes()
-		if err != nil {
-			t.Error(err)
-		}
+		c.Assert(err, IsNil)
 	}
 }
 
-func TestParserErrorHandling(t *testing.T) {
+func (s *testProxyParserSuite) TestParserErrorHandling(c *C) {
 	buf := bytes.NewBuffer([]byte("-Error message\r\n"))
 	r := bufio.NewReader(buf)
 
 	resp, err := Parse(r)
-	if err != nil {
-		t.Error("should not return error")
-	}
-
-	if resp.Type != ErrorResp {
-		t.Error("type not match")
-	}
-
-	if len(raw2Error(resp)) == 0 {
-		t.Error("parse error message failed")
-	}
+	c.Assert(err, IsNil)
+	c.Assert(resp.Type, Equals, ErrorResp)
+	c.Assert(len(raw2Error(resp)), Not(Equals), 0)
 }
 
-func TestParserInvalid(t *testing.T) {
+func (s *testProxyParserSuite) TestParserInvalid(c *C) {
 	table := []string{
 		"",
 		"$6\r\nfoobar\r",
@@ -226,22 +184,19 @@ func TestParserInvalid(t *testing.T) {
 		"-Error message\r",
 	}
 
-	for _, s := range table {
-		//test invalid input
-		buf := bytes.NewBuffer([]byte(s))
+	for _, t := range table {
+		// test invalid input
+		buf := bytes.NewBuffer([]byte(t))
 		r := bufio.NewReader(buf)
 
 		_, err := Parse(r)
-		if err == nil {
-			t.Error("should return error", s)
-		}
+		c.Assert(err, NotNil)
 	}
 }
 
-func TestWriteCommand(t *testing.T) {
+func (s *testProxyParserSuite) TestWriteCommand(c *C) {
 	var buf bytes.Buffer
-
 	WriteCommand(&buf, "SET", "a", 1)
 
-	testParser(t, buf.String())
+	s.testParser(c, buf.String())
 }

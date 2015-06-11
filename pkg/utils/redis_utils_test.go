@@ -46,6 +46,8 @@ func (s *testUtilsSuite) TestPing(c *C) {
 
 func (s *testUtilsSuite) TestGetInfo(c *C) {
 	// miniredis has no INFO command, we will use qdb instead later.
-	// _, err := GetRedisInfo(s.addr, "", s.auth)
-	// c.Assert(err, IsNil)
+	c.Skip("miniredis has no INFO command, use qdb instead later, skip now")
+
+	_, err := GetRedisInfo(s.addr, "", s.auth)
+	c.Assert(err, IsNil)
 }

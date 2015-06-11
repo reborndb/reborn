@@ -23,7 +23,7 @@ go get -u github.com/juju/errors
 go get -u github.com/juju/loggo
 go get -u github.com/ngaut/go-zookeeper/zk
 go get -u github.com/ngaut/gostats
-go get -u github.com/ngaut/logging
+go get -u github.com/ngaut/log
 go get -u github.com/ngaut/zkhelper
 go get -u github.com/ngaut/pools
 go get -u github.com/ngaut/deadline

@@ -10,7 +10,7 @@ import (
 	"github.com/reborndb/reborn/pkg/proxy/router/topology"
 	"github.com/reborndb/reborn/pkg/utils"
 
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 type Conf struct {

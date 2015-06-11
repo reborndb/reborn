@@ -26,7 +26,7 @@ import (
 
 	"github.com/juju/errors"
 	stats "github.com/ngaut/gostats"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 const (

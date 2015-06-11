@@ -22,7 +22,7 @@ import (
 	"github.com/juju/errors"
 	topo "github.com/ngaut/go-zookeeper/zk"
 	stats "github.com/ngaut/gostats"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	respcoding "github.com/ngaut/resp"
 )
 

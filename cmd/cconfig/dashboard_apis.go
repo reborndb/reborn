@@ -17,7 +17,7 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/juju/errors"
 	"github.com/ngaut/go-zookeeper/zk"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 	"github.com/nu7hatch/gouuid"
 )

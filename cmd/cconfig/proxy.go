@@ -9,7 +9,7 @@ import (
 	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/docopt/docopt-go"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 func cmdProxy(argv []string) (err error) {

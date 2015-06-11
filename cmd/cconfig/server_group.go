@@ -10,7 +10,7 @@ import (
 	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/docopt/docopt-go"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 // reborn redis instance manage tool

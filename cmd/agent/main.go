@@ -16,7 +16,7 @@ import (
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
 	"github.com/ngaut/go-zookeeper/zk"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/env"
 	"github.com/reborndb/reborn/pkg/utils"

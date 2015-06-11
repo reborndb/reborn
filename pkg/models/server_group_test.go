@@ -63,7 +63,7 @@ func (s *testModelSuite) TestServerGroup(c *C) {
 	g.AddServer(fakeCoordConn, s2, auth)
 	c.Assert(len(g.Servers), Equals, 2)
 
-	err = g.Promote(fakeCoordConn, s2.Addr)
+	err = g.Promote(fakeCoordConn, s2.Addr, auth)
 	c.Assert(err, IsNil)
 
 	m, err := g.Master(fakeCoordConn)

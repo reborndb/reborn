@@ -20,6 +20,7 @@ import (
 
 var (
 	productName = "unit_test"
+	auth        = ""
 )
 
 func TestT(t *testing.T) {
@@ -29,14 +30,14 @@ func TestT(t *testing.T) {
 var _ = Suite(&testModelSuite{})
 
 type testServer struct {
-	addr  string
-	store *store.Store
+	addr    string
+	store   *store.Store
+	handler *service.Handler
 }
 
 func (s *testServer) Close() {
-	if s.store != nil {
-		s.store.Close()
-		s.store = nil
+	if s.handler != nil {
+		s.handler.Close()
 	}
 }
 
@@ -77,15 +78,19 @@ func (s *testModelSuite) testCreateServer(c *C, port int) *testServer {
 
 	cfg := service.NewDefaultConfig()
 	cfg.Listen = fmt.Sprintf("127.0.0.1:%d", port)
+	cfg.PidFile = fmt.Sprintf(base, "qdb.pid")
 	cfg.DumpPath = path.Join(base, "rdb.dump")
 	cfg.SyncFilePath = path.Join(base, "sync.pipe")
 
 	store := store.New(testdb)
-	go service.Serve(cfg, store)
+	handler, err := service.NewHandler(cfg, store)
+	c.Assert(err, IsNil)
+	go handler.Run()
 
 	ss := new(testServer)
 	ss.addr = cfg.Listen
 	ss.store = store
+	ss.handler = handler
 
 	return ss
 }

@@ -200,7 +200,7 @@ func (sg *ServerGroup) RemoveServer(coordConn zkhelper.Conn, addr string) error 
 	return errors.Trace(err)
 }
 
-func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string, auth string) error {
+func (sg *ServerGroup) Promote(conn zkhelper.Conn, addr string, auth string) error {
 	var s *Server
 	exists := false
 	for i := 0; i < len(sg.Servers); i++ {
@@ -229,7 +229,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string, auth string) e
 	// old master may be nil
 	if master != nil {
 		master.Type = SERVER_TYPE_OFFLINE
-		err = self.AddServer(conn, master, auth)
+		err = sg.AddServer(conn, master, auth)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -237,7 +237,7 @@ func (self *ServerGroup) Promote(conn zkhelper.Conn, addr string, auth string) e
 
 	// promote new server to master
 	s.Type = SERVER_TYPE_MASTER
-	err = self.AddServer(conn, s, auth)
+	err = sg.AddServer(conn, s, auth)
 	return errors.Trace(err)
 }
 

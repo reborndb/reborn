@@ -13,6 +13,7 @@ import (
 
 var (
 	productName = "unit_test"
+	auth        = ""
 )
 
 func TestT(t *testing.T) {

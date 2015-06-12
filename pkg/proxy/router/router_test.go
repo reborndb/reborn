@@ -88,7 +88,7 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int) *testServer {
 
 var (
 	conf       *Conf
-	ss          *Server
+	ss         *Server
 	once       sync.Once
 	waitonce   sync.Once
 	conn       zkhelper.Conn
@@ -177,8 +177,8 @@ func (s *testProxyRouterSuite) testDialProxy(c *C, addr string) (redis.Conn, err
 	cc, err := redis.Dial("tcp", addr)
 	c.Assert(err, IsNil)
 
-	if len(proxyPassword) > 0 {
-		ok, err := redis.String(cc.Do("AUTH", proxyPassword))
+	if len(proxyAuth) > 0 {
+		ok, err := redis.String(cc.Do("AUTH", proxyAuth))
 		c.Assert(err, IsNil)
 		c.Assert(ok, Equals, "OK")
 	}

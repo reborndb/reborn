@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -75,7 +77,7 @@ func (t *haTask) check() error {
 
 	cnt := 0
 
-	ch := make(chan *models.Server, 100)
+	ch := make(chan interface{}, 100)
 
 	// check all servers in all groups
 	for _, group := range groups {
@@ -94,14 +96,22 @@ func (t *haTask) check() error {
 	var crashSlaves []*models.Server
 	var crashMasters []*models.Server
 	for i := 0; i < cnt; i++ {
-		s := <-ch
-		if s == nil {
-			continue
-		} else if s.Type == models.SERVER_TYPE_SLAVE {
-			crashSlaves = append(crashSlaves, s)
-		} else if s.Type == models.SERVER_TYPE_MASTER {
-			crashMasters = append(crashMasters, s)
+		v := <-ch
+		switch s := v.(type) {
+		case nil:
+		case *models.Server:
+			if s.Type == models.SERVER_TYPE_SLAVE {
+				crashSlaves = append(crashSlaves, s)
+			} else if s.Type == models.SERVER_TYPE_MASTER {
+				crashMasters = append(crashMasters, s)
+			}
+		case error:
+			err = errors.Trace(s)
 		}
+	}
+
+	if err != nil {
+		return errors.Trace(err)
 	}
 
 	for _, s := range crashSlaves {
@@ -143,15 +153,49 @@ func checkStore(addr string) error {
 	return errors.Trace(err)
 }
 
-func (t *haTask) checkGroupServer(s *models.Server, ch chan<- *models.Server) {
+func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
 	err := checkStore(s.Addr)
 	if err == nil {
 		ch <- nil
 		return
 	}
 
-	//todo
 	log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
+
+	// get all agents
+	agents, err := getAgents()
+	if err != nil {
+		log.Errorf("get agents err %v", err)
+		ch <- errors.Trace(err)
+		return
+	}
+
+	for _, agent := range agents {
+		if agent.ID == agentID {
+			// ignore itself
+			continue
+		}
+
+		resp, err := http.Get(fmt.Sprintf("http://%s/api/check_store?addr=%s", agent.Addr, s.Addr))
+		if err != nil {
+			log.Errorf("let %s agent help check sever %s err %v", agent.Addr, s.Addr, err)
+			ch <- errors.Trace(err)
+			return
+		}
+		defer resp.Body.Close()
+		if _, err = ioutil.ReadAll(resp.Body); err != nil {
+			log.Errorf("read %s agent check response err %v", agent.Addr, err)
+			ch <- errors.Trace(err)
+			return
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			log.Warningf("agent %s ping server %s ok, it is not down", agent.Addr, s.Addr)
+			ch <- nil
+			return
+		}
+		// here means agent ping server failed
+	}
 
 	// if all nodes check the store server is down, we will think it is down
 	ch <- s

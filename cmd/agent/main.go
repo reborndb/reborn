@@ -47,6 +47,7 @@ options:
     -c <config_file>               base environment config for reborn config and proxy
     --qdb-config=<qdb_config>      base qdb config 
     --redis-config=<redis_config>  base redis config for reborn-server
+    --ha                           start HA for store monitor and failover
 `
 
 func getStringArg(args map[string]interface{}, key string) string {
@@ -175,6 +176,10 @@ func main() {
 
 		fatal("ctrl-c or SIGTERM found, exit")
 	}()
+
+	if args["--ha"] != nil {
+		go startHA()
+	}
 
 	if err := loadSavedProcs(); err != nil {
 		log.Fatalf("restart agent using last saved processes err: %v", err)

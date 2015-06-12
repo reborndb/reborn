@@ -34,6 +34,7 @@ var (
 	proxyMutex sync.Mutex
 	proxyAuth  = "123"
 	storeAuth  = "abc"
+	proxyAddr  = "localhost:19000"
 )
 
 func TestT(t *testing.T) {
@@ -239,7 +240,7 @@ func (s *testProxyRouterSuite) testDialProxy(c *C, addr string, auth string) red
 }
 
 func (s *testProxyRouterSuite) TestSingleKeyRedisCmd(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("SET", "foo", "bar")
@@ -261,7 +262,7 @@ func (s *testProxyRouterSuite) TestSingleKeyRedisCmd(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestMget(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	const count = 20480
@@ -295,7 +296,7 @@ func (s *testProxyRouterSuite) TestMget(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestMultiKeyRedisCmd(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("SET", "key1", "value1")
@@ -357,7 +358,7 @@ func (s *testProxyRouterSuite) TestMultiKeyRedisCmd(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdUnknown(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("unknown", "key1", "key2", "key3")
@@ -368,7 +369,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdUnknown(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestNotAllowedCmd(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("save")
@@ -380,7 +381,7 @@ func (s *testProxyRouterSuite) TestNotAllowedCmd(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdPing(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	reply, err := cc.Do("ping")
@@ -392,7 +393,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdPing(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdQuit(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("quit")
@@ -403,7 +404,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdQuit(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdEcho(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("echo", "xx")
@@ -417,7 +418,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdEcho(c *C) {
 }
 
 func (s *testProxyRouterSuite) testStoreRestart(c *C) {
-	cc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("SET", "key1", "value1")
@@ -478,7 +479,7 @@ func (s *testProxyRouterSuite) testStoreRestart(c *C) {
 	// maybe some bug in reborn, proxy recover failed
 
 	// now, proxy should recovered from connection error
-	// ccc := s.testDialProxy(c, "localhost:19000", proxyAuth)
+	// ccc := s.testDialProxy(c, proxyAddr, proxyAuth)
 	// defer ccc.Close()
 
 	// _, err = ccc.Do("SET", "key1", "value1")

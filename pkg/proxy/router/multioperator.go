@@ -72,17 +72,16 @@ func newPool(server, auth string) *redis.Pool {
 				return nil, err
 			}
 			if len(auth) > 0 {
-				if _, err := c.Do("AUTH", auth); err != nil {
+				if ok, err := c.Do("AUTH", auth); err != nil {
 					c.Close()
 					return nil, err
+				} else if ok != "OK" {
+					c.Close()
+					return nil, errors.Errorf("auth err, need OK but got %s", ok)
 				}
 			}
 			return c, err
 		},
-		//	TestOnBorrow: func(c redis.Conn, t time.Time) error {
-		//		_, err := c.Do("PING")
-		//		return err
-		//	},
 	}
 }
 

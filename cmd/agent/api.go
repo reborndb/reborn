@@ -23,6 +23,7 @@ func runHTTPServer() {
 	m.HandleFunc("/api/start_dashboard", apiStartDashboardProc).Methods("POST", "PUT")
 	m.HandleFunc("/api/stop", apiStopProc).Methods("DELETE", "POST", "PUT")
 	m.HandleFunc("/api/procs", apiListProcs)
+	m.HandleFunc("/api/check_store", apiCheckStore)
 
 	http.Handle("/", m)
 	http.ListenAndServe(addr, nil)
@@ -198,4 +199,18 @@ func apiListProcs(w http.ResponseWriter, r *http.Request) {
 	m.Unlock()
 
 	respJson(w, stats)
+}
+
+// /check_store?addr=addr
+func apiCheckStore(w http.ResponseWriter, r *http.Request) {
+	addr := r.FormValue("addr")
+
+	err := checkStore(addr)
+	if err != nil {
+		respError(w, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }

@@ -30,14 +30,14 @@ func TestT(t *testing.T) {
 var _ = Suite(&testModelSuite{})
 
 type testServer struct {
-	addr    string
-	store   *store.Store
-	handler *service.Handler
+	addr   string
+	store  *store.Store
+	server *service.Server
 }
 
 func (s *testServer) Close() {
-	if s.handler != nil {
-		s.handler.Close()
+	if s.server != nil {
+		s.server.Close()
 	}
 }
 
@@ -83,14 +83,14 @@ func (s *testModelSuite) testCreateServer(c *C, port int) *testServer {
 	cfg.SyncFilePath = path.Join(base, "sync.pipe")
 
 	store := store.New(testdb)
-	handler, err := service.NewHandler(cfg, store)
+	server, err := service.NewServer(cfg, store)
 	c.Assert(err, IsNil)
-	go handler.Run()
+	go server.Serve()
 
 	ss := new(testServer)
 	ss.addr = cfg.Listen
 	ss.store = store
-	ss.handler = handler
+	ss.server = server
 
 	return ss
 }

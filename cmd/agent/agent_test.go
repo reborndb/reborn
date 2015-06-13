@@ -4,11 +4,18 @@
 package main
 
 import (
-	"math/rand"
-	"path"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/ngaut/zkhelper"
+	. "github.com/reborndb/go/gocheck2"
+	"github.com/reborndb/reborn/pkg/env"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 
 	. "gopkg.in/check.v1"
 )
@@ -17,71 +24,259 @@ func TestT(t *testing.T) {
 	TestingT(t)
 }
 
+type testAgentInfo struct {
+	cmd  *exec.Cmd
+	addr string
+}
+
+func (a testAgentInfo) apiURL(action string, query string) string {
+	if len(query) > 0 {
+		return fmt.Sprintf("http://%s/api/%s?%s", a.addr, action, query)
+	} else {
+		return fmt.Sprintf("http://%s/api/%s", a.addr, action)
+	}
+}
+
+func (a testAgentInfo) httpCall(c *C, objPrt interface{}, action string, query string, method string) {
+	err := httpCall(objPrt, a.apiURL(action, query), method, nil)
+	c.Assert(err, IsNil)
+}
+
 type testAgentSuite struct {
+	agentDashboard   testAgentInfo
+	agentProxy       testAgentInfo
+	agentStoreMaster testAgentInfo
+	agentStoreSlave  testAgentInfo
 }
 
 var _ = Suite(&testAgentSuite{})
 
-type testEnv struct {
-}
-
-func (env *testEnv) ProductName() string {
-	return "test_agent"
-}
-
-func (env *testEnv) DashboardAddr() string {
-	return "localhost:18087"
-}
-
-func (env *testEnv) StoreAuth() string {
-	return ""
-}
-
-func (env *testEnv) NewCoordConn() (zkhelper.Conn, error) {
-	return zkhelper.ConnectToZk("localhost:2181")
-}
-
 func (s *testAgentSuite) SetUpSuite(c *C) {
-	globalEnv = new(testEnv)
-	var err error
+	// initial whole test environment
+	configFile = "config.ini"
+	resetAbsPath(&configFile)
+	cfg, err := utils.InitConfigFromFile(configFile)
+	c.Assert(err, IsNil)
+
+	globalEnv = env.LoadRebornEnv(cfg)
 	globalConn, err = globalEnv.NewCoordConn()
 	c.Assert(err, IsNil)
+
+	s.testSetExecPath(c)
+
+	// remove all infos in coordinator first
+	err = zkhelper.DeleteRecursive(globalConn, fmt.Sprintf("/zk/reborn/db_%s", globalEnv.ProductName()), -1)
+	c.Assert(err, IsNil)
+
+	s.agentDashboard = s.testStartAgent(c, "127.0.0.1:39001")
+	s.agentProxy = s.testStartAgent(c, "127.0.0.1:39002")
+	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003")
+	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004")
+
+	s.testDashboard(c)
+
+	s.testInitGroup(c, 1)
+	s.testInitSlots(c)
 }
 
 func (s *testAgentSuite) TearDownSuite(c *C) {
 	if globalConn != nil {
 		globalConn.Close()
 	}
-}
 
-func (s *testAgentSuite) testAddAgent(c *C, id string, addr string) {
-	agent := &agentInfo{
-		ID:   id,
-		Addr: addr,
-		PID:  rand.Int(),
+	stopAgent := func(agent testAgentInfo) {
+		s.testStopAllProcs(c, agent)
+		s.testStopAgent(c, agent)
 	}
 
-	err := addAgent(agent)
+	stopAgent(s.agentProxy)
+	stopAgent(s.agentStoreSlave)
+	stopAgent(s.agentStoreMaster)
+	stopAgent(s.agentDashboard)
+}
+
+func (s *testAgentSuite) testSetExecPath(c *C) {
+	// the executer is in ../../bin path, we will add this path in global $PATH
+	execPath := "../../bin"
+	resetAbsPath(&execPath)
+	c.Assert(strings.HasSuffix(execPath, "/src/github.com/reborndb/reborn/bin"), IsTrue)
+
+	os.Setenv("PATH", os.ExpandEnv(fmt.Sprintf("${PATH}:%s", execPath)))
+
+	_, err := exec.LookPath("reborn-config")
+	c.Assert(err, IsNil)
+
+	_, err = exec.LookPath("reborn-proxy")
+	c.Assert(err, IsNil)
+
+	_, err = exec.LookPath("reborn-server")
+	c.Assert(err, IsNil)
+
+	_, err = exec.LookPath("reborn-agent")
 	c.Assert(err, IsNil)
 }
 
-func (s *testAgentSuite) TestAgentModel(c *C) {
-	s.testAddAgent(c, "1", "127.0.0.1:11000")
-	s.testAddAgent(c, "2", "127.0.0.1:12000")
+func (s *testAgentSuite) testStartAgent(c *C, addr string) testAgentInfo {
+	dataDir := fmt.Sprintf("./var/%s/data", addr)
+	logDir := fmt.Sprintf("./var/%s/log", addr)
 
-	agents, err := getAgents()
+	os.RemoveAll(dataDir)
+	os.RemoveAll(logDir)
+
+	os.MkdirAll(dataDir, 0755)
+	os.MkdirAll(logDir, 0755)
+
+	cmd := exec.Command("reborn-agent", "--addr", addr, "--data-dir", dataDir, "--log-dir",
+		logDir, "-L", fmt.Sprintf("./var/%s/agent.log", addr))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Start()
 	c.Assert(err, IsNil)
-	c.Assert(agents, HasLen, 2)
-	c.Assert(agents[0].ID, Equals, "1")
-	c.Assert(agents[1].ID, Equals, "2")
 
-	// remove all agents
-	for _, agent := range agents {
-		err = globalConn.Delete(path.Join(agentPath(), agent.ID), -1)
+	var info testAgentInfo
+	info.cmd = cmd
+	info.addr = addr
+
+	time.Sleep(time.Second)
+
+	return info
+}
+
+func (s *testAgentSuite) testStopAgent(c *C, agent testAgentInfo) {
+	c.Assert(agent.cmd, NotNil)
+	agent.cmd.Process.Signal(os.Interrupt)
+	agent.cmd.Wait()
+}
+
+func (s *testAgentSuite) testStopAllProcs(c *C, agent testAgentInfo) {
+	procs := s.testGetProcs(c, agent)
+
+	for _, proc := range procs {
+		agent.httpCall(c, nil, "stop", fmt.Sprintf("id=%s", proc.ID), "POST")
+	}
+}
+
+func (s *testAgentSuite) testKillAllProcs(c *C, agent testAgentInfo) {
+	procs := s.testGetProcs(c, agent)
+
+	for _, proc := range procs {
+		p, err := os.FindProcess(proc.Pid)
 		c.Assert(err, IsNil)
+		p.Kill()
+		p.Wait()
+	}
+}
+
+func (s *testAgentSuite) testGetProcs(c *C, agent testAgentInfo) []procStatus {
+	var procs []procStatus
+	agent.httpCall(c, &procs, "procs", "", "GET")
+	return procs
+}
+
+func (s *testAgentSuite) callDashboardAPI(c *C, retVal interface{}, apiPath string, method string, arg interface{}) {
+	err := httpCall(retVal, fmt.Sprintf("http://%s%s", globalEnv.DashboardAddr(), apiPath), method, arg)
+	c.Assert(err, IsNil)
+}
+
+func (s *testAgentSuite) testDashboard(c *C) {
+	agent := s.agentDashboard
+
+	agent.httpCall(c, nil, "start_dashboard", "", "POST")
+
+	time.Sleep(2 * time.Second)
+	s.callDashboardAPI(c, nil, "/ping", "GET", nil)
+
+	// if we kill dashboard, the restart one will wait a coorindator session timeout time
+	// for old session expired, this will be a long time, so we don't test this case here.
+}
+
+func (s *testAgentSuite) testStore(c *C, agent testAgentInfo, port int) {
+	agent.httpCall(c, nil, "start_redis", fmt.Sprintf("port=%d", port), "POST")
+
+	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	err := utils.Ping(addr, globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+
+	// kill store and then wait 2s for restart
+	s.testKillAllProcs(c, agent)
+
+	time.Sleep(2 * time.Second)
+
+	err = utils.Ping(addr, globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+}
+
+func (s *testAgentSuite) testStoreAddServer(c *C) {
+	s.testStore(c, s.agentStoreMaster, 6381)
+	s.testStore(c, s.agentStoreSlave, 6382)
+
+	groupID := 1
+
+	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_MASTER, groupID)
+	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE, groupID)
+}
+
+func (s *testAgentSuite) testInitGroup(c *C, groupID int) {
+	serverGroup := models.NewServerGroup(globalEnv.ProductName(), groupID)
+
+	s.callDashboardAPI(c, nil, "/api/server_groups", "PUT", serverGroup)
+}
+
+func (s *testAgentSuite) testAddStoreToGroup(c *C, port int, role string, groupID int) {
+	server := models.NewServer(role, fmt.Sprintf("127.0.0.1:%d", port))
+	s.callDashboardAPI(c, nil, fmt.Sprintf("/api/server_group/%d/addServer", groupID), "PUT", server)
+}
+
+func (s *testAgentSuite) testInitSlots(c *C) {
+	s.callDashboardAPI(c, nil, "/api/slots/init", "POST", nil)
+
+	v := struct {
+		FromSlot   int    `json:"from"`
+		ToSlot     int    `json:"to"`
+		NewGroupID int    `json:"new_group"`
+		Status     string `json:"status"`
+	}{
+		FromSlot:   0,
+		ToSlot:     1023,
+		NewGroupID: 1,
+		Status:     "online",
 	}
 
-	agents, err = getAgents()
+	s.callDashboardAPI(c, nil, "/api/slot", "POST", v)
+}
+
+func (s *testAgentSuite) testProxy(c *C) {
+	agent := s.agentProxy
+	proxyAddr := "127.0.0.1:19000"
+	proxyHTTPAddr := "127.0.0.1:29000"
+
+	agent.httpCall(c, nil, "start_proxy", fmt.Sprintf("addr=%s&http_addr=%s", proxyAddr, proxyHTTPAddr), "POST")
+
+	// now the proxy will wait 3s for online, this is very long for test
+	// maybe later we will change it.
+	var err error
+	for i := 0; i < 3; i++ {
+		time.Sleep(2 * time.Second)
+		if err = utils.Ping(proxyAddr, ""); err == nil {
+			break
+		}
+	}
 	c.Assert(err, IsNil)
-	c.Assert(agents, HasLen, 0)
+
+	// kill proxy and then wait for restart
+	s.testKillAllProcs(c, agent)
+
+	for i := 0; i < 3; i++ {
+		time.Sleep(2 * time.Second)
+		if err = utils.Ping(proxyAddr, ""); err == nil {
+			break
+		}
+	}
+	c.Assert(err, IsNil)
+}
+
+func (s *testAgentSuite) TestSimple(c *C) {
+	s.testStoreAddServer(c)
+	s.testProxy(c)
 }

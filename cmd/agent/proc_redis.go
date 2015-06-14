@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 type redisArgs struct {

@@ -12,7 +12,8 @@ import (
 	"github.com/reborndb/reborn/pkg/utils"
 
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/go-zookeeper/zk"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 )
 
@@ -107,7 +108,8 @@ func ServerGroups(coordConn zkhelper.Conn, productName string) ([]*ServerGroup, 
 	var ret []*ServerGroup
 	root := fmt.Sprintf("/zk/reborn/db_%s/servers", productName)
 	groups, _, err := coordConn.Children(root)
-	if err != nil {
+	// if ErrNoNode, we may return an empty slice like ProxyList
+	if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
 		return nil, errors.Trace(err)
 	}
 

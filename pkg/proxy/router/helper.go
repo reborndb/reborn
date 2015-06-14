@@ -22,7 +22,7 @@ import (
 	"github.com/juju/errors"
 	topo "github.com/ngaut/go-zookeeper/zk"
 	stats "github.com/ngaut/gostats"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	respcoding "github.com/ngaut/resp"
 )
 
@@ -259,18 +259,6 @@ func CheckUlimit(min int) {
 	if err != nil || n < min {
 		log.Fatalf("ulimit too small: %d, should be at least %d", n, min)
 	}
-}
-
-func GetOriginError(err *errors.Err) error {
-	if err != nil {
-		if err.Cause() == nil && err.Underlying() == nil {
-			return err
-		} else {
-			return err.Underlying()
-		}
-	}
-
-	return err
 }
 
 func recordResponseTime(c *stats.Counters, d time.Duration) {

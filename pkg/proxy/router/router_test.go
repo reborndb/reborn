@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reborndb/qdb/pkg/engine/rocksdb"
+	"github.com/reborndb/qdb/pkg/engine/goleveldb"
 	"github.com/reborndb/qdb/pkg/service"
 	"github.com/reborndb/qdb/pkg/store"
 	"github.com/reborndb/reborn/pkg/models"
@@ -97,8 +97,8 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int, auth string) *te
 	err = os.MkdirAll(base, 0700)
 	c.Assert(err, IsNil)
 
-	conf := rocksdb.NewDefaultConfig()
-	testdb, err := rocksdb.Open(path.Join(base, "db"), conf, false)
+	conf := goleveldb.NewDefaultConfig()
+	testdb, err := goleveldb.Open(path.Join(base, "db"), conf, false)
 	c.Assert(err, IsNil)
 
 	cfg := service.NewDefaultConfig()

@@ -20,7 +20,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/mitchellh/go-ps"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/nu7hatch/gouuid"
 )
 

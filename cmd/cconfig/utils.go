@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 const (

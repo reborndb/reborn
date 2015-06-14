@@ -13,7 +13,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/ngaut/go-zookeeper/zk"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 )
 

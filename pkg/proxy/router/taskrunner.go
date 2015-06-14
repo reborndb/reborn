@@ -9,7 +9,7 @@ import (
 	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 const (

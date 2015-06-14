@@ -9,7 +9,7 @@ import (
 	"github.com/reborndb/reborn/pkg/models"
 
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 )
 

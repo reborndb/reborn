@@ -62,14 +62,9 @@ type testProxyRouterSuite struct {
 }
 
 func (s *testProxyRouterSuite) SetUpSuite(c *C) {
-	s.s = s.testCreateServer(c, 16380)
-	c.Assert(s.s, NotNil)
-
-	s.s1 = s.testCreateServer(c, 16381)
-	c.Assert(s.s1, NotNil)
-
-	s.s2 = s.testCreateServer(c, 16382)
-	c.Assert(s.s2, NotNil)
+	s.s = s.testCreateServer(c, 16380, storeAuth)
+	s.s1 = s.testCreateServer(c, 16381, storeAuth)
+	s.s2 = s.testCreateServer(c, 16382, storeAuth)
 
 	s.initEnv(c)
 }
@@ -94,7 +89,7 @@ func (s *testProxyRouterSuite) TearDownSuite(c *C) {
 	}
 }
 
-func (s *testProxyRouterSuite) testCreateServer(c *C, port int) *testServer {
+func (s *testProxyRouterSuite) testCreateServer(c *C, port int, auth string) *testServer {
 	base := fmt.Sprintf("/tmp/test_reborn/test_proxy_router/%d", port)
 	err := os.RemoveAll(base)
 	c.Assert(err, IsNil)
@@ -111,6 +106,7 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int) *testServer {
 	cfg.PidFile = fmt.Sprintf(base, "qdb.pid")
 	cfg.DumpPath = path.Join(base, "rdb.dump")
 	cfg.SyncFilePath = path.Join(base, "sync.pipe")
+	cfg.Auth = auth
 
 	store := store.New(testdb)
 	server, err := service.NewServer(cfg, store)
@@ -121,6 +117,8 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int) *testServer {
 	ss.addr = cfg.Listen
 	ss.store = store
 	ss.server = server
+
+	c.Assert(ss, NotNil)
 
 	return ss
 }
@@ -156,22 +154,6 @@ func (s *testProxyRouterSuite) initEnv(c *C) {
 		g1.Create(conn)
 		g2 := models.NewServerGroup(conf.ProductName, 2)
 		g2.Create(conn)
-
-		c1 := s.testDialProxy(c, s.s1.addr, "")
-		ok, err := redis.String(c1.Do("CONFIG", "SET", "REQUIREPASS", storeAuth))
-		c.Assert(err, IsNil)
-		c.Assert(ok, Equals, "OK")
-
-		err = c1.Close()
-		c.Assert(err, IsNil)
-
-		c2 := s.testDialProxy(c, s.s2.addr, "")
-		ok, err = redis.String(c2.Do("CONFIG", "SET", "REQUIREPASS", storeAuth))
-		c.Assert(err, IsNil)
-		c.Assert(ok, Equals, "OK")
-
-		err = c2.Close()
-		c.Assert(err, IsNil)
 
 		s1 := models.NewServer(models.SERVER_TYPE_MASTER, s.s1.addr)
 		s2 := models.NewServer(models.SERVER_TYPE_MASTER, s.s2.addr)
@@ -226,7 +208,7 @@ func (s *testProxyRouterSuite) testMarkOffline(c *C) {
 	c.Assert(atomic.LoadInt64(&suicide), Not(Equals), 0)
 }
 
-func (s *testProxyRouterSuite) testDialProxy(c *C, addr string, auth string) redis.Conn {
+func (s *testProxyRouterSuite) testDialConn(c *C, addr string, auth string) redis.Conn {
 	cc, err := redis.Dial("tcp", addr)
 	c.Assert(err, IsNil)
 
@@ -240,7 +222,7 @@ func (s *testProxyRouterSuite) testDialProxy(c *C, addr string, auth string) red
 }
 
 func (s *testProxyRouterSuite) TestSingleKeyRedisCmd(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("SET", "foo", "bar")
@@ -262,7 +244,7 @@ func (s *testProxyRouterSuite) TestSingleKeyRedisCmd(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestMget(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	const count = 20480
@@ -296,7 +278,7 @@ func (s *testProxyRouterSuite) TestMget(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestMultiKeyRedisCmd(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("SET", "key1", "value1")
@@ -358,7 +340,7 @@ func (s *testProxyRouterSuite) TestMultiKeyRedisCmd(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdUnknown(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("unknown", "key1", "key2", "key3")
@@ -369,7 +351,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdUnknown(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestNotAllowedCmd(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("save")
@@ -381,7 +363,7 @@ func (s *testProxyRouterSuite) TestNotAllowedCmd(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdPing(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	reply, err := cc.Do("ping")
@@ -393,7 +375,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdPing(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdQuit(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("quit")
@@ -404,7 +386,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdQuit(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestInvalidRedisCmdEcho(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("echo", "xx")
@@ -418,7 +400,9 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdEcho(c *C) {
 }
 
 func (s *testProxyRouterSuite) testStoreRestart(c *C) {
-	cc := s.testDialProxy(c, proxyAddr, proxyAuth)
+	c.Skip("need qdb cleanly close support, skip now")
+
+	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
 	_, err := cc.Do("SET", "key1", "value1")
@@ -439,31 +423,23 @@ func (s *testProxyRouterSuite) testStoreRestart(c *C) {
 	c.Assert(err, NotNil)
 
 	// restart
-	s.s1 = s.testCreateServer(c, 16381)
+	s.s1 = s.testCreateServer(c, 16381, storeAuth)
 	c.Assert(s.s1, NotNil)
 
-	s.s2 = s.testCreateServer(c, 16382)
+	s.s2 = s.testCreateServer(c, 16382, storeAuth)
 	c.Assert(s.s2, NotNil)
 
 	// auth
-	c1 := s.testDialProxy(c, s.s1.addr, "")
+	c1 := s.testDialConn(c, s.s1.addr, storeAuth)
 	_, err = c1.Do("SET", "key11", "value11")
 	c.Assert(err, IsNil)
-
-	ok, err := redis.String(c1.Do("CONFIG", "SET", "REQUIREPASS", storeAuth))
-	c.Assert(err, IsNil)
-	c.Assert(ok, Equals, "OK")
 
 	err = c1.Close()
 	c.Assert(err, IsNil)
 
-	c2 := s.testDialProxy(c, s.s2.addr, "")
+	c2 := s.testDialConn(c, s.s2.addr, storeAuth)
 	_, err = c2.Do("SET", "key22", "value22")
 	c.Assert(err, IsNil)
-
-	ok, err = redis.String(c2.Do("CONFIG", "SET", "REQUIREPASS", storeAuth))
-	c.Assert(err, IsNil)
-	c.Assert(ok, Equals, "OK")
 
 	err = c2.Close()
 	c.Assert(err, IsNil)
@@ -474,13 +450,12 @@ func (s *testProxyRouterSuite) testStoreRestart(c *C) {
 
 	// Notice:
 	// maybe some bug in reborn, proxy recover failed
-
 	// now, proxy should recovered from connection error
-	// ccc := s.testDialProxy(c, proxyAddr, proxyAuth)
-	// defer ccc.Close()
+	ccc := s.testDialConn(c, proxyAddr, proxyAuth)
+	defer ccc.Close()
 
-	// _, err = ccc.Do("SET", "key1", "value1")
-	// c.Assert(err, IsNil)
+	_, err = ccc.Do("SET", "key1", "value1")
+	c.Assert(err, IsNil)
 
 	s.s1.store.Reset()
 	s.s2.store.Reset()

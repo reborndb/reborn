@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -13,11 +14,11 @@ import (
 )
 
 type redisArgs struct {
-	Port string `json:"port"`
+	Addr string `json:"addr"`
 	// add customized args later
 }
 
-// reborn-server [configfile] --port 6380 [other options]
+// reborn-server [configfile] --port 6380 --bind 127.0.0.1 [other options]
 func startRedis(args *redisArgs) (*process, error) {
 	p := newDefaultProcess("reborn-server", redisType)
 
@@ -27,12 +28,16 @@ func startRedis(args *redisArgs) (*process, error) {
 		p.addCmdArgs(redisConfigFile)
 	}
 
-	if len(args.Port) == 0 {
-		return nil, fmt.Errorf("redis must have a specail port, not empty")
-	}
-	p.Ctx["addr"] = fmt.Sprintf(":%s", args.Port)
+	seps := strings.Split(args.Addr, ":")
 
-	p.addCmdArgs("--port", args.Port)
+	if len(seps) != 2 {
+		return nil, fmt.Errorf("redis addr must be ip:port format")
+	}
+
+	p.Ctx["addr"] = args.Addr
+
+	p.addCmdArgs("--bind", seps[0])
+	p.addCmdArgs("--port", seps[1])
 	p.addCmdArgs("--daemonize", "yes")
 	p.addCmdArgs("--logfile", path.Join(p.baseLogDir(), "redis.log"))
 	p.addCmdArgs("--dir", p.baseDataDir())

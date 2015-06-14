@@ -641,7 +641,6 @@ func (s *Server) waitOnline() {
 
 		if pi.State == models.PROXY_STATE_ONLINE {
 			s.pi.State = pi.State
-			println("good, we are on line", s.pi.ID)
 			log.Info("we are online", s.pi.ID)
 			_, err := s.top.WatchNode(path.Join(models.GetProxyPath(s.top.ProductName), s.pi.ID), s.evtbus)
 			if err != nil {
@@ -661,7 +660,6 @@ func (s *Server) waitOnline() {
 		default: //otherwise ignore it
 		}
 
-		println("wait to be online ", s.pi.ID)
 		log.Warning(s.pi.ID, "wait to be online")
 
 		time.Sleep(3 * time.Second)

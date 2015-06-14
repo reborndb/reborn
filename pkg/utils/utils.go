@@ -10,7 +10,7 @@ import (
 
 	"github.com/c4pt0r/cfg"
 	"github.com/kardianos/osext"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 )
 

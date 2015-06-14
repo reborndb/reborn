@@ -9,7 +9,7 @@ import (
 
 	"github.com/docopt/docopt-go"
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 func cmdSlot(argv []string) (err error) {

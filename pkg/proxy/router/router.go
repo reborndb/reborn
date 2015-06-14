@@ -26,7 +26,7 @@ import (
 
 	"github.com/juju/errors"
 	stats "github.com/ngaut/gostats"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 const (
@@ -331,14 +331,9 @@ func (s *Server) handleConn(c net.Conn) {
 
 	var err error
 	defer func() {
-		client.closeSignal.Wait() // waiting for writer goroutine
-
-		if err != nil { // TODO: fix this ugly error check
-			if GetOriginError(err.(*errors.Err)).Error() != io.EOF.Error() {
-				log.Warningf("close connection %v, %v", client, errors.ErrorStack(err))
-			} else {
-				log.Infof("close connection by eof %v", client)
-			}
+		client.closeSignal.Wait() //waiting for writer goroutine
+		if errors.Cause(err) != io.EOF {
+			log.Warningf("close connection %v, %v", client, errors.ErrorStack(err))
 		} else {
 			log.Infof("close connection %v", client)
 		}

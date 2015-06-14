@@ -17,7 +17,7 @@ import (
 	"github.com/c4pt0r/cfg"
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 )
 

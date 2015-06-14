@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 var procs map[string]*process = map[string]*process{}

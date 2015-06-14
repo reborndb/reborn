@@ -6,12 +6,10 @@ package router
 import (
 	"bufio"
 	"bytes"
-	"io"
 	"time"
 
 	"github.com/reborndb/reborn/pkg/proxy/parser"
 
-	"github.com/juju/errors"
 	stats "github.com/ngaut/gostats"
 	. "gopkg.in/check.v1"
 )
@@ -129,11 +127,6 @@ func (s *testProxyRouterSuite) TestWrite2Redis(c *C) {
 	c.Assert(err, IsNil)
 
 	c.Assert(string(result.Bytes()), Equals, simpleRequest)
-}
-
-func (s *testProxyRouterSuite) TestGetOrginError(c *C) {
-	err := errors.Trace(io.EOF)
-	c.Assert(GetOriginError(errors.Trace(err).(*errors.Err)).Error(), Equals, io.EOF.Error())
 }
 
 func (s *testProxyRouterSuite) TestHandleSpecCommand(c *C) {

@@ -6,7 +6,7 @@ package group
 import (
 	"github.com/reborndb/reborn/pkg/models"
 
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 type Group struct {

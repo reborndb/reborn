@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"path"
 
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 )
 
 type qdbArgs struct {

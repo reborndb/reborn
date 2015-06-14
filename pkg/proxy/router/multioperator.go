@@ -72,17 +72,16 @@ func newPool(server, auth string) *redis.Pool {
 				return nil, err
 			}
 			if len(auth) > 0 {
-				if _, err := c.Do("AUTH", auth); err != nil {
+				if ok, err := c.Do("AUTH", auth); err != nil {
 					c.Close()
 					return nil, err
+				} else if ok != "OK" {
+					c.Close()
+					return nil, errors.Errorf("auth err, need OK but got %s", ok)
 				}
 			}
 			return c, err
 		},
-		//	TestOnBorrow: func(c redis.Conn, t time.Time) error {
-		//		_, err := c.Do("PING")
-		//		return err
-		//	},
 	}
 }
 
@@ -188,7 +187,7 @@ func (oper *MultiOperator) msetResults(mop *MulOp) ([]byte, error) {
 
 func (oper *MultiOperator) mset(mop *MulOp) {
 	start := time.Now()
-	defer func() { //todo:extra function
+	defer func() { // TODO: extra function
 		if sec := time.Since(start).Seconds(); sec > 2 {
 			log.Warning("too long to do del", sec)
 		}
@@ -206,7 +205,7 @@ func (oper *MultiOperator) mset(mop *MulOp) {
 
 func (oper *MultiOperator) del(mop *MulOp) {
 	start := time.Now()
-	defer func() { //todo:extra function
+	defer func() { // TODO: extra function
 		if sec := time.Since(start).Seconds(); sec > 2 {
 			log.Warning("too long to do del", sec)
 		}

@@ -3,14 +3,14 @@
 
 package router
 
-import "testing"
+import (
+	. "gopkg.in/check.v1"
+)
 
-func TestMapKey2Slot(t *testing.T) {
+func (s *testProxyRouterSuite) TestMapKey2Slot(c *C) {
 	index := mapKey2Slot([]byte("xxx"))
 	table := []string{"123{xxx}abc", "{xxx}aa", "x{xxx}"}
 	for _, v := range table {
-		if index != mapKey2Slot([]byte(v)) {
-			t.Error("not match", v)
-		}
+		c.Assert(index, Equals, mapKey2Slot([]byte(v)))
 	}
 }

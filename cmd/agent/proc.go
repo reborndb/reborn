@@ -139,14 +139,14 @@ func (p *process) start() error {
 		c.Wait()
 	}()
 
-	log.Infof("wait 3s to let %s start ok", p.Type)
-	time.Sleep(3 * time.Second)
+	log.Infof("wait 1s to let %s start ok", p.Type)
+	time.Sleep(time.Second)
 
 	var err error
 	for i := 0; i < 5; i++ {
 		// we must read pid from pid file
 		if p.Pid, err = p.readPid(); err != nil {
-			log.Errorf("read pid failed, err %v, wait 1s and retry", err)
+			log.Warningf("read pid failed, err %v, wait 1s and retry", err)
 			err = errors.Trace(err)
 			time.Sleep(1 * time.Second)
 		} else {

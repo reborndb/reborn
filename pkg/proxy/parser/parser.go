@@ -77,7 +77,7 @@ func Itoa(i int) []byte {
 	return []byte(strconv.Itoa(i))
 }
 
-//todo: overflow
+// TODO: overflow
 func Btoi(b []byte) (int, error) {
 	n := 0
 	sign := 1
@@ -252,6 +252,7 @@ func Parse(r *bufio.Reader) (*Resp, error) {
 
 			resp.Multi = append(resp.Multi, &Resp{Type: BulkResp, Raw: b})
 		}
+		
 		return resp, nil
 	}
 }
@@ -282,7 +283,7 @@ func ReadBulk(r *bufio.Reader, size int, raw *[]byte) error {
 		*raw = append(*raw, old...)
 	}
 
-	//avoid copy
+	// avoid copy
 	if _, err := io.ReadFull(r, (*raw)[n:n+size]); err != nil {
 		return err
 	}
@@ -378,5 +379,6 @@ func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
 	for _, arg := range args {
 		err = writeBulkArg(sw, formatCommandArg(arg))
 	}
+	
 	return err
 }

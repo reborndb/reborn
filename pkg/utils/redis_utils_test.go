@@ -14,6 +14,8 @@ func TestT(t *testing.T) {
 	TestingT(t)
 }
 
+var _ = Suite(&testUtilsSuite{})
+
 type testUtilsSuite struct {
 	r    *miniredis.Miniredis
 	addr string
@@ -42,7 +44,10 @@ func (s *testUtilsSuite) TestPing(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *testUtilsSuite) TestGetInfo(c C) {
+func (s *testUtilsSuite) TestGetInfo(c *C) {
+	// miniredis has no INFO command, we will use qdb instead later.
+	c.Skip("miniredis has no INFO command, use qdb instead later, skip now")
+
 	_, err := GetRedisInfo(s.addr, "", s.auth)
 	c.Assert(err, IsNil)
 }

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -15,7 +14,6 @@ import (
 
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
-	"github.com/ngaut/go-zookeeper/zk"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/reborn/pkg/env"
@@ -100,8 +98,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	agentID = genProcID()
-
 	setStringFromOpt(&configFile, args, "-c")
 	resetAbsPath(&configFile)
 
@@ -116,7 +112,15 @@ func main() {
 		fatal(err)
 	}
 
-	addAgent()
+	agentID = genProcID()
+
+	if err := addAgent(&agentInfo{
+		ID:   agentID,
+		Addr: addr,
+		PID:  os.Getpid(),
+	}); err != nil {
+		fatal(err)
+	}
 
 	setStringFromOpt(&qdbConfigFile, args, "--qdb-config")
 	resetAbsPath(&qdbConfigFile)
@@ -180,19 +184,4 @@ func main() {
 
 	log.Infof("listening %s", addr)
 	runHTTPServer()
-}
-
-func addAgent() {
-	agentPath := fmt.Sprintf("/zk/reborn/db_%s/agent", globalEnv.ProductName())
-
-	zkhelper.CreateRecursive(globalConn, agentPath, "", 0, zkhelper.DefaultDirACLs())
-
-	pid := os.Getpid()
-	contents := fmt.Sprintf(`{"addr": "%s", "pid": %v}`, addr, pid)
-
-	_, err := globalConn.Create(path.Join(agentPath, agentID),
-		[]byte(contents), zk.FlagEphemeral, zkhelper.DefaultFileACLs())
-	if err != nil {
-		fatal(err)
-	}
 }

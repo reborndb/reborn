@@ -85,7 +85,7 @@ func (s *Server) stopTaskRunners() {
 	}
 	wg.Wait()
 
-	//remove all
+	// remove all
 	for k, _ := range s.pipeConns {
 		delete(s.pipeConns, k)
 	}
@@ -123,9 +123,9 @@ func (s *Server) fillSlot(i int, force bool) {
 	log.Infof("fill slot %d, force %v, %+v", i, force, slot.dst)
 
 	if slot.slotInfo.State.Status == models.SLOT_STATUS_MIGRATE {
-		//get migrate src group and fill it
+		// get migrate src group and fill it
 		from, err := s.top.GetGroup(slot.slotInfo.State.MigrateStatus.From)
-		if err != nil { //todo: retry ?
+		if err != nil { // TODO: retry ?
 			log.Fatal(err)
 		}
 		slot.migrateFrom = group.NewGroup(*from)
@@ -189,7 +189,7 @@ func (s *Server) handleMigrateState(slotIndex int, keys ...[]byte) error {
 
 	redisReader := redisConn.BufioReader()
 
-	//handle migrate result
+	// handle migrate result
 	for i := 0; i < len(keys); i++ {
 		resp, err := parser.Parse(redisReader)
 		if err != nil {
@@ -227,7 +227,7 @@ func (s *Server) sendBack(c *session, op []byte, keys [][]byte, resp *parser.Res
 	}
 
 	resp, err := parser.Parse(bufio.NewReader(bytes.NewReader(result)))
-	//just send to backQ
+	// just send to backQ
 	c.backQ <- &PipelineResponse{ctx: pr, err: err, resp: resp}
 }
 
@@ -280,7 +280,7 @@ func (s *Server) redisTunnel(c *session) error {
 	}
 
 	if isMulOp(opstr) {
-		if !isTheSameSlot(keys) { //can not send to redis directly
+		if !isTheSameSlot(keys) { // can not send to redis directly
 			var result []byte
 			err := s.moper.handleMultiOp(opstr, keys, &result)
 			if err != nil {
@@ -293,7 +293,7 @@ func (s *Server) redisTunnel(c *session) error {
 
 	i := mapKey2Slot(k)
 
-	//pipeline
+	// pipeline
 	c.pipelineSeq++
 	pr := &PipelineRequest{
 		slotIdx: i,
@@ -418,7 +418,7 @@ func (s *Server) responseAction(seq int64) {
 }
 
 func (s *Server) getProxyInfo() models.ProxyInfo {
-	//todo:send request to evtbus, and get response
+	// TODO: send request to evtbus, and get response
 	var pi = s.pi
 	return pi
 }
@@ -435,11 +435,11 @@ func (s *Server) getActionObject(seq int, target interface{}) {
 
 func (s *Server) checkAndDoTopoChange(seq int) bool {
 	act, err := s.top.GetActionWithSeq(int64(seq))
-	if err != nil { //todo: error is not "not exist"
+	if err != nil { // TODO: error is not "not exist"
 		log.Fatal(errors.ErrorStack(err), "action seq", seq)
 	}
 
-	if !needResponse(act.Receivers, s.pi) { //no need to response
+	if !needResponse(act.Receivers, s.pi) { // no need to response
 		return false
 	}
 
@@ -458,7 +458,7 @@ func (s *Server) checkAndDoTopoChange(seq int) bool {
 		s.getActionObject(seq, serverGroup)
 		s.OnGroupChange(serverGroup.Id)
 	case models.ACTION_TYPE_SERVER_GROUP_REMOVE:
-		//do not care
+		// do not care
 	case models.ACTION_TYPE_MULTI_SLOT_CHANGED:
 		param := &models.SlotMultiSetParam{}
 		s.getActionObject(seq, param)
@@ -499,12 +499,12 @@ func (s *Server) handleProxyCommand() {
 
 func (s *Server) processAction(e interface{}) {
 	if strings.Index(GetEventPath(e), models.GetProxyPath(s.top.ProductName)) == 0 {
-		//proxy event, should be order for me to suicide
+		// proxy event, should be order for me to suicide
 		s.handleProxyCommand()
 		return
 	}
 
-	//re-watch
+	// re-watch
 	nodes, err := s.top.WatchChildren(models.GetWatchActionPath(s.top.ProductName), s.evtbus)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
@@ -519,7 +519,7 @@ func (s *Server) processAction(e interface{}) {
 		return
 	}
 
-	//get last pos
+	// get last pos
 	index := -1
 	for i, seq := range seqs {
 		if s.lastActionSeq < seq {
@@ -564,7 +564,7 @@ func (s *Server) dispatch(r *PipelineRequest) (success bool) {
 
 	tr, ok := s.pipeConns[s.slots[r.slotIdx].dst.Master()]
 	if !ok {
-		//try recreate taskrunner
+		// try recreate taskrunner
 		if err := s.createTaskRunner(s.slots[r.slotIdx]); err != nil {
 			r.backQ <- &PipelineResponse{ctx: r, resp: nil, err: err}
 			return true
@@ -770,7 +770,7 @@ func NewServer(conf *Conf) *Server {
 
 	s.FillSlots()
 
-	//start event handler
+	// start event handler
 	go s.handleTopoEvent()
 	go s.dumpCounter()
 

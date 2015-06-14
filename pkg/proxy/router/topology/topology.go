@@ -166,7 +166,7 @@ func (top *Topology) doWatch(evtch <-chan topo.Event, evtbus chan interface{}) {
 	//case topo.EventNodeCreated:
 	//case topo.EventNodeDataChanged:
 	case topo.EventNodeChildrenChanged: //only care children changed
-		//todo:get changed node and decode event
+		// TODO: get changed node and decode event
 	default:
 		log.Warningf("%+v", e)
 	}

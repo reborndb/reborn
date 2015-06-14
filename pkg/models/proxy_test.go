@@ -6,62 +6,67 @@ package models
 import (
 	"testing"
 
+	log "github.com/ngaut/logging"
 	"github.com/ngaut/zkhelper"
+	. "gopkg.in/check.v1"
 )
 
 var (
-	auth = ""
+	productName = "unit_test"
+	auth        = ""
 )
 
-func TestProxy(t *testing.T) {
+func TestT(t *testing.T) {
+	TestingT(t)
+}
+
+var _ = Suite(&testModelSuite{})
+
+type testModelSuite struct {
+}
+
+func (s *testModelSuite) SetUpSuite(c *C) {
+}
+
+func (s *testModelSuite) TearDownSuite(c *C) {
+}
+
+func (s *testModelSuite) TestProxy(c *C) {
+	log.Info("[TestProxy][start]")
 	fakeCoordConn := zkhelper.NewConn()
+
 	path := GetSlotBasePath(productName)
 	children, _, _ := fakeCoordConn.Children(path)
-	if len(children) != 0 {
-		t.Error("slot is no empty")
-	}
+	c.Assert(len(children), Equals, 0)
 
 	g := NewServerGroup(productName, 1)
 	g.Create(fakeCoordConn)
 
 	// test create new group
 	_, err := ServerGroups(fakeCoordConn, productName)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	ok, err := g.Exists(fakeCoordConn)
-	if !ok || err != nil {
-		t.Error("create group error")
-	}
+	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, true)
 
 	s1 := NewServer(SERVER_TYPE_MASTER, "localhost:1111")
 
 	g.AddServer(fakeCoordConn, s1, auth)
 
 	err = InitSlotSet(fakeCoordConn, productName, 1024)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
-	children, _, _ = fakeCoordConn.Children(path)
-	if len(children) != 1024 {
-		t.Error("init slots error")
-	}
+	children, _, err = fakeCoordConn.Children(path)
+	c.Assert(err, IsNil)
+	c.Assert(len(children), Equals, 1024)
 
-	s, err := GetSlot(fakeCoordConn, productName, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if s.GroupId != -1 {
-		t.Error("init slots error")
-	}
+	sl, err := GetSlot(fakeCoordConn, productName, 1)
+	c.Assert(err, IsNil)
+	c.Assert(sl.GroupId, Equals, -1)
 
 	err = SetSlotRange(fakeCoordConn, productName, 0, 1023, 1, SLOT_STATUS_ONLINE)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	pi := &ProxyInfo{
 		ID:    "proxy_1",
@@ -70,30 +75,20 @@ func TestProxy(t *testing.T) {
 	}
 
 	_, err = CreateProxyInfo(fakeCoordConn, productName, pi)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	ps, err := ProxyList(fakeCoordConn, productName, nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(ps) != 1 || ps[0].ID != "proxy_1" {
-		t.Error("create proxy error")
-	}
+	c.Assert(err, IsNil)
+	c.Assert(len(ps), Equals, 1)
+	c.Assert(ps[0].ID, Equals, "proxy_1")
 
 	err = SetProxyStatus(fakeCoordConn, productName, pi.ID, PROXY_STATE_ONLINE)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
 
 	p, err := GetProxyInfo(fakeCoordConn, productName, pi.ID)
-	if err != nil {
-		t.Error(err)
-	}
+	c.Assert(err, IsNil)
+	c.Assert(p.State, Equals, PROXY_STATE_ONLINE)
 
-	if p.State != PROXY_STATE_ONLINE {
-		t.Error("change status error")
-	}
+	fakeCoordConn.Close()
+	log.Info("[TestProxy][end]")
 }

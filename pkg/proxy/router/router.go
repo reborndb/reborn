@@ -662,7 +662,9 @@ func (s *Server) waitOnline() {
 
 		log.Warning(s.pi.ID, "wait to be online")
 
-		time.Sleep(3 * time.Second)
+		// old 3s is too long, now use 1s
+		// maybe later we will use BackoffDelay to control the wait time
+		time.Sleep(1 * time.Second)
 	}
 }
 

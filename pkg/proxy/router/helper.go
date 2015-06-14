@@ -261,18 +261,6 @@ func CheckUlimit(min int) {
 	}
 }
 
-func GetOriginError(err *errors.Err) error {
-	if err != nil {
-		if err.Cause() == nil && err.Underlying() == nil {
-			return err
-		} else {
-			return err.Underlying()
-		}
-	}
-
-	return err
-}
-
 func recordResponseTime(c *stats.Counters, d time.Duration) {
 	switch {
 	case d < 5:

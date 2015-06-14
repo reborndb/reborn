@@ -6,7 +6,6 @@ package router
 import (
 	"bufio"
 	"bytes"
-	"io"
 	"testing"
 	"time"
 
@@ -177,13 +176,6 @@ func TestWrite2Redis(t *testing.T) {
 
 	if string(result.Bytes()) != simple_request {
 		t.Error("not match")
-	}
-}
-
-func TestGetOrginError(t *testing.T) {
-	err := errors.Trace(io.EOF)
-	if GetOriginError(errors.Trace(err).(*errors.Err)).Error() != io.EOF.Error() {
-		t.Error("should be io.EOF")
 	}
 }
 

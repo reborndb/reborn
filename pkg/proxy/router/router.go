@@ -332,13 +332,8 @@ func (s *Server) handleConn(c net.Conn) {
 	var err error
 	defer func() {
 		client.closeSignal.Wait() //waiting for writer goroutine
-
-		if err != nil { //todo: fix this ugly error check
-			if GetOriginError(err.(*errors.Err)).Error() != io.EOF.Error() {
-				log.Warningf("close connection %v, %v", client, errors.ErrorStack(err))
-			} else {
-				log.Infof("close connection by eof %v", client)
-			}
+		if errors.Cause(err) != io.EOF {
+			log.Warningf("close connection %v, %v", client, errors.ErrorStack(err))
 		} else {
 			log.Infof("close connection %v", client)
 		}

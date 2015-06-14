@@ -193,9 +193,9 @@ func (s *testAgentSuite) testDashboard(c *C) {
 }
 
 func (s *testAgentSuite) testStore(c *C, agent testAgentInfo, port int) {
-	agent.httpCall(c, nil, "start_redis", fmt.Sprintf("port=%d", port), "POST")
-
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	agent.httpCall(c, nil, "start_redis", fmt.Sprintf("addr=%s", url.QueryEscape(addr)), "POST")
+
 	err := utils.Ping(addr, globalEnv.StoreAuth())
 	c.Assert(err, IsNil)
 

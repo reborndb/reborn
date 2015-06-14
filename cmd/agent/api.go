@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -73,20 +72,16 @@ func apiStopProc(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// /start_redis?port=6379
+// /start_redis?addr=addr
 func apiStartRedisProc(w http.ResponseWriter, r *http.Request) {
-	port := r.FormValue("port")
-	if len(port) == 0 {
-		respError(w, http.StatusBadRequest, fmt.Sprintf("must have a port for redis, not empty"))
-		return
-	}
-	if n, err := strconv.ParseInt(port, 10, 16); err != nil || n <= 0 {
-		respError(w, http.StatusBadRequest, fmt.Sprintf("invalid port redis port %s", port))
+	addr := r.FormValue("addr")
+	if len(addr) == 0 {
+		respError(w, http.StatusBadRequest, "must have an address for redis, not empty")
 		return
 	}
 
 	args := new(redisArgs)
-	args.Port = port
+	args.Addr = addr
 
 	p, err := startRedis(args)
 	if err != nil {

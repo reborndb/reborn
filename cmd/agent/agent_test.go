@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -251,7 +252,11 @@ func (s *testAgentSuite) testProxy(c *C) {
 	proxyAddr := "127.0.0.1:19000"
 	proxyHTTPAddr := "127.0.0.1:29000"
 
-	agent.httpCall(c, nil, "start_proxy", fmt.Sprintf("addr=%s&http_addr=%s", proxyAddr, proxyHTTPAddr), "POST")
+	args := make(url.Values)
+	args.Set("addr", proxyAddr)
+	args.Set("http_addr", proxyHTTPAddr)
+
+	agent.httpCall(c, nil, "start_proxy", args.Encode(), "POST")
 
 	// now the proxy will wait 3s for online, this is very long for test
 	// maybe later we will change it.

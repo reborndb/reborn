@@ -32,4 +32,7 @@ distclean: clean
 	@make --no-print-directory --quiet -C extern/redis-2.8.13 clean
 
 gotest:
-	go test --race -tags 'all' -cover ./pkg/... ./cmd/...
+	go test -tags 'all' ./pkg/... -race -cover
+
+agent_test: build
+	go test -tags 'all' ./cmd/agent/... -race -cover

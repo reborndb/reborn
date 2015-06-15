@@ -10,7 +10,7 @@ import (
 )
 
 func (s *testProxyRouterSuite) TestMgetResults(c *C) {
-	moper := newMultiOperator(s.s.addr, "")
+	moper := newMultiOperator(s.s.addr, storeAuth)
 
 	var err error
 	err = s.s.store.Set(0, "a", "a")
@@ -49,7 +49,7 @@ func (s *testProxyRouterSuite) TestMgetResults(c *C) {
 
 func (s *testProxyRouterSuite) TestMsetResults(c *C) {
 	// for mset x y z bad case test
-	moper := newMultiOperator(s.s.addr, "")
+	moper := newMultiOperator(s.s.addr, storeAuth)
 	_, err := moper.msetResults(&MulOp{
 		op: "mset",
 		keys: [][]byte{[]byte("x"),
@@ -62,7 +62,7 @@ func (s *testProxyRouterSuite) TestMsetResults(c *C) {
 }
 
 func (s *testProxyRouterSuite) TestDeltResults(c *C) {
-	moper := newMultiOperator(s.s.addr, "")
+	moper := newMultiOperator(s.s.addr, storeAuth)
 
 	var err error
 	err = s.s.store.Set(0, "a", "a")

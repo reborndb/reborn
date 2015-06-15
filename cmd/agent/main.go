@@ -32,6 +32,9 @@ var (
 	agentID    string
 	globalEnv  env.Env
 	globalConn zkhelper.Conn
+
+	haMaxRetryNum = 3
+	haRetryDelay  = 1
 )
 
 var usage = `usage: reborn-agent [options]
@@ -48,6 +51,8 @@ options:
     --qdb-config=<qdb_config>      base qdb config 
     --redis-config=<redis_config>  base redis config for reborn-server
     --ha                           start HA for store monitor and failover
+    --ha-max-retry-num=<num>       maximum retry number for checking store
+    --ha-retry-delay=<n_seconds>   wait n seconds for next check
 `
 
 func getStringArg(args map[string]interface{}, key string) string {
@@ -56,6 +61,21 @@ func getStringArg(args map[string]interface{}, key string) string {
 	} else {
 		return ""
 	}
+}
+
+func setIntArgFromOpt(dest *int, args map[string]interface{}, key string) {
+	v := getStringArg(args, key)
+	if len(v) == 0 {
+		return
+	}
+
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		log.Fatalf("parse int arg err %v", err)
+		return
+	}
+
+	*dest = n
 }
 
 func setStringFromOpt(dest *string, args map[string]interface{}, key string) {
@@ -177,7 +197,10 @@ func main() {
 		fatal("ctrl-c or SIGTERM found, exit")
 	}()
 
-	if args["--ha"] != nil {
+	if args["--ha"].(bool) {
+		setIntArgFromOpt(&haMaxRetryNum, args, "--ha-max-retry-num")
+		setIntArgFromOpt(&haRetryDelay, args, "--ha-retry-delay")
+
 		go startHA()
 	}
 

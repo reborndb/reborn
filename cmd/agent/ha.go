@@ -5,8 +5,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,7 +15,7 @@ import (
 	"github.com/reborndb/reborn/pkg/utils"
 
 	"github.com/juju/errors"
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 )
 
@@ -38,6 +36,8 @@ type haTask struct {
 }
 
 func (t *haTask) Run() error {
+	log.Infof("we are leader now, begin check")
+
 	t.quited.Set(0)
 	t.wg.Add(1)
 	defer t.wg.Done()
@@ -53,7 +53,7 @@ func (t *haTask) Run() error {
 		}
 
 		// check servers every n seconds
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
@@ -63,6 +63,8 @@ func (t *haTask) Stop() {
 	t.quited.Set(1)
 
 	t.wg.Wait()
+
+	log.Infof("stop ha check")
 }
 
 func (t *haTask) Interrupted() bool {
@@ -137,16 +139,13 @@ func (t *haTask) check() error {
 }
 
 func checkStore(addr string) error {
-	const maxRetryNum = 3
-	const nextRetryDelay = 3 * time.Second
-
 	var err error
-	for i := 0; i < maxRetryNum; i++ {
-		if err = utils.Ping(addr, globalEnv.StoreAuth()); err != nil {
+	for i := 0; i < haMaxRetryNum; i++ {
+		if err = utils.Ping(addr, globalEnv.StoreAuth()); err == nil {
 			return nil
 		}
 
-		time.Sleep(nextRetryDelay)
+		time.Sleep(time.Duration(haRetryDelay) * time.Second)
 	}
 
 	// here means we cannot ping server ok, so we think it is down
@@ -160,42 +159,43 @@ func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
 		return
 	}
 
-	log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
+	// todo later
+	// log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
 
-	// get all agents
-	agents, err := getAgents()
-	if err != nil {
-		log.Errorf("get agents err %v", err)
-		ch <- errors.Trace(err)
-		return
-	}
+	// // get all agents
+	// agents, err := getAgents()
+	// if err != nil {
+	// 	log.Errorf("get agents err %v", err)
+	// 	ch <- errors.Trace(err)
+	// 	return
+	// }
 
-	for _, agent := range agents {
-		if agent.ID == agentID {
-			// ignore itself
-			continue
-		}
+	// for _, agent := range agents {
+	// 	if agent.ID == agentID {
+	// 		// ignore itself
+	// 		continue
+	// 	}
 
-		resp, err := http.Get(fmt.Sprintf("http://%s/api/check_store?addr=%s", agent.Addr, s.Addr))
-		if err != nil {
-			log.Errorf("let %s agent help check sever %s err %v", agent.Addr, s.Addr, err)
-			ch <- errors.Trace(err)
-			return
-		}
-		defer resp.Body.Close()
-		if _, err = ioutil.ReadAll(resp.Body); err != nil {
-			log.Errorf("read %s agent check response err %v", agent.Addr, err)
-			ch <- errors.Trace(err)
-			return
-		}
+	// 	resp, err := http.Get(fmt.Sprintf("http://%s/api/check_store?addr=%s", agent.Addr, s.Addr))
+	// 	if err != nil {
+	// 		log.Errorf("let %s agent help check sever %s err %v", agent.Addr, s.Addr, err)
+	// 		ch <- errors.Trace(err)
+	// 		return
+	// 	}
+	// 	defer resp.Body.Close()
+	// 	if _, err = ioutil.ReadAll(resp.Body); err != nil {
+	// 		log.Errorf("read %s agent check response err %v", agent.Addr, err)
+	// 		ch <- errors.Trace(err)
+	// 		return
+	// 	}
 
-		if resp.StatusCode == http.StatusOK {
-			log.Warningf("agent %s ping server %s ok, it is not down", agent.Addr, s.Addr)
-			ch <- nil
-			return
-		}
-		// here means agent ping server failed
-	}
+	// 	if resp.StatusCode == http.StatusOK {
+	// 		log.Warningf("agent %s ping server %s ok, it is not down", agent.Addr, s.Addr)
+	// 		ch <- nil
+	// 		return
+	// 	}
+	// 	// here means agent ping server failed
+	// }
 
 	// if all nodes check the store server is down, we will think it is down
 	ch <- s
@@ -212,20 +212,24 @@ func (t *haTask) doFailover(s *models.Server) error {
 	}
 
 	slaves := make([]*models.Server, 0, len(group.Servers))
+	slaveAddrs := make([]string, 0, len(group.Servers))
 
 	for _, s := range group.Servers {
 		if s.Type == models.SERVER_TYPE_SLAVE {
 			slaves = append(slaves, s)
+			slaveAddrs = append(slaveAddrs, s.Addr)
 		}
 	}
 
 	// elect a new master
+	log.Infof("elect a new master in %v", slaveAddrs)
 	addr, err := t.electNewMaster(slaves)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
 	// prmote it as new master
+	log.Infof("promote %s as the new master", addr)
 	if err := group.Promote(globalConn, addr, globalEnv.StoreAuth()); err != nil {
 		// should we fatal here and let human intervention ???
 		return errors.Trace(err)
@@ -237,6 +241,7 @@ func (t *haTask) doFailover(s *models.Server) error {
 			continue
 		}
 
+		log.Infof("let %s slaveof new master %s", slave.Addr, addr)
 		if err := utils.SlaveOf(slave.Addr, addr, globalEnv.StoreAuth()); err != nil {
 			// should we fatal here and let human intervention ???
 			return errors.Trace(err)
@@ -317,6 +322,7 @@ func (t *haTask) electNewMaster(slaves []*models.Server) (string, error) {
 func startHA() {
 	elector := zkhelper.CreateElection(globalConn, fmt.Sprintf("/zk/reborn/db_%s/ha", globalEnv.ProductName()))
 	task := &haTask{}
+
 	err := elector.RunTask(task)
 	if err != nil {
 		log.Errorf("run elector task err: %v", err)

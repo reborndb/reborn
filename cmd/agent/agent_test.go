@@ -326,7 +326,7 @@ func (s *testAgentSuite) TestHA(c *C) {
 	s.testStopAgent(c, s.agentStoreSlave)
 	s.testKillProcs(c, procs)
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_OFFLINE)
 
@@ -342,7 +342,7 @@ func (s *testAgentSuite) TestHA(c *C) {
 	s.testStopAgent(c, s.agentStoreMaster)
 	s.testKillProcs(c, procs)
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 	// now 6382 is slave, and 6381 is offline
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_MASTER)
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_OFFLINE)

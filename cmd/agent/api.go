@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 func runHTTPServer() {
@@ -200,7 +201,7 @@ func apiListProcs(w http.ResponseWriter, r *http.Request) {
 func apiCheckStore(w http.ResponseWriter, r *http.Request) {
 	addr := r.FormValue("addr")
 
-	err := checkStore(addr)
+	err := utils.Ping(addr, globalEnv.StoreAuth())
 	if err != nil {
 		respError(w, http.StatusServiceUnavailable, err.Error())
 		return

@@ -52,6 +52,7 @@ type testServer struct {
 func (s *testServer) Close() {
 	if s.server != nil {
 		s.server.Close()
+		s.server = nil
 	}
 }
 
@@ -70,10 +71,6 @@ func (s *testProxyRouterSuite) SetUpSuite(c *C) {
 }
 
 func (s *testProxyRouterSuite) TearDownSuite(c *C) {
-	// Notice:
-	// maybe pipeline process problem,
-	// so now we only test incomplete store restart case here
-	s.testStoreRestart(c)
 	s.testMarkOffline(c)
 
 	if s.s != nil {
@@ -399,9 +396,7 @@ func (s *testProxyRouterSuite) TestInvalidRedisCmdEcho(c *C) {
 	s.s2.store.Reset()
 }
 
-func (s *testProxyRouterSuite) testStoreRestart(c *C) {
-	c.Skip("need qdb cleanly close support, skip now")
-
+func (s *testProxyRouterSuite) TestStoreRestart(c *C) {
 	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()
 
@@ -448,14 +443,13 @@ func (s *testProxyRouterSuite) testStoreRestart(c *C) {
 	_, err = cc.Do("SET", "key1", "value1")
 	c.Assert(err, NotNil)
 
-	// Notice:
-	// maybe some bug in reborn, proxy recover failed
-	// now, proxy should recovered from connection error
+	// now, proxy should recover from connection error
 	ccc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer ccc.Close()
 
-	_, err = ccc.Do("SET", "key1", "value1")
+	ok, err := redis.String(ccc.Do("SET", "key1", "value1"))
 	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, "OK")
 
 	s.s1.store.Reset()
 	s.s2.store.Reset()

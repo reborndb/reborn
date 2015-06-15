@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -138,66 +140,90 @@ func (t *haTask) check() error {
 	return nil
 }
 
-func checkStore(addr string) error {
+func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
+	// we don't check offline server
+	if s.Type == models.SERVER_TYPE_OFFLINE {
+		ch <- nil
+		return
+	}
+
 	var err error
 	for i := 0; i < haMaxRetryNum; i++ {
-		if err = utils.Ping(addr, globalEnv.StoreAuth()); err == nil {
-			return nil
+		if err = utils.Ping(s.Addr, globalEnv.StoreAuth()); err == nil {
+			break
 		}
 
+		err = errors.Trace(err)
 		time.Sleep(time.Duration(haRetryDelay) * time.Second)
 	}
 
 	// here means we cannot ping server ok, so we think it is down
-	return errors.Trace(err)
-}
-
-func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
-	err := checkStore(s.Addr)
 	if err == nil {
 		ch <- nil
 		return
 	}
 
-	// todo later
-	// log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
+	log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
 
-	// // get all agents
-	// agents, err := getAgents()
-	// if err != nil {
-	// 	log.Errorf("get agents err %v", err)
-	// 	ch <- errors.Trace(err)
-	// 	return
-	// }
+	// get all agents
+	agents, err := getAgents()
+	if err != nil {
+		log.Errorf("get agents err %v", err)
+		ch <- errors.Trace(err)
+		return
+	}
 
-	// for _, agent := range agents {
-	// 	if agent.ID == agentID {
-	// 		// ignore itself
-	// 		continue
-	// 	}
+	reply := make([]interface{}, len(agents))
 
-	// 	resp, err := http.Get(fmt.Sprintf("http://%s/api/check_store?addr=%s", agent.Addr, s.Addr))
-	// 	if err != nil {
-	// 		log.Errorf("let %s agent help check sever %s err %v", agent.Addr, s.Addr, err)
-	// 		ch <- errors.Trace(err)
-	// 		return
-	// 	}
-	// 	defer resp.Body.Close()
-	// 	if _, err = ioutil.ReadAll(resp.Body); err != nil {
-	// 		log.Errorf("read %s agent check response err %v", agent.Addr, err)
-	// 		ch <- errors.Trace(err)
-	// 		return
-	// 	}
+	var wg sync.WaitGroup
+	for i, agent := range agents {
+		if agent.ID == agentID {
+			// ignore itself
+			reply[i] = nil
+			continue
+		}
 
-	// 	if resp.StatusCode == http.StatusOK {
-	// 		log.Warningf("agent %s ping server %s ok, it is not down", agent.Addr, s.Addr)
-	// 		ch <- nil
-	// 		return
-	// 	}
-	// 	// here means agent ping server failed
-	// }
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			resp, err := http.Get(fmt.Sprintf("http://%s/api/check_store?addr=%s", agent.Addr, s.Addr))
+			if err != nil {
+				reply[i] = errors.Trace(err)
+				return
+			}
+			defer resp.Body.Close()
+			if _, err = ioutil.ReadAll(resp.Body); err != nil {
+				reply[i] = errors.Trace(err)
+				return
+			}
+
+			reply[i] = int(resp.StatusCode)
+		}(i)
+	}
+
+	wg.Wait()
+
+	for i, r := range reply {
+		switch v := r.(type) {
+		case nil:
+			// itself, ignore
+		case error:
+			log.Errorf("let agent %s check %s err %v", agents[i].Addr, s.Addr, v)
+			ch <- errors.Trace(v)
+			return
+		case int:
+			if v == http.StatusOK {
+				log.Infof("agent %s check %s ok, maybe it is alive", agents[i].Addr, s.Addr)
+				ch <- nil
+				return
+			}
+			// here mean agent check server failed
+		}
+	}
 
 	// if all nodes check the store server is down, we will think it is down
+	log.Infof("all agents check server %s is down", s.Addr)
 	ch <- s
 }
 

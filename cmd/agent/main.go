@@ -133,6 +133,9 @@ func main() {
 		fatal(err)
 	}
 
+	// set addr
+	setStringFromOpt(&addr, args, "--addr")
+
 	agentID = genProcID()
 
 	if err := addAgent(&agentInfo{
@@ -171,9 +174,6 @@ func main() {
 			fatal(err)
 		}
 	}
-
-	// set addr
-	setStringFromOpt(&addr, args, "--addr")
 
 	// set data dir
 	setStringFromOpt(&dataDir, args, "--data-dir")

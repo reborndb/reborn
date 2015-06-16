@@ -54,7 +54,7 @@ func (t *haTask) Run() error {
 			return errors.Trace(err)
 		}
 
-		// check servers every seconds
+		// check servers every second
 		time.Sleep(1 * time.Second)
 	}
 

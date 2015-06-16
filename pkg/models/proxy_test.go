@@ -9,6 +9,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/reborndb/go/bytesize"
 	"github.com/reborndb/qdb/pkg/engine/goleveldb"
 	"github.com/reborndb/qdb/pkg/service"
 	"github.com/reborndb/qdb/pkg/store"
@@ -81,6 +82,7 @@ func (s *testModelSuite) testCreateServer(c *C, port int) *testServer {
 	cfg.PidFile = fmt.Sprintf(base, "qdb.pid")
 	cfg.DumpPath = path.Join(base, "rdb.dump")
 	cfg.SyncFilePath = path.Join(base, "sync.pipe")
+	cfg.ReplBacklogSize = bytesize.MB
 
 	store := store.New(testdb)
 	server, err := service.NewServer(cfg, store)

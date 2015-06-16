@@ -81,7 +81,8 @@ func (t *haTask) check() error {
 
 	cnt := 0
 
-	ch := make(chan interface{}, 100)
+	const checkChanSize = 100
+	ch := make(chan interface{}, checkChanSize)
 
 	// check all servers in all groups
 	for _, group := range groups {

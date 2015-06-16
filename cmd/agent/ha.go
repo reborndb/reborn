@@ -158,12 +158,13 @@ func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
 		time.Sleep(time.Duration(haRetryDelay) * time.Second)
 	}
 
-	// here means we cannot ping server ok, so we think it is down
 	if err == nil {
 		ch <- nil
 		return
 	}
 
+	// here means we cannot ping server ok, so we think it is down
+	// let other help use to check
 	log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
 
 	// get all agents
@@ -211,8 +212,7 @@ func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
 			// itself, ignore
 		case error:
 			log.Errorf("let agent %s check %s err %v", agents[i].Addr, s.Addr, v)
-			ch <- errors.Trace(v)
-			return
+			err = errors.Trace(v)
 		case int:
 			if v == http.StatusOK {
 				log.Infof("agent %s check %s ok, maybe it is alive", agents[i].Addr, s.Addr)
@@ -221,6 +221,13 @@ func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
 			}
 			// here mean agent check server failed
 		}
+	}
+
+	if err != nil {
+		// here mean let some agent check err, maybe we cann't connect the agent
+		// so return error to retry again
+		ch <- errors.Trace(err)
+		return
 	}
 
 	// if all nodes check the store server is down, we will think it is down

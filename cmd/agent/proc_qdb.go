@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path"
 
 	"github.com/ngaut/log"
@@ -34,15 +35,18 @@ func startQDB(args *qdbArgs) (*process, error) {
 		p.addCmdArgs(fmt.Sprintf("--config=%s", qdbConfigFile))
 	}
 
+	storeDataPath := p.storeDataDir(args.Addr)
+	os.MkdirAll(storeDataPath, 0755)
+
 	p.addCmdArgs("-L", path.Join(p.baseLogDir(), "qdb.log"))
 	p.addCmdArgs(fmt.Sprintf("--ncpu=%s", args.CPUNum))
 	p.addCmdArgs(fmt.Sprintf("--dbtype=%s", args.DBType))
-	p.addCmdArgs(fmt.Sprintf("--dbpath=%s", path.Join(p.baseDataDir(), "db")))
+	p.addCmdArgs(fmt.Sprintf("--dbpath=%s", path.Join(storeDataPath, "db")))
 	p.addCmdArgs(fmt.Sprintf("--addr=%s", args.Addr))
 	p.addCmdArgs(fmt.Sprintf("--pidfile=%s", p.pidPath()))
-	p.addCmdArgs(fmt.Sprintf("--dump_path=%s", path.Join(p.baseDataDir(), "dump.rdb")))
-	p.addCmdArgs(fmt.Sprintf("--sync_file_path=%s", path.Join(p.baseDataDir(), "sync.pipe")))
-	p.addCmdArgs(fmt.Sprintf("--repl_backlog_file_path=%s", path.Join(p.baseDataDir(), "repl_backlog")))
+	p.addCmdArgs(fmt.Sprintf("--dump_path=%s", path.Join(storeDataPath, "dump.rdb")))
+	p.addCmdArgs(fmt.Sprintf("--sync_file_path=%s", path.Join(storeDataPath, "sync.pipe")))
+	p.addCmdArgs(fmt.Sprintf("--repl_backlog_file_path=%s", path.Join(storeDataPath, "repl_backlog")))
 
 	// below we use fixed config, later maybe passed from args
 	p.addCmdArgs(fmt.Sprintf("--conn_timeout=900"))

@@ -186,6 +186,10 @@ func (p *process) save() error {
 	return errors.Trace(err)
 }
 
+// agent path
+// log: logDir/type_id/xxx
+// data: dataDir/type_id/xxx or dataDir/type_addr/xxx
+
 func (p *process) pidPath() string {
 	return path.Join(p.baseDataDir(), fmt.Sprintf("%s.pid", p.Type))
 }
@@ -200,6 +204,10 @@ func (p *process) baseDataDir() string {
 
 func (p *process) baseLogDir() string {
 	return path.Join(logDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
+}
+
+func (p *process) storeDataDir(addr string) string {
+	return path.Join(dataDir, fmt.Sprintf("%s_%s", p.Type, addr))
 }
 
 func (p *process) checkAlive() (bool, error) {
@@ -233,8 +241,12 @@ func (p *process) needRestart() bool {
 }
 
 func (p *process) clear() {
+	// remove base dir
 	os.RemoveAll(p.baseDataDir())
-	os.RemoveAll(p.baseLogDir())
+
+	// rename log dir
+	newLogDir := fmt.Sprintf("%s_%d", p.baseLogDir(), time.Now().Unix())
+	os.Rename(p.baseLogDir(), newLogDir)
 }
 
 func (p *process) stop() error {

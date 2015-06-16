@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/reborndb/go/bytesize"
 	"github.com/reborndb/qdb/pkg/engine/goleveldb"
 	"github.com/reborndb/qdb/pkg/service"
 	"github.com/reborndb/qdb/pkg/store"
@@ -104,6 +105,7 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int, auth string) *te
 	cfg.DumpPath = path.Join(base, "rdb.dump")
 	cfg.SyncFilePath = path.Join(base, "sync.pipe")
 	cfg.Auth = auth
+	cfg.ReplBacklogSize = bytesize.MB
 
 	store := store.New(testdb)
 	server, err := service.NewServer(cfg, store)

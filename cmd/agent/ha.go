@@ -86,12 +86,7 @@ func (t *haTask) check() error {
 
 	// check all servers in all groups
 	for _, group := range groups {
-		servers, err := group.GetServers(globalConn)
-		if err != nil {
-			return errors.Trace(err)
-		}
-
-		for _, server := range servers {
+		for _, server := range group.Servers {
 			cnt++
 
 			go t.checkGroupServer(server, ch)

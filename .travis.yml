@@ -1,0 +1,10 @@
+language: go
+go: 
+    1.3.3
+
+before_install:
+  - go get github.com/tools/godep
+  - go install -race std
+
+script:
+  - godep go test  ./pkg/... -race -cover

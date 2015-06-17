@@ -43,6 +43,9 @@ func (s *testAgentSuite) TestDir(c *C) {
 	err = os.MkdirAll(dir, 0755)
 	c.Assert(err, IsNil)
 
+	err = os.MkdirAll(dir, 0755)
+	c.Assert(err, IsNil)
+
 	c.Assert(isDirExist(dir), Equals, true)
 	err = os.Rename(dir, newDir)
 	c.Assert(err, NotNil)

@@ -145,17 +145,16 @@ func clearOldProcsFiles(baseDir string, tp string) {
 			continue
 		}
 
-		// if log type, then we just rename dir
-		if tp == logType {
-			newName := fmt.Sprintf("%s_%s_%d", tp, v, time.Now().Unix())
-			os.Rename(path.Join(baseDir, baseName), path.Join(baseDir, newName))
-			continue
-		}
-
 		// path format is type_id
 		if _, ok := procs[v]; !ok {
 			// we need remove unnecessary files
 			os.RemoveAll(path.Join(baseDir, baseName))
+
+			// if log type, then we just rename dir
+			if tp == logType {
+				newName := fmt.Sprintf("%s_%s_%d", tp, v, time.Now().Nanosecond())
+				os.Rename(path.Join(baseDir, baseName), path.Join(baseDir, newName))
+			}
 		}
 	}
 }

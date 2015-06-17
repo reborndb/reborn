@@ -228,8 +228,29 @@ func (p *process) checkAlive() (bool, error) {
 }
 
 func isFileExist(name string) bool {
-	_, err := os.Stat(name)
-	return !os.IsNotExist(err)
+	fi, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if fi.IsDir() {
+		return false
+	}
+
+	return true
+}
+
+func isDirExist(name string) bool {
+	fi, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if !fi.IsDir() {
+		return false
+	}
+
+	return true
 }
 
 func (p *process) needRestart() bool {
@@ -244,8 +265,11 @@ func (p *process) clear() {
 	// remove base dir
 	os.RemoveAll(p.baseDataDir())
 
-	// rename log dir
-	newLogDir := fmt.Sprintf("%s_%d", p.baseLogDir(), time.Now().Unix())
+	// backup log dir
+	// 1 if log dir does not exist, there will be an error
+	// 2 if newLogDir exists, there will be an error
+	// all erroros we ignore
+	newLogDir := fmt.Sprintf("%s_%d", p.baseLogDir(), time.Now().Nanosecond())
 	os.Rename(p.baseLogDir(), newLogDir)
 }
 

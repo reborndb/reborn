@@ -38,6 +38,10 @@ var (
 	proxyAddr  = "localhost:19000"
 )
 
+func init() {
+	log.SetLevelByString("error")
+}
+
 func TestT(t *testing.T) {
 	TestingT(t)
 }
@@ -124,7 +128,6 @@ func (s *testProxyRouterSuite) testCreateServer(c *C, port int, auth string) *te
 
 func (s *testProxyRouterSuite) initEnv(c *C) {
 	go once.Do(func() {
-		log.SetLevelByString("error")
 		conn = zkhelper.NewConn()
 		conf = &Conf{
 			ProductName:     "test",

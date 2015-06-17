@@ -1,10 +1,15 @@
 {
 	"ImportPath": "github.com/reborndb/reborn",
-	"GoVersion": "go1.3.3",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.1.0-21-g056c9bc",
+			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
+		},
 		{
 			"ImportPath": "github.com/alicebob/miniredis",
 			"Rev": "369a529586baa6b4da7675162a4eb066d4babfe3"
@@ -38,6 +43,16 @@
 			"Rev": "8ce6181c2609699e4c7cd30994b76a850a9cdadc"
 		},
 		{
+			"ImportPath": "github.com/coreos/etcd/error",
+			"Comment": "v2.1.0-alpha.0-271-g5618adf",
+			"Rev": "5618adff9904fcb0bb14100e6ab8e69fef189284"
+		},
+		{
+			"ImportPath": "github.com/coreos/go-etcd/etcd",
+			"Comment": "v2.0.0-16-g1180386",
+			"Rev": "11803862ebb77bb451b70d790fe036bf4688ba22"
+		},
+		{
 			"ImportPath": "github.com/cupcake/rdb",
 			"Rev": "3454dcabd33cb8ea8261ffd6a45f4d836eb504cc"
 		},
@@ -60,12 +75,36 @@
 			"Rev": "0667da2d9fb42143323bb9d1ae05030fd628a073"
 		},
 		{
+			"ImportPath": "github.com/google/go-snappy/snappy",
+			"Rev": "eaa750b9bf4dcb7cb20454be850613b66cda3273"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "94903de8c98a68d8b4483c529b26a5d146e386a2"
+		},
+		{
 			"ImportPath": "github.com/juju/errors",
 			"Rev": "8c374326f1293bcedc0d596e9cfe5af838ed0105"
 		},
 		{
+			"ImportPath": "github.com/kardianos/osext",
+			"Rev": "6e7f843663477789fac7c02def0d0909e969b4e5"
+		},
+		{
 			"ImportPath": "github.com/martini-contrib/cors",
 			"Rev": "553b9208d353a39b0850c02355f478ba020c86d7"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/go-ps",
+			"Rev": "e8defe55e54eb8104de2889b8a7b38ad6293f664"
+		},
+		{
+			"ImportPath": "github.com/ngaut/deadline",
+			"Rev": "fae8f9dfd7048de16575b9d4c255278e38c28a4f"
 		},
 		{
 			"ImportPath": "github.com/ngaut/go-zookeeper/zk",
@@ -74,6 +113,10 @@
 		{
 			"ImportPath": "github.com/ngaut/gostats",
 			"Rev": "faefc939c0359a8930e92767bfa425546a38f69a"
+		},
+		{
+			"ImportPath": "github.com/ngaut/log",
+			"Rev": "a370e11a897352d792b9a6cba4db829368271c41"
 		},
 		{
 			"ImportPath": "github.com/ngaut/logging",
@@ -98,6 +141,78 @@
 		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
 			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/atomic2",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/bytesize",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/errors",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/gocheck2",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/io/ioutils",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/io/pipe",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/log",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/redis/rdb",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/redis/resp",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/ring",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/sync2",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/go/trace",
+			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+		},
+		{
+			"ImportPath": "github.com/reborndb/qdb/pkg/engine",
+			"Rev": "618a8f878f59bd7826e5c6778dc0df128531003c"
+		},
+		{
+			"ImportPath": "github.com/reborndb/qdb/pkg/service",
+			"Rev": "618a8f878f59bd7826e5c6778dc0df128531003c"
+		},
+		{
+			"ImportPath": "github.com/reborndb/qdb/pkg/store",
+			"Rev": "618a8f878f59bd7826e5c6778dc0df128531003c"
+		},
+		{
+			"ImportPath": "github.com/syndtr/goleveldb/leveldb",
+			"Rev": "a06509502ca32565bdf74afc1e573050023f261c"
+		},
+		{
+			"ImportPath": "github.com/ugorji/go/codec",
+			"Rev": "821cda7e48749cacf7cad2c6ed01e96457ca7e9d"
+		},
+		{
+			"ImportPath": "gopkg.in/check.v1",
+			"Rev": "64131543e7896d5bcc6bd5a76287eb75ea96c673"
 		}
 	]
 }

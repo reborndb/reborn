@@ -7,4 +7,4 @@ before_install:
   - go install -race std
 
 script:
-  - godep go test --race -cover -v ./pkg/...
+  - godep go test  ./pkg/... -race -cover

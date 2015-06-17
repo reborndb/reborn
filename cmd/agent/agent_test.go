@@ -48,6 +48,7 @@ type testAgentSuite struct {
 	agentProxy       testAgentInfo
 	agentStoreMaster testAgentInfo
 	agentStoreSlave  testAgentInfo
+	agentHA          testAgentInfo
 }
 
 var _ = Suite(&testAgentSuite{})
@@ -69,15 +70,16 @@ func (s *testAgentSuite) SetUpSuite(c *C) {
 	err = zkhelper.DeleteRecursive(globalConn, fmt.Sprintf("/zk/reborn/db_%s", globalEnv.ProductName()), -1)
 	c.Assert(err, IsNil)
 
-	s.agentDashboard = s.testStartAgent(c, "127.0.0.1:39001")
-	s.agentProxy = s.testStartAgent(c, "127.0.0.1:39002")
-	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003")
-	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004")
+	s.agentDashboard = s.testStartAgent(c, "127.0.0.1:39001", false)
+	s.agentProxy = s.testStartAgent(c, "127.0.0.1:39002", false)
+	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003", false)
+	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004", false)
 
 	s.testDashboard(c)
 
-	s.testInitGroup(c, 1)
+	s.testInitGroup(c)
 	s.testInitSlots(c)
+	s.testStoreAddServer(c)
 }
 
 func (s *testAgentSuite) TearDownSuite(c *C) {
@@ -117,7 +119,7 @@ func (s *testAgentSuite) testSetExecPath(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *testAgentSuite) testStartAgent(c *C, addr string) testAgentInfo {
+func (s *testAgentSuite) testStartAgent(c *C, addr string, ha bool) testAgentInfo {
 	dataDir := fmt.Sprintf("./var/%s/data", addr)
 	logDir := fmt.Sprintf("./var/%s/log", addr)
 
@@ -127,8 +129,16 @@ func (s *testAgentSuite) testStartAgent(c *C, addr string) testAgentInfo {
 	os.MkdirAll(dataDir, 0755)
 	os.MkdirAll(logDir, 0755)
 
-	cmd := exec.Command("reborn-agent", "--addr", addr, "--data-dir", dataDir, "--log-dir",
-		logDir, "-L", fmt.Sprintf("./var/%s/agent.log", addr))
+	args := []string{
+		"--addr", addr, "--data-dir", dataDir, "--log-dir",
+		logDir, "-L", fmt.Sprintf("./var/%s/agent.log", addr)}
+
+	if ha {
+		args = append(args, "--ha", "--ha-max-retry-num", "1", "--ha-retry-delay", "1")
+	}
+
+	cmd := exec.Command("reborn-agent", args...)
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -160,7 +170,10 @@ func (s *testAgentSuite) testStopAllProcs(c *C, agent testAgentInfo) {
 
 func (s *testAgentSuite) testKillAllProcs(c *C, agent testAgentInfo) {
 	procs := s.testGetProcs(c, agent)
+	s.testKillProcs(c, procs)
+}
 
+func (s *testAgentSuite) testKillProcs(c *C, procs []procStatus) {
 	for _, proc := range procs {
 		p, err := os.FindProcess(proc.Pid)
 		c.Assert(err, IsNil)
@@ -212,21 +225,22 @@ func (s *testAgentSuite) testStoreAddServer(c *C) {
 	s.testStore(c, s.agentStoreMaster, 6381)
 	s.testStore(c, s.agentStoreSlave, 6382)
 
-	groupID := 1
+	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_MASTER)
+	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE)
 
-	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_MASTER, groupID)
-	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE, groupID)
+	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_MASTER)
+	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_SLAVE)
 }
 
-func (s *testAgentSuite) testInitGroup(c *C, groupID int) {
-	serverGroup := models.NewServerGroup(globalEnv.ProductName(), groupID)
+func (s *testAgentSuite) testInitGroup(c *C) {
+	serverGroup := models.NewServerGroup(globalEnv.ProductName(), 1)
 
 	s.callDashboardAPI(c, nil, "/api/server_groups", "PUT", serverGroup)
 }
 
-func (s *testAgentSuite) testAddStoreToGroup(c *C, port int, role string, groupID int) {
+func (s *testAgentSuite) testAddStoreToGroup(c *C, port int, role string) {
 	server := models.NewServer(role, fmt.Sprintf("127.0.0.1:%d", port))
-	s.callDashboardAPI(c, nil, fmt.Sprintf("/api/server_group/%d/addServer", groupID), "PUT", server)
+	s.callDashboardAPI(c, nil, fmt.Sprintf("/api/server_group/%d/addServer", 1), "PUT", server)
 }
 
 func (s *testAgentSuite) testInitSlots(c *C) {
@@ -281,7 +295,62 @@ func (s *testAgentSuite) testProxy(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *testAgentSuite) TestSimple(c *C) {
-	s.testStoreAddServer(c)
+func (s *testAgentSuite) TestProxy(c *C) {
 	s.testProxy(c)
+}
+
+func (s *testAgentSuite) checkStoreServerType(c *C, addr string, tp string) {
+	group := models.NewServerGroup(globalEnv.ProductName(), 1)
+	servers, err := group.GetServers(globalConn)
+	c.Assert(err, IsNil)
+
+	for _, server := range servers {
+		if server.Addr == addr {
+			c.Assert(server.Type, Equals, tp)
+			return
+		}
+	}
+	c.Fatalf("addr %s is not in group servers %v", addr, servers)
+}
+
+func (s *testAgentSuite) TestHA(c *C) {
+	s.agentHA = s.testStartAgent(c, "127.0.0.1:39005", true)
+	defer s.testStopAgent(c, s.agentHA)
+
+	time.Sleep(3 * time.Second)
+
+	// first test slave ha
+	procs := s.testGetProcs(c, s.agentStoreSlave)
+	// first stop agent then kill procs
+
+	s.testStopAgent(c, s.agentStoreSlave)
+	s.testKillProcs(c, procs)
+
+	time.Sleep(5 * time.Second)
+
+	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_OFFLINE)
+
+	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004", false)
+	s.testStore(c, s.agentStoreSlave, 6382)
+	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE)
+
+	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_SLAVE)
+
+	// test master ha
+	procs = s.testGetProcs(c, s.agentStoreMaster)
+
+	s.testStopAgent(c, s.agentStoreMaster)
+	s.testKillProcs(c, procs)
+
+	time.Sleep(5 * time.Second)
+	// now 6382 is slave, and 6381 is offline
+	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_MASTER)
+	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_OFFLINE)
+
+	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003", false)
+	s.testStore(c, s.agentStoreMaster, 6381)
+	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_SLAVE)
+
+	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_SLAVE)
+
 }

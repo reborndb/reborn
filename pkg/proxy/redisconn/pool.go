@@ -131,6 +131,17 @@ func (p *Pools) PutConn(c *Conn) {
 	}
 }
 
+func (p *Pools) ClearPool(addr string) {
+	p.m.Lock()
+	pool, ok := p.mpools[addr]
+	p.m.Unlock()
+	if !ok {
+		return
+	}
+
+	pool.Clear()
+}
+
 func (p *Pools) Clear() {
 	p.m.Lock()
 	defer p.m.Unlock()

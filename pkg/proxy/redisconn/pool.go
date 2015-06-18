@@ -75,7 +75,7 @@ func (p *Pool) PutConn(c *Conn) {
 	p.conns.PushBack(&poolConn{c, time.Now()})
 }
 
-func (p *Pool) Close() {
+func (p *Pool) Clear() {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -131,16 +131,12 @@ func (p *Pools) PutConn(c *Conn) {
 	}
 }
 
-func (p *Pools) Close() {
-	p.Clear()
-}
-
 func (p *Pools) Clear() {
 	p.m.Lock()
 	defer p.m.Unlock()
 
 	for _, pool := range p.mpools {
-		pool.Close()
+		pool.Clear()
 	}
 
 	p.mpools = map[string]*Pool{}

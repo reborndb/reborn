@@ -60,6 +60,6 @@ func (s *testPoolSuite) TestPool(c *C) {
 
 	c.Assert(p.conns.Len(), Equals, capability-1)
 
-	p.Close()
+	p.Clear()
 	c.Assert(p.conns.Len(), Equals, 0)
 }

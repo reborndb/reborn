@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ngaut/go-zookeeper/zk"
 	"github.com/ngaut/zkhelper"
 	. "github.com/reborndb/go/gocheck2"
 	"github.com/reborndb/reborn/pkg/env"
@@ -68,7 +69,9 @@ func (s *testAgentSuite) SetUpSuite(c *C) {
 
 	// remove all infos in coordinator first
 	err = zkhelper.DeleteRecursive(globalConn, fmt.Sprintf("/zk/reborn/db_%s", globalEnv.ProductName()), -1)
-	c.Assert(err, IsNil)
+	if err != nil && !zkhelper.ZkErrorEqual(err, zk.ErrNoNode) {
+		c.Assert(err, IsNil)
+	}
 
 	s.agentDashboard = s.testStartAgent(c, "127.0.0.1:39001", false)
 	s.agentProxy = s.testStartAgent(c, "127.0.0.1:39002", false)

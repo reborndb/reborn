@@ -253,13 +253,13 @@ func (p *process) stop() error {
 		} else {
 			if p.stopFunc != nil {
 				if err := p.stopFunc(p); err != nil {
-					log.Errorf("stop %d (%s) err %v, send kill signal", p.Pid, p.Type, err)
+					log.Errorf("stop %d (%s) err %v, send SIGTERM and Interrupt signal", p.Pid, p.Type, err)
 					proc.Signal(syscall.SIGTERM)
-					proc.Signal(os.Kill)
+					proc.Signal(os.Interrupt)
 				}
 			} else {
 				proc.Signal(syscall.SIGTERM)
-				proc.Signal(os.Kill)
+				proc.Signal(os.Interrupt)
 			}
 
 			ch := make(chan struct{}, 1)

@@ -4,40 +4,58 @@
 package redisconn
 
 import (
+	"container/list"
 	"sync"
 	"time"
-
-	"github.com/juju/errors"
-	"github.com/ngaut/pools"
 )
 
 const PoolIdleTimeoutSecond = 120
 
 type CreateConnFunc func(addr string) (*Conn, error)
 
+type poolConn struct {
+	c    *Conn
+	last time.Time
+}
+
 type Pool struct {
-	p *pools.ResourcePool
+	m sync.Mutex
+
+	f          CreateConnFunc
+	addr       string
+	capability int
+	conns      *list.List
 }
 
 func NewPool(addr string, capability int, f CreateConnFunc) *Pool {
-	poolFunc := func() (pools.Resource, error) {
-		return f(addr)
-	}
-
 	p := new(Pool)
-	p.p = pools.NewResourcePool(poolFunc, capability, capability, PoolIdleTimeoutSecond*time.Second)
+	p.f = f
+	p.addr = addr
+	p.capability = capability
+
+	p.conns = list.New()
+
 	return p
 }
 
 func (p *Pool) GetConn() (*Conn, error) {
-	conn, err := p.p.Get()
-	if err != nil {
-		return nil, errors.Trace(err)
-	} else if conn == nil {
-		return nil, errors.Errorf("create nil connection")
-	} else {
-		return conn.(*Conn), nil
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	n := time.Now()
+	for p.conns.Len() > 0 {
+		e := p.conns.Front()
+		p.conns.Remove(e)
+
+		c := e.Value.(*poolConn)
+		if n.Sub(c.last) > time.Duration(PoolIdleTimeoutSecond)*time.Second {
+			c.c.Close()
+		} else {
+			return c.c, nil
+		}
 	}
+
+	return p.f(p.addr)
 }
 
 func (p *Pool) PutConn(c *Conn) {
@@ -45,11 +63,27 @@ func (p *Pool) PutConn(c *Conn) {
 		return
 	}
 
-	p.p.Put(c)
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	for p.conns.Len() >= p.capability {
+		e := p.conns.Front()
+		p.conns.Remove(e)
+		e.Value.(*poolConn).c.Close()
+	}
+
+	p.conns.PushBack(&poolConn{c, time.Now()})
 }
 
-func (p *Pool) Close() {
-	p.p.Close()
+func (p *Pool) Clear() {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	for p.conns.Len() > 0 {
+		e := p.conns.Front()
+		p.conns.Remove(e)
+		e.Value.(*poolConn).c.Close()
+	}
 }
 
 type Pools struct {
@@ -97,12 +131,23 @@ func (p *Pools) PutConn(c *Conn) {
 	}
 }
 
-func (p *Pools) Close() {
+func (p *Pools) ClearPool(addr string) {
+	p.m.Lock()
+	pool, ok := p.mpools[addr]
+	p.m.Unlock()
+	if !ok {
+		return
+	}
+
+	pool.Clear()
+}
+
+func (p *Pools) Clear() {
 	p.m.Lock()
 	defer p.m.Unlock()
 
 	for _, pool := range p.mpools {
-		pool.Close()
+		pool.Clear()
 	}
 
 	p.mpools = map[string]*Pool{}

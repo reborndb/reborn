@@ -159,6 +159,7 @@ func main() {
 
 	// set output log file
 	if v := getStringArg(args, "-L"); len(v) > 0 {
+		log.SetHighlighting(false)
 		log.SetOutputByName(v)
 	}
 

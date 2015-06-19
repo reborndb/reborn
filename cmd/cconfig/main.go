@@ -126,6 +126,7 @@ func main() {
 
 	// set output log file
 	if args["-L"] != nil {
+		log.SetHighlighting(false)
 		log.SetOutputByName(args["-L"].(string))
 	}
 

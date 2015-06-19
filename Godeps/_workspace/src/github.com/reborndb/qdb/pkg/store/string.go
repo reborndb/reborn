@@ -36,7 +36,7 @@ func (o *stringRow) deleteObject(s *Store, bt *engine.Batch) error {
 	return nil
 }
 
-func (o *stringRow) storeObject(s *Store, bt *engine.Batch, expireat uint64, obj interface{}) error {
+func (o *stringRow) storeObject(s *Store, bt *engine.Batch, expireat int64, obj interface{}) error {
 	value, ok := obj.(rdb.String)
 	if !ok || len(value) == 0 {
 		return errors.Trace(ErrObjectValue)
@@ -71,17 +71,12 @@ func (s *Store) loadStringRow(db uint32, key []byte, deleteIfExpired bool) (*str
 }
 
 // GET key
-func (s *Store) Get(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) Get(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -102,17 +97,13 @@ func (s *Store) Get(db uint32, args ...interface{}) ([]byte, error) {
 }
 
 // APPEND key value
-func (s *Store) Append(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Append(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	for i, ref := range []interface{}{&key, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	value := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -136,23 +127,20 @@ func (s *Store) Append(db uint32, args ...interface{}) (int64, error) {
 		o.Value = value
 		bt.Set(o.MetaKey(), o.MetaValue())
 	}
+
 	bt.Set(o.DataKey(), o.DataValue())
 	fw := &Forward{DB: db, Op: "Append", Args: args}
 	return int64(len(o.Value)), s.commit(bt, fw)
 }
 
 // SET key value
-func (s *Store) Set(db uint32, args ...interface{}) error {
+func (s *Store) Set(db uint32, args [][]byte) error {
 	if len(args) != 2 {
 		return errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	for i, ref := range []interface{}{&key, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	value := args[1]
 
 	if err := s.acquire(); err != nil {
 		return err
@@ -164,6 +152,7 @@ func (s *Store) Set(db uint32, args ...interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	o := newStringRow(db, key)
 	o.Value = value
 	bt.Set(o.DataKey(), o.DataValue())
@@ -173,22 +162,23 @@ func (s *Store) Set(db uint32, args ...interface{}) error {
 }
 
 // PSETEX key milliseconds value
-func (s *Store) PSetEX(db uint32, args ...interface{}) error {
+func (s *Store) PSetEX(db uint32, args [][]byte) error {
 	if len(args) != 3 {
 		return errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key, value []byte
-	var ttlms int64
-	for i, ref := range []interface{}{&key, &ttlms, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	ttlms, err := ParseInt(args[1])
+	if err != nil {
+		return errArguments("parse args failed - %s", err)
 	}
+	value := args[2]
+
 	if ttlms == 0 {
 		return errArguments("invalid ttlms = %d", ttlms)
 	}
-	expireat := uint64(0)
+
+	expireat := int64(0)
 	if v, ok := TTLmsToExpireAt(ttlms); ok && v > 0 {
 		expireat = v
 	} else {
@@ -201,10 +191,11 @@ func (s *Store) PSetEX(db uint32, args ...interface{}) error {
 	defer s.release()
 
 	bt := engine.NewBatch()
-	_, err := s.deleteIfExists(bt, db, key)
+	_, err = s.deleteIfExists(bt, db, key)
 	if err != nil {
 		return err
 	}
+
 	if !IsExpired(expireat) {
 		o := newStringRow(db, key)
 		o.ExpireAt, o.Value = expireat, value
@@ -213,28 +204,28 @@ func (s *Store) PSetEX(db uint32, args ...interface{}) error {
 		fw := &Forward{DB: db, Op: "PSetEX", Args: args}
 		return s.commit(bt, fw)
 	} else {
-		fw := &Forward{DB: db, Op: "Del", Args: []interface{}{key}}
+		fw := &Forward{DB: db, Op: "Del", Args: [][]byte{key}}
 		return s.commit(bt, fw)
 	}
 }
 
 // SETEX key seconds value
-func (s *Store) SetEX(db uint32, args ...interface{}) error {
+func (s *Store) SetEX(db uint32, args [][]byte) error {
 	if len(args) != 3 {
 		return errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key, value []byte
-	var ttls int64
-	for i, ref := range []interface{}{&key, &ttls, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	ttls, err := ParseInt(args[1])
+	if err != nil {
+		return errArguments("parse args failed - %s", err)
 	}
+	value := args[2]
+
 	if ttls == 0 {
 		return errArguments("invalid ttls = %d", ttls)
 	}
-	expireat := uint64(0)
+	expireat := int64(0)
 	if v, ok := TTLsToExpireAt(ttls); ok && v > 0 {
 		expireat = v
 	} else {
@@ -247,7 +238,7 @@ func (s *Store) SetEX(db uint32, args ...interface{}) error {
 	defer s.release()
 
 	bt := engine.NewBatch()
-	_, err := s.deleteIfExists(bt, db, key)
+	_, err = s.deleteIfExists(bt, db, key)
 	if err != nil {
 		return err
 	}
@@ -259,23 +250,19 @@ func (s *Store) SetEX(db uint32, args ...interface{}) error {
 		fw := &Forward{DB: db, Op: "SetEX", Args: args}
 		return s.commit(bt, fw)
 	} else {
-		fw := &Forward{DB: db, Op: "Del", Args: []interface{}{key}}
+		fw := &Forward{DB: db, Op: "Del", Args: [][]byte{key}}
 		return s.commit(bt, fw)
 	}
 }
 
 // SETNX key value
-func (s *Store) SetNX(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SetNX(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	for i, ref := range []interface{}{&key, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	value := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -297,17 +284,13 @@ func (s *Store) SetNX(db uint32, args ...interface{}) (int64, error) {
 }
 
 // GETSET key value
-func (s *Store) GetSet(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) GetSet(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 2 {
 		return nil, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	for i, ref := range []interface{}{&key, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	value := args[1]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -334,6 +317,7 @@ func (s *Store) GetSet(db uint32, args ...interface{}) ([]byte, error) {
 		o = newStringRow(db, key)
 		bt.Set(o.MetaKey(), o.MetaValue())
 	}
+
 	o.Value, value = value, o.Value
 	bt.Set(o.DataKey(), o.DataValue())
 	fw := &Forward{DB: db, Op: "Set", Args: args}
@@ -361,9 +345,10 @@ func (s *Store) incrInt(db uint32, key []byte, delta int64) (int64, error) {
 		o = newStringRow(db, key)
 		bt.Set(o.MetaKey(), o.MetaValue())
 	}
+
 	o.Value = FormatInt(delta)
 	bt.Set(o.DataKey(), o.DataValue())
-	fw := &Forward{DB: db, Op: "IncrBy", Args: []interface{}{key, delta}}
+	fw := &Forward{DB: db, Op: "IncrBy", Args: [][]byte{key, FormatInt(delta)}}
 	return delta, s.commit(bt, fw)
 }
 
@@ -395,22 +380,17 @@ func (s *Store) incrFloat(db uint32, key []byte, delta float64) (float64, error)
 
 	o.Value = FormatFloat(delta)
 	bt.Set(o.DataKey(), o.DataValue())
-	fw := &Forward{DB: db, Op: "IncrByFloat", Args: []interface{}{key, delta}}
+	fw := &Forward{DB: db, Op: "IncrByFloat", Args: [][]byte{key, FormatFloat(delta)}}
 	return delta, s.commit(bt, fw)
 }
 
 // INCR key
-func (s *Store) Incr(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Incr(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -421,17 +401,15 @@ func (s *Store) Incr(db uint32, args ...interface{}) (int64, error) {
 }
 
 // INCRBY key delta
-func (s *Store) IncrBy(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) IncrBy(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var delta int64
-	for i, ref := range []interface{}{&key, &delta} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	delta, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -443,17 +421,12 @@ func (s *Store) IncrBy(db uint32, args ...interface{}) (int64, error) {
 }
 
 // DECR key
-func (s *Store) Decr(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Decr(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -464,17 +437,15 @@ func (s *Store) Decr(db uint32, args ...interface{}) (int64, error) {
 }
 
 // DECRBY key delta
-func (s *Store) DecrBy(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) DecrBy(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var delta int64
-	for i, ref := range []interface{}{&key, &delta} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	delta, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -486,17 +457,15 @@ func (s *Store) DecrBy(db uint32, args ...interface{}) (int64, error) {
 }
 
 // INCRBYFLOAT key delta
-func (s *Store) IncrByFloat(db uint32, args ...interface{}) (float64, error) {
+func (s *Store) IncrByFloat(db uint32, args [][]byte) (float64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var delta float64
-	for i, ref := range []interface{}{&key, &delta} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	delta, err := ParseFloat(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -508,18 +477,21 @@ func (s *Store) IncrByFloat(db uint32, args ...interface{}) (float64, error) {
 }
 
 // SETBIT key offset value
-func (s *Store) SetBit(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SetBit(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key []byte
-	var offset, value uint64
-	for i, ref := range []interface{}{&key, &offset, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	offset, err := ParseUint(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	value, err := ParseUint(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+
 	if offset > maxVarbytesLen {
 		return 0, errArguments("offset = %d", offset)
 	}
@@ -568,18 +540,18 @@ func (s *Store) SetBit(db uint32, args ...interface{}) (int64, error) {
 }
 
 // SETRANGE key offset value
-func (s *Store) SetRange(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SetRange(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key, value []byte
-	var offset uint64
-	for i, ref := range []interface{}{&key, &offset, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	offset, err := ParseUint(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	value := args[2]
+
 	if offset > maxVarbytesLen {
 		return 0, errArguments("offset = %d", offset)
 	}
@@ -614,16 +586,9 @@ func (s *Store) SetRange(db uint32, args ...interface{}) (int64, error) {
 }
 
 // MSET key value [key value ...]
-func (s *Store) MSet(db uint32, args ...interface{}) error {
+func (s *Store) MSet(db uint32, args [][]byte) error {
 	if len(args) == 0 || len(args)%2 != 0 {
 		return errArguments("len(args) = %d, expect != 0 && mod 2 = 0", len(args))
-	}
-
-	pairs := make([][]byte, len(args))
-	for i := 0; i < len(args); i++ {
-		if err := parseArgument(args[i], &pairs[i]); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
 	}
 
 	if err := s.acquire(); err != nil {
@@ -633,8 +598,8 @@ func (s *Store) MSet(db uint32, args ...interface{}) error {
 
 	ms := &markSet{}
 	bt := engine.NewBatch()
-	for i := len(pairs)/2 - 1; i >= 0; i-- {
-		key, value := pairs[i*2], pairs[i*2+1]
+	for i := len(args)/2 - 1; i >= 0; i-- {
+		key, value := args[i*2], args[i*2+1]
 		if !ms.Has(key) {
 			_, err := s.deleteIfExists(bt, db, key)
 			if err != nil {
@@ -652,16 +617,9 @@ func (s *Store) MSet(db uint32, args ...interface{}) error {
 }
 
 // MSETNX key value [key value ...]
-func (s *Store) MSetNX(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) MSetNX(db uint32, args [][]byte) (int64, error) {
 	if len(args) == 0 || len(args)%2 != 0 {
 		return 0, errArguments("len(args) = %d, expect != 0 && mod 2 = 0", len(args))
-	}
-
-	pairs := make([][]byte, len(args))
-	for i := 0; i < len(args); i++ {
-		if err := parseArgument(args[i], &pairs[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
 	}
 
 	if err := s.acquire(); err != nil {
@@ -669,8 +627,8 @@ func (s *Store) MSetNX(db uint32, args ...interface{}) (int64, error) {
 	}
 	defer s.release()
 
-	for i := 0; i < len(pairs); i += 2 {
-		o, err := s.loadStoreRow(db, pairs[i], true)
+	for i := 0; i < len(args); i += 2 {
+		o, err := s.loadStoreRow(db, args[i], true)
 		if err != nil || o != nil {
 			return 0, err
 		}
@@ -678,8 +636,8 @@ func (s *Store) MSetNX(db uint32, args ...interface{}) (int64, error) {
 
 	ms := &markSet{}
 	bt := engine.NewBatch()
-	for i := len(pairs)/2 - 1; i >= 0; i-- {
-		key, value := pairs[i*2], pairs[i*2+1]
+	for i := len(args)/2 - 1; i >= 0; i-- {
+		key, value := args[i*2], args[i*2+1]
 		if !ms.Has(key) {
 			o := newStringRow(db, key)
 			o.Value = value
@@ -693,17 +651,12 @@ func (s *Store) MSetNX(db uint32, args ...interface{}) (int64, error) {
 }
 
 // MGET key [key ...]
-func (s *Store) MGet(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) MGet(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) == 0 {
 		return nil, errArguments("len(args) = %d, expect != 0", len(args))
 	}
 
-	keys := make([][]byte, len(args))
-	for i := 0; i < len(args); i++ {
-		if err := parseArgument(args[i], &keys[i]); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	keys := args
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -736,18 +689,17 @@ func (s *Store) MGet(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // GETBIT key offset
-func (s *Store) GetBit(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) GetBit(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var offset uint64
-	for i, ref := range []interface{}{&key, &offset} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	offset, err := ParseUint(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+
 	if offset > maxVarbytesLen {
 		return 0, errArguments("offset = %d", offset)
 	}
@@ -780,17 +732,19 @@ func (s *Store) GetBit(db uint32, args ...interface{}) (int64, error) {
 }
 
 // GETRANGE key beg end
-func (s *Store) GetRange(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) GetRange(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 3 {
 		return nil, errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key []byte
-	var beg, end int64
-	for i, ref := range []interface{}{&key, &beg, &end} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	beg, err := ParseInt(args[1])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
+	}
+	end, err := ParseInt(args[2])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -843,17 +797,12 @@ func maxIntValue(v1, v2 int64) int64 {
 }
 
 // STRLEN key
-func (s *Store) Strlen(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Strlen(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err

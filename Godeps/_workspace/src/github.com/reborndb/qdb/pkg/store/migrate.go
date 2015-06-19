@@ -182,7 +182,7 @@ func doMigrate(addr string, timeout time.Duration, db uint32, bins []*rdb.BinEnt
 		cmd2.AppendBulkBytes(bin.Key)
 		ttlms := int64(0)
 		if bin.ExpireAt != 0 {
-			if v, ok := ExpireAtToTTLms(bin.ExpireAt); ok && v > 0 {
+			if v, ok := ExpireAtToTTLms(int64(bin.ExpireAt)); ok && v > 0 {
 				ttlms = v
 			} else {
 				ttlms = 1

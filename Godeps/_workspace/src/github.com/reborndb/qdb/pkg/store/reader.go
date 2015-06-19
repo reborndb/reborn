@@ -36,7 +36,7 @@ func loadObjEntry(r storeReader, db uint32, key []byte) (storeRow, *rdb.ObjEntry
 			DB:       db,
 			Key:      key,
 			Value:    val,
-			ExpireAt: o.GetExpireAt(),
+			ExpireAt: uint64(o.GetExpireAt()),
 		}
 		return o, obj, nil
 	}

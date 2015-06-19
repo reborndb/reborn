@@ -192,15 +192,15 @@
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/engine",
-			"Rev": "5bc0c51680168aa2b6a0aad971ac11ab67235819"
+			"Rev": "126eddb991be7ccf22f1c310f894f21b7a62f703"
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/service",
-			"Rev": "5bc0c51680168aa2b6a0aad971ac11ab67235819"
+			"Rev": "126eddb991be7ccf22f1c310f894f21b7a62f703"
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/store",
-			"Rev": "5bc0c51680168aa2b6a0aad971ac11ab67235819"
+			"Rev": "126eddb991be7ccf22f1c310f894f21b7a62f703"
 		},
 		{
 			"ImportPath": "github.com/syndtr/goleveldb/leveldb",

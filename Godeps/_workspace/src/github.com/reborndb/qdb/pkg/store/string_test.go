@@ -19,7 +19,7 @@ func (s *testStoreSuite) xdel(c *C, db uint32, key string, expect int64) {
 func (s *testStoreSuite) xdump(c *C, db uint32, key string, expect string) {
 	s.kexists(c, db, key, 1)
 
-	v, err := s.s.Dump(db, key)
+	v, err := s.s.Dump(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(v, NotNil)
 
@@ -35,7 +35,7 @@ func (s *testStoreSuite) xrestore(c *C, db uint32, key string, ttlms uint64, val
 	dump, err := rdb.EncodeDump(x)
 	c.Assert(err, IsNil)
 
-	err = s.s.Restore(db, key, ttlms, dump)
+	err = s.s.Restore(db, FormatBytes(key, ttlms, dump))
 	c.Assert(err, IsNil)
 
 	s.xdump(c, db, key, value)
@@ -47,7 +47,7 @@ func (s *testStoreSuite) xrestore(c *C, db uint32, key string, ttlms uint64, val
 }
 
 func (s *testStoreSuite) xset(c *C, db uint32, key, value string) {
-	err := s.s.Set(db, []byte(key), []byte(value))
+	err := s.s.Set(db, FormatBytes(key, value))
 	c.Assert(err, IsNil)
 
 	s.kttl(c, db, key, -1)
@@ -55,7 +55,7 @@ func (s *testStoreSuite) xset(c *C, db uint32, key, value string) {
 }
 
 func (s *testStoreSuite) xget(c *C, db uint32, key string, expect string) {
-	x, err := s.s.Get(db, []byte(key))
+	x, err := s.s.Get(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 
 	if expect == "" {
@@ -68,13 +68,13 @@ func (s *testStoreSuite) xget(c *C, db uint32, key string, expect string) {
 }
 
 func (s *testStoreSuite) xappend(c *C, db uint32, key, value string, expect int64) {
-	x, err := s.s.Append(db, key, value)
+	x, err := s.s.Append(db, FormatBytes(key, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xgetset(c *C, db uint32, key, value string, expect string) {
-	x, err := s.s.GetSet(db, key, value)
+	x, err := s.s.GetSet(db, FormatBytes(key, value))
 	c.Assert(err, IsNil)
 
 	if expect == "" {
@@ -87,7 +87,7 @@ func (s *testStoreSuite) xgetset(c *C, db uint32, key, value string, expect stri
 }
 
 func (s *testStoreSuite) xpsetex(c *C, db uint32, key, value string, ttlms uint64) {
-	err := s.s.PSetEX(db, key, ttlms, value)
+	err := s.s.PSetEX(db, FormatBytes(key, ttlms, value))
 	c.Assert(err, IsNil)
 
 	s.xdump(c, db, key, value)
@@ -95,7 +95,7 @@ func (s *testStoreSuite) xpsetex(c *C, db uint32, key, value string, ttlms uint6
 }
 
 func (s *testStoreSuite) xsetex(c *C, db uint32, key, value string, ttls uint64) {
-	err := s.s.SetEX(db, key, ttls, value)
+	err := s.s.SetEX(db, FormatBytes(key, ttls, value))
 	c.Assert(err, IsNil)
 
 	s.xdump(c, db, key, value)
@@ -103,7 +103,7 @@ func (s *testStoreSuite) xsetex(c *C, db uint32, key, value string, ttls uint64)
 }
 
 func (s *testStoreSuite) xsetnx(c *C, db uint32, key, value string, expect int64) {
-	x, err := s.s.SetNX(db, key, value)
+	x, err := s.s.SetNX(db, FormatBytes(key, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -120,43 +120,43 @@ func (s *testStoreSuite) xstrlen(c *C, db uint32, key string, expect int64) {
 		s.kexists(c, db, key, 0)
 	}
 
-	x, err := s.s.Strlen(db, key)
+	x, err := s.s.Strlen(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xincr(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.Incr(db, key)
+	x, err := s.s.Incr(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xdecr(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.Decr(db, key)
+	x, err := s.s.Decr(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xincrby(c *C, db uint32, key string, delta int64, expect int64) {
-	x, err := s.s.IncrBy(db, key, delta)
+	x, err := s.s.IncrBy(db, FormatBytes(key, delta))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xdecrby(c *C, db uint32, key string, delta int64, expect int64) {
-	x, err := s.s.DecrBy(db, key, delta)
+	x, err := s.s.DecrBy(db, FormatBytes(key, delta))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xincrbyfloat(c *C, db uint32, key string, delta float64, expect float64) {
-	x, err := s.s.IncrByFloat(db, key, delta)
+	x, err := s.s.IncrByFloat(db, FormatBytes(key, delta))
 	c.Assert(err, IsNil)
 	c.Assert(math.Abs(x-expect) < 1e-9, Equals, true)
 }
 
 func (s *testStoreSuite) xsetbit(c *C, db uint32, key string, offset uint, value int64, expect int64) {
-	x, err := s.s.SetBit(db, key, offset, value)
+	x, err := s.s.SetBit(db, FormatBytes(key, offset, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -164,13 +164,13 @@ func (s *testStoreSuite) xsetbit(c *C, db uint32, key string, offset uint, value
 }
 
 func (s *testStoreSuite) xgetbit(c *C, db uint32, key string, offset uint, expect int64) {
-	x, err := s.s.GetBit(db, key, offset)
+	x, err := s.s.GetBit(db, FormatBytes(key, offset))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) xsetrange(c *C, db uint32, key string, offset uint, value string, expect int64) {
-	x, err := s.s.SetRange(db, key, offset, value)
+	x, err := s.s.SetRange(db, FormatBytes(key, offset, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -178,7 +178,7 @@ func (s *testStoreSuite) xsetrange(c *C, db uint32, key string, offset uint, val
 }
 
 func (s *testStoreSuite) xgetrange(c *C, db uint32, key string, beg, end int, expect string) {
-	x, err := s.s.GetRange(db, key, beg, end)
+	x, err := s.s.GetRange(db, FormatBytes(key, beg, end))
 	c.Assert(err, IsNil)
 	c.Assert(string(x), Equals, expect)
 }
@@ -189,7 +189,7 @@ func (s *testStoreSuite) xmset(c *C, db uint32, pairs ...string) {
 		args[i] = s
 	}
 
-	err := s.s.MSet(db, args...)
+	err := s.s.MSet(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 
 	m := make(map[string]string)
@@ -208,7 +208,7 @@ func (s *testStoreSuite) xmsetnx(c *C, db uint32, expect int64, pairs ...string)
 		args[i] = s
 	}
 
-	x, err := s.s.MSetNX(db, args...)
+	x, err := s.s.MSetNX(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -234,7 +234,7 @@ func (s *testStoreSuite) xmget(c *C, db uint32, pairs ...string) {
 		args = append(args, pairs[i])
 	}
 
-	x, err := s.s.MGet(db, args...)
+	x, err := s.s.MGet(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(len(x), Equals, len(args))
 
@@ -406,10 +406,10 @@ func (s *testStoreSuite) TestXIncrByFloat(c *C) {
 		s.xincrbyfloat(c, 0, "string", a, sum)
 	}
 
-	_, err := s.s.IncrByFloat(0, "string", math.Inf(1))
+	_, err := s.s.IncrByFloat(0, FormatBytes("string", math.Inf(1)))
 	c.Assert(err, NotNil)
 
-	_, err = s.s.IncrByFloat(0, "string", math.Inf(-1))
+	_, err = s.s.IncrByFloat(0, FormatBytes("string", math.Inf(-1)))
 	c.Assert(err, NotNil)
 
 	s.xdel(c, 0, "string", 1)

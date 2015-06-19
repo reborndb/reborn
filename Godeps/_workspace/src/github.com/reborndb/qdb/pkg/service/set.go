@@ -11,7 +11,7 @@ func SAddCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().SAdd(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SAdd(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -24,7 +24,7 @@ func SCardCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if n, err := s.Store().SCard(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SCard(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -37,7 +37,7 @@ func SIsMemberCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if x, err := s.Store().SIsMember(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().SIsMember(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -50,7 +50,7 @@ func SMembersCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if a, err := s.Store().SMembers(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().SMembers(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -67,7 +67,7 @@ func SPopCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if v, err := s.Store().SPop(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().SPop(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytes(v), nil
@@ -80,7 +80,7 @@ func SRandMemberCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1 or 2", len(args))
 	}
 
-	if a, err := s.Store().SRandMember(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().SRandMember(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -97,7 +97,7 @@ func SRemCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().SRem(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SRem(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil

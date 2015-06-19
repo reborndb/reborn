@@ -519,13 +519,13 @@ func (h *Handler) doSyncRDB(c *conn, size int64) error {
 				db, key, value := entry.DB, entry.Key, entry.Value
 				ttlms := int64(0)
 				if entry.ExpireAt != 0 {
-					if v, ok := store.ExpireAtToTTLms(entry.ExpireAt); ok && v > 0 {
+					if v, ok := store.ExpireAtToTTLms(int64(entry.ExpireAt)); ok && v > 0 {
 						ttlms = v
 					} else {
 						ttlms = 1
 					}
 				}
-				if err := c.Store().SlotsRestore(db, key, ttlms, value); err != nil {
+				if err := c.Store().SlotsRestore(db, [][]byte{key, store.FormatInt(ttlms), value}); err != nil {
 					errs <- err
 					return
 				}

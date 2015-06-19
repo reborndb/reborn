@@ -52,7 +52,7 @@ func (o *listRow) deleteObject(s *Store, bt *engine.Batch) error {
 	return it.Error()
 }
 
-func (o *listRow) storeObject(s *Store, bt *engine.Batch, expireat uint64, obj interface{}) error {
+func (o *listRow) storeObject(s *Store, bt *engine.Batch, expireat int64, obj interface{}) error {
 	list, ok := obj.(rdb.List)
 	if !ok || len(list) == 0 {
 		return errors.Trace(ErrObjectValue)
@@ -101,17 +101,15 @@ func (s *Store) loadListRow(db uint32, key []byte, deleteIfExpired bool) (*listR
 }
 
 // LINDEX key index
-func (s *Store) LIndex(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) LIndex(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 2 {
 		return nil, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var index int64
-	for i, ref := range []interface{}{&key, &index} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	index, err := ParseInt(args[1])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
 	}
 
 	o, err := s.loadListRow(db, key, true)
@@ -132,17 +130,12 @@ func (s *Store) LIndex(db uint32, args ...interface{}) ([]byte, error) {
 }
 
 // LLEN key
-func (s *Store) LLen(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) LLen(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -157,17 +150,19 @@ func (s *Store) LLen(db uint32, args ...interface{}) (int64, error) {
 }
 
 // LRANGE key beg end
-func (s *Store) LRange(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) LRange(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 3 {
 		return nil, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var beg, end int64
-	for i, ref := range []interface{}{&key, &beg, &end} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	beg, err := ParseInt(args[1])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
+	}
+	end, err := ParseInt(args[2])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -198,18 +193,17 @@ func (s *Store) LRange(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // LSET key index value
-func (s *Store) LSet(db uint32, args ...interface{}) error {
+func (s *Store) LSet(db uint32, args [][]byte) error {
 	if len(args) != 3 {
 		return errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	var index int64
-	for i, ref := range []interface{}{&key, &index, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	index, err := ParseInt(args[1])
+	if err != nil {
+		return errArguments("parse args failed - %s", err)
 	}
+	value := args[2]
 
 	if err := s.acquire(); err != nil {
 		return err
@@ -238,17 +232,19 @@ func (s *Store) LSet(db uint32, args ...interface{}) error {
 }
 
 // LTRIM key beg end
-func (s *Store) LTrim(db uint32, args ...interface{}) error {
+func (s *Store) LTrim(db uint32, args [][]byte) error {
 	if len(args) != 3 {
 		return errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var beg, end int64
-	for i, ref := range []interface{}{&key, &beg, &end} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	beg, err := ParseInt(args[1])
+	if err != nil {
+		return errArguments("parse args failed - %s", err)
+	}
+	end, err := ParseInt(args[2])
+	if err != nil {
+		return errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -288,17 +284,12 @@ func (s *Store) LTrim(db uint32, args ...interface{}) error {
 }
 
 // LPOP key
-func (s *Store) LPop(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) LPop(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -327,17 +318,12 @@ func (s *Store) LPop(db uint32, args ...interface{}) ([]byte, error) {
 }
 
 // RPOP key
-func (s *Store) RPop(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) RPop(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -366,21 +352,13 @@ func (s *Store) RPop(db uint32, args ...interface{}) ([]byte, error) {
 }
 
 // LPUSH key value [value ...]
-func (s *Store) LPush(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) LPush(db uint32, args [][]byte) (int64, error) {
 	if len(args) < 2 {
 		return 0, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var values = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(values); i++ {
-		if err := parseArgument(args[i+1], &values[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	values := args[1:]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -391,17 +369,13 @@ func (s *Store) LPush(db uint32, args ...interface{}) (int64, error) {
 }
 
 // LPUSHX key value
-func (s *Store) LPushX(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) LPushX(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	for i, ref := range []interface{}{&key, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	value := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -412,21 +386,13 @@ func (s *Store) LPushX(db uint32, args ...interface{}) (int64, error) {
 }
 
 // RPUSH key value [value ...]
-func (s *Store) RPush(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) RPush(db uint32, args [][]byte) (int64, error) {
 	if len(args) < 2 {
 		return 0, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var values = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(values); i++ {
-		if err := parseArgument(args[i+1], &values[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	values := args[1:]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -437,17 +403,13 @@ func (s *Store) RPush(db uint32, args ...interface{}) (int64, error) {
 }
 
 // RPUSHX key value
-func (s *Store) RPushX(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) RPushX(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, value []byte
-	for i, ref := range []interface{}{&key, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	value := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -470,7 +432,7 @@ func (s *Store) lpush(db uint32, key []byte, create bool, values ...[]byte) (int
 		o = newListRow(db, key)
 	}
 
-	fw := &Forward{DB: db, Op: "LPush", Args: []interface{}{key}}
+	fw := &Forward{DB: db, Op: "LPush", Args: [][]byte{key}}
 	bt := engine.NewBatch()
 	for _, value := range values {
 		o.Lindex--
@@ -495,7 +457,7 @@ func (s *Store) rpush(db uint32, key []byte, create bool, values ...[]byte) (int
 		o = newListRow(db, key)
 	}
 
-	fw := &Forward{DB: db, Op: "RPush", Args: []interface{}{key}}
+	fw := &Forward{DB: db, Op: "RPush", Args: [][]byte{key}}
 	bt := engine.NewBatch()
 	for _, value := range values {
 		o.Index, o.Value = o.Rindex, value

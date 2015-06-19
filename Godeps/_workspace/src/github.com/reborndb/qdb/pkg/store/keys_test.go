@@ -15,7 +15,7 @@ func (s *testStoreSuite) kdel(c *C, db uint32, expect int64, keys ...string) {
 		args[i] = key
 	}
 
-	n, err := s.s.Del(db, args...)
+	n, err := s.s.Del(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(n, Equals, expect)
 
@@ -25,7 +25,7 @@ func (s *testStoreSuite) kdel(c *C, db uint32, expect int64, keys ...string) {
 }
 
 func (s *testStoreSuite) ktype(c *C, db uint32, key string, expect ObjectCode) {
-	x, err := s.s.Type(db, key)
+	x, err := s.s.Type(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -37,13 +37,13 @@ func (s *testStoreSuite) ktype(c *C, db uint32, key string, expect ObjectCode) {
 }
 
 func (s *testStoreSuite) kexists(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.Exists(db, key)
+	x, err := s.s.Exists(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) kttl(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.TTL(db, key)
+	x, err := s.s.TTL(db, FormatBytes(key))
 	switch expect {
 	case -1, -2, 0:
 		c.Assert(err, IsNil)
@@ -55,7 +55,7 @@ func (s *testStoreSuite) kttl(c *C, db uint32, key string, expect int64) {
 }
 
 func (s *testStoreSuite) kpttl(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.PTTL(db, key)
+	x, err := s.s.PTTL(db, FormatBytes(key))
 	switch expect {
 	case -1, -2, 0:
 		c.Assert(err, IsNil)
@@ -67,7 +67,7 @@ func (s *testStoreSuite) kpttl(c *C, db uint32, key string, expect int64) {
 }
 
 func (s *testStoreSuite) kpersist(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.Persist(db, key)
+	x, err := s.s.Persist(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -77,7 +77,7 @@ func (s *testStoreSuite) kpersist(c *C, db uint32, key string, expect int64) {
 }
 
 func (s *testStoreSuite) kexpire(c *C, db uint32, key string, ttls uint64, expect int64) {
-	x, err := s.s.Expire(db, key, ttls)
+	x, err := s.s.Expire(db, FormatBytes(key, ttls))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -91,7 +91,7 @@ func (s *testStoreSuite) kexpire(c *C, db uint32, key string, ttls uint64, expec
 }
 
 func (s *testStoreSuite) kpexpire(c *C, db uint32, key string, ttlms uint64, expect int64) {
-	x, err := s.s.PExpire(db, key, ttlms)
+	x, err := s.s.PExpire(db, FormatBytes(key, ttlms))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -104,8 +104,8 @@ func (s *testStoreSuite) kpexpire(c *C, db uint32, key string, ttlms uint64, exp
 	}
 }
 
-func (s *testStoreSuite) kexpireat(c *C, db uint32, key string, timestamp uint64, expect int64) {
-	x, err := s.s.ExpireAt(db, key, timestamp)
+func (s *testStoreSuite) kexpireat(c *C, db uint32, key string, timestamp int64, expect int64) {
+	x, err := s.s.ExpireAt(db, FormatBytes(key, timestamp))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -119,8 +119,8 @@ func (s *testStoreSuite) kexpireat(c *C, db uint32, key string, timestamp uint64
 	}
 }
 
-func (s *testStoreSuite) kpexpireat(c *C, db uint32, key string, expireat uint64, expect int64) {
-	x, err := s.s.PExpireAt(db, key, expireat)
+func (s *testStoreSuite) kpexpireat(c *C, db uint32, key string, expireat int64, expect int64) {
+	x, err := s.s.PExpireAt(db, FormatBytes(key, expireat))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 

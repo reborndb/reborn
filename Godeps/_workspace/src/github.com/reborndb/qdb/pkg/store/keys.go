@@ -26,7 +26,7 @@ func (s *Store) loadStoreRow(db uint32, key []byte, deleteIfExpired bool) (store
 		if err := o.deleteObject(s, bt); err != nil {
 			return nil, err
 		}
-		fw := &Forward{DB: db, Op: "Del", Args: []interface{}{key}}
+		fw := &Forward{DB: db, Op: "Del", Args: [][]byte{key}}
 		return nil, s.commit(bt, fw)
 	}
 	return o, nil
@@ -41,17 +41,12 @@ func (s *Store) deleteIfExists(bt *engine.Batch, db uint32, key []byte) (bool, e
 }
 
 // DEL key [key ...]
-func (s *Store) Del(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Del(db uint32, args [][]byte) (int64, error) {
 	if len(args) == 0 {
 		return 0, errArguments("len(args) = %d, expect != 0", len(args))
 	}
 
-	keys := make([][]byte, len(args))
-	for i := 0; i < len(keys); i++ {
-		if err := parseArgument(args[i], &keys[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", err)
-		}
-	}
+	keys := args
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -83,17 +78,12 @@ func (s *Store) Del(db uint32, args ...interface{}) (int64, error) {
 }
 
 // DUMP key
-func (s *Store) Dump(db uint32, args ...interface{}) (interface{}, error) {
+func (s *Store) Dump(db uint32, args [][]byte) (interface{}, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -113,17 +103,12 @@ func (s *Store) Dump(db uint32, args ...interface{}) (interface{}, error) {
 }
 
 // TYPE key
-func (s *Store) Type(db uint32, args ...interface{}) (ObjectCode, error) {
+func (s *Store) Type(db uint32, args [][]byte) (ObjectCode, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -138,17 +123,12 @@ func (s *Store) Type(db uint32, args ...interface{}) (ObjectCode, error) {
 }
 
 // EXISTS key
-func (s *Store) Exists(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Exists(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -164,17 +144,12 @@ func (s *Store) Exists(db uint32, args ...interface{}) (int64, error) {
 }
 
 // TTL key
-func (s *Store) TTL(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) TTL(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -189,17 +164,12 @@ func (s *Store) TTL(db uint32, args ...interface{}) (int64, error) {
 }
 
 // PTTL key
-func (s *Store) PTTL(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) PTTL(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -222,7 +192,7 @@ func (s *Store) getExpireTTLms(db uint32, key []byte) (int64, error) {
 	}
 }
 
-func (s *Store) setExpireAt(db uint32, key []byte, expireat uint64) (int64, error) {
+func (s *Store) setExpireAt(db uint32, key []byte, expireat int64) (int64, error) {
 	o, err := s.loadStoreRow(db, key, true)
 	if err != nil || o == nil {
 		return 0, err
@@ -231,30 +201,25 @@ func (s *Store) setExpireAt(db uint32, key []byte, expireat uint64) (int64, erro
 	if !IsExpired(expireat) {
 		o.SetExpireAt(expireat)
 		bt.Set(o.MetaKey(), o.MetaValue())
-		fw := &Forward{DB: db, Op: "PExpireAt", Args: []interface{}{key, expireat}}
+		fw := &Forward{DB: db, Op: "PExpireAt", Args: [][]byte{key, FormatInt(expireat)}}
 		return 1, s.commit(bt, fw)
 	} else {
 		_, err := s.deleteIfExists(bt, db, key)
 		if err != nil {
 			return 0, err
 		}
-		fw := &Forward{DB: db, Op: "Del", Args: []interface{}{key}}
+		fw := &Forward{DB: db, Op: "Del", Args: [][]byte{key}}
 		return 1, s.commit(bt, fw)
 	}
 }
 
 // PERSIST key
-func (s *Store) Persist(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Persist(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -277,20 +242,18 @@ func (s *Store) Persist(db uint32, args ...interface{}) (int64, error) {
 }
 
 // EXPIRE key seconds
-func (s *Store) Expire(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) Expire(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var ttls int64
-	for i, ref := range []interface{}{&key, &ttls} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	ttls, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
-	expireat := uint64(0)
+	expireat := int64(0)
 	if v, ok := TTLsToExpireAt(ttls); ok && v > 0 {
 		expireat = v
 	} else {
@@ -306,20 +269,18 @@ func (s *Store) Expire(db uint32, args ...interface{}) (int64, error) {
 }
 
 // PEXPIRE key milliseconds
-func (s *Store) PExpire(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) PExpire(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var ttlms int64
-	for i, ref := range []interface{}{&key, &ttlms} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	ttlms, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
-	expireat := uint64(0)
+	expireat := int64(0)
 	if v, ok := TTLmsToExpireAt(ttlms); ok && v > 0 {
 		expireat = v
 	} else {
@@ -335,23 +296,22 @@ func (s *Store) PExpire(db uint32, args ...interface{}) (int64, error) {
 }
 
 // EXPIREAT key timestamp
-func (s *Store) ExpireAt(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ExpireAt(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var timestamp uint64
-	for i, ref := range []interface{}{&key, &timestamp} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	timestamp, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+
 	if timestamp > MaxExpireAt/1e3 {
 		return 0, errArguments("parse timestamp = %d", timestamp)
 	}
 
-	expireat := uint64(1)
+	expireat := int64(1)
 	if timestamp != 0 {
 		expireat = timestamp * 1e3
 	}
@@ -365,23 +325,22 @@ func (s *Store) ExpireAt(db uint32, args ...interface{}) (int64, error) {
 }
 
 // PEXPIREAT key milliseconds-timestamp
-func (s *Store) PExpireAt(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) PExpireAt(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key []byte
-	var mtimestamp uint64
-	for i, ref := range []interface{}{&key, &mtimestamp} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	mtimestamp, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+
 	if mtimestamp > MaxExpireAt {
 		return 0, errArguments("parse mtimestamp = %d", mtimestamp)
 	}
 
-	expireat := uint64(1)
+	expireat := int64(1)
 	if mtimestamp != 0 {
 		expireat = mtimestamp
 	}
@@ -395,20 +354,19 @@ func (s *Store) PExpireAt(db uint32, args ...interface{}) (int64, error) {
 }
 
 // RESTORE key ttlms value
-func (s *Store) Restore(db uint32, args ...interface{}) error {
+func (s *Store) Restore(db uint32, args [][]byte) error {
 	if len(args) != 3 {
 		return errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key, value []byte
-	var ttlms int64
-	for i, ref := range []interface{}{&key, &ttlms, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	ttlms, err := ParseInt(args[1])
+	if err != nil {
+		return errArguments("parse args failed - %s", err)
 	}
+	value := args[2]
 
-	expireat := uint64(0)
+	expireat := int64(0)
 	if ttlms != 0 {
 		if v, ok := TTLmsToExpireAt(ttlms); ok && v > 0 {
 			expireat = v
@@ -435,7 +393,7 @@ func (s *Store) Restore(db uint32, args ...interface{}) error {
 	return s.commit(bt, fw)
 }
 
-func (s *Store) restore(bt *engine.Batch, db uint32, key []byte, expireat uint64, obj interface{}) error {
+func (s *Store) restore(bt *engine.Batch, db uint32, key []byte, expireat int64, obj interface{}) error {
 	_, err := s.deleteIfExists(bt, db, key)
 	if err != nil {
 		return err
@@ -489,11 +447,11 @@ func (s *Store) Info() (string, error) {
 	return s.db.Stats(), nil
 }
 
-func nowms() uint64 {
-	return uint64(time.Now().UnixNano()) / uint64(time.Millisecond)
+func nowms() int64 {
+	return int64(time.Now().UnixNano()) / int64(time.Millisecond)
 }
 
-func ExpireAtToTTLms(expireat uint64) (int64, bool) {
+func ExpireAtToTTLms(expireat int64) (int64, bool) {
 	switch {
 	case expireat > MaxExpireAt:
 		return -1, false
@@ -508,18 +466,18 @@ func ExpireAtToTTLms(expireat uint64) (int64, bool) {
 	}
 }
 
-func TTLsToExpireAt(ttls int64) (uint64, bool) {
+func TTLsToExpireAt(ttls int64) (int64, bool) {
 	if ttls < 0 || ttls > MaxExpireAt/1e3 {
 		return 0, false
 	}
 	return TTLmsToExpireAt(ttls * 1e3)
 }
 
-func TTLmsToExpireAt(ttlms int64) (uint64, bool) {
+func TTLmsToExpireAt(ttlms int64) (int64, bool) {
 	if ttlms < 0 || ttlms > MaxExpireAt {
 		return 0, false
 	}
-	expireat := nowms() + uint64(ttlms)
+	expireat := nowms() + ttlms
 	if expireat > MaxExpireAt {
 		return 0, false
 	}

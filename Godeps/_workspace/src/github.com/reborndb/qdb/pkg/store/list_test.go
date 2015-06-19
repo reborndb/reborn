@@ -18,7 +18,7 @@ func (s *testStoreSuite) ldel(c *C, db uint32, key string, expect int64) {
 func (s *testStoreSuite) ldump(c *C, db uint32, key string, expect ...string) {
 	s.kexists(c, db, key, 1)
 
-	v, err := s.s.Dump(db, key)
+	v, err := s.s.Dump(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(v, NotNil)
 
@@ -36,7 +36,7 @@ func (s *testStoreSuite) ldump(c *C, db uint32, key string, expect ...string) {
 }
 
 func (s *testStoreSuite) llen(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.LLen(db, key)
+	x, err := s.s.LLen(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -48,7 +48,7 @@ func (s *testStoreSuite) llen(c *C, db uint32, key string, expect int64) {
 }
 
 func (s *testStoreSuite) lindex(c *C, db uint32, key string, index int, expect string) {
-	x, err := s.s.LIndex(db, key, index)
+	x, err := s.s.LIndex(db, FormatBytes(key, index))
 	c.Assert(err, IsNil)
 
 	if expect == "" {
@@ -59,7 +59,7 @@ func (s *testStoreSuite) lindex(c *C, db uint32, key string, index int, expect s
 }
 
 func (s *testStoreSuite) lrange(c *C, db uint32, key string, beg, end int, expect ...string) {
-	x, err := s.s.LRange(db, key, beg, end)
+	x, err := s.s.LRange(db, FormatBytes(key, beg, end))
 	c.Assert(err, IsNil)
 	c.Assert(len(x), Equals, len(expect))
 
@@ -69,7 +69,7 @@ func (s *testStoreSuite) lrange(c *C, db uint32, key string, beg, end int, expec
 }
 
 func (s *testStoreSuite) lset(c *C, db uint32, key string, index int, value string) {
-	err := s.s.LSet(db, key, index, value)
+	err := s.s.LSet(db, FormatBytes(key, index, value))
 	c.Assert(err, IsNil)
 
 	s.lrange(c, db, key, index, index, value)
@@ -77,12 +77,12 @@ func (s *testStoreSuite) lset(c *C, db uint32, key string, index int, value stri
 }
 
 func (s *testStoreSuite) ltrim(c *C, db uint32, key string, beg, end int) {
-	err := s.s.LTrim(db, key, beg, end)
+	err := s.s.LTrim(db, FormatBytes(key, beg, end))
 	c.Assert(err, IsNil)
 }
 
 func (s *testStoreSuite) lpop(c *C, db uint32, key string, expect string) {
-	x, err := s.s.LPop(db, key)
+	x, err := s.s.LPop(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 
 	if expect == "" {
@@ -93,7 +93,7 @@ func (s *testStoreSuite) lpop(c *C, db uint32, key string, expect string) {
 }
 
 func (s *testStoreSuite) rpop(c *C, db uint32, key string, expect string) {
-	x, err := s.s.RPop(db, key)
+	x, err := s.s.RPop(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 
 	if expect == "" {
@@ -109,7 +109,7 @@ func (s *testStoreSuite) lpush(c *C, db uint32, key string, expect int64, values
 		args = append(args, v)
 	}
 
-	x, err := s.s.LPush(db, args...)
+	x, err := s.s.LPush(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -122,7 +122,7 @@ func (s *testStoreSuite) rpush(c *C, db uint32, key string, expect int64, values
 		args = append(args, v)
 	}
 
-	x, err := s.s.RPush(db, args...)
+	x, err := s.s.RPush(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -130,7 +130,7 @@ func (s *testStoreSuite) rpush(c *C, db uint32, key string, expect int64, values
 }
 
 func (s *testStoreSuite) lpushx(c *C, db uint32, key string, value string, expect int64) {
-	x, err := s.s.LPushX(db, key, value)
+	x, err := s.s.LPushX(db, FormatBytes(key, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -138,7 +138,7 @@ func (s *testStoreSuite) lpushx(c *C, db uint32, key string, value string, expec
 }
 
 func (s *testStoreSuite) rpushx(c *C, db uint32, key string, value string, expect int64) {
-	x, err := s.s.RPushX(db, key, value)
+	x, err := s.s.RPushX(db, FormatBytes(key, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -154,7 +154,7 @@ func (s *testStoreSuite) lrestore(c *C, db uint32, key string, ttlms int64, expe
 	dump, err := rdb.EncodeDump(x)
 	c.Assert(err, IsNil)
 
-	err = s.s.Restore(db, key, ttlms, dump)
+	err = s.s.Restore(db, FormatBytes(key, ttlms, dump))
 	c.Assert(err, IsNil)
 
 	s.ldump(c, db, key, expect...)

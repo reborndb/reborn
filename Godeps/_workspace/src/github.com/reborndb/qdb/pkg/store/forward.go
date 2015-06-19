@@ -10,7 +10,7 @@ import (
 type Forward struct {
 	DB   uint32
 	Op   string
-	Args []interface{}
+	Args [][]byte
 }
 
 type ForwardHandler func(f *Forward) error

@@ -14,7 +14,7 @@ func SlotsRestoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect != 0 && mod 3 == 0", len(args))
 	}
 
-	if err := s.Store().SlotsRestore(s.DB(), iconvert(args)...); err != nil {
+	if err := s.Store().SlotsRestore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewString("OK"), nil
@@ -27,7 +27,7 @@ func SlotsMgrtSlotCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 4", len(args))
 	}
 
-	if n, err := s.Store().SlotsMgrtSlot(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SlotsMgrtSlot(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -47,7 +47,7 @@ func SlotsMgrtTagSlotCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 4", len(args))
 	}
 
-	if n, err := s.Store().SlotsMgrtTagSlot(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SlotsMgrtTagSlot(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -67,7 +67,7 @@ func SlotsMgrtOneCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 4", len(args))
 	}
 
-	if n, err := s.Store().SlotsMgrtOne(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SlotsMgrtOne(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -80,7 +80,7 @@ func SlotsMgrtTagOneCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 4", len(args))
 	}
 
-	if n, err := s.Store().SlotsMgrtTagOne(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().SlotsMgrtTagOne(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -93,7 +93,7 @@ func SlotsInfoCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect <= 2", len(args))
 	}
 
-	if m, err := s.Store().SlotsInfo(s.DB(), iconvert(args)...); err != nil {
+	if m, err := s.Store().SlotsInfo(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()

@@ -278,6 +278,13 @@ func (sg *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
 var ErrNodeExists = errors.New("node already exists")
 
 func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, auth string) error {
+	// we only support reborn-server and qdb-server
+	// origin redis has no slot_info command
+	// atm, we can use this command to check whether server is alive or not.
+	if _, err := utils.SlotsInfo(s.Addr, 0, 0, auth); err != nil {
+		return errors.Trace(err)
+	}
+
 	s.GroupId = sg.Id
 
 	servers, err := sg.GetServers(coordConn)

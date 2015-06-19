@@ -13,7 +13,6 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
-	"github.com/syndtr/goleveldb/leveldb/storage"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -75,7 +74,7 @@ func (db *GoLevelDB) init(path string, conf *Config, repair bool) error {
 	}
 
 	var err error
-	if db.lvdb, err = leveldb.Open(storage.NewMemStorage(), db.opts); err != nil {
+	if db.lvdb, err = leveldb.OpenFile(path, db.opts); err != nil {
 		return errors.Trace(err)
 	}
 	return nil

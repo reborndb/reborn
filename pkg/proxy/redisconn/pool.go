@@ -21,7 +21,11 @@ type Pool struct {
 
 func NewPool(addr string, capability int, f CreateConnFunc) *Pool {
 	poolFunc := func() (pools.Resource, error) {
-		return f(addr)
+		r, err := f(addr)
+		if err == nil && r == nil {
+			return nil, errors.Errorf("cannot create nil connection")
+		}
+		return r, err
 	}
 
 	p := new(Pool)
@@ -33,19 +37,20 @@ func (p *Pool) GetConn() (*Conn, error) {
 	conn, err := p.p.Get()
 	if err != nil {
 		return nil, errors.Trace(err)
-	} else if conn == nil {
-		return nil, errors.Errorf("create nil connection")
 	} else {
 		return conn.(*Conn), nil
 	}
 }
 
 func (p *Pool) PutConn(c *Conn) {
-	if c == nil || c.closed {
+	if c == nil {
 		return
+	} else if c.closed {
+		// if c is closed, we will put nil
+		p.p.Put(nil)
+	} else {
+		p.p.Put(c)
 	}
-
-	p.p.Put(c)
 }
 
 func (p *Pool) Close() {
@@ -83,7 +88,7 @@ func (p *Pools) GetConn(addr string) (*Conn, error) {
 }
 
 func (p *Pools) PutConn(c *Conn) {
-	if c == nil || c.closed {
+	if c == nil {
 		return
 	}
 

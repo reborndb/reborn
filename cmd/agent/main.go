@@ -34,6 +34,9 @@ var (
 	agentID    string
 	globalEnv  env.Env
 	globalConn zkhelper.Conn
+
+	haMaxRetryNum = 3
+	haRetryDelay  = 1
 )
 
 var usage = `usage: reborn-agent [options]
@@ -49,6 +52,9 @@ options:
     -c <config_file>               base environment config for reborn config and proxy
     --qdb-config=<qdb_config>      base qdb config 
     --redis-config=<redis_config>  base redis config for reborn-server
+    --ha                           start HA for store monitor and failover
+    --ha-max-retry-num=<num>       maximum retry number for checking store
+    --ha-retry-delay=<n_seconds>   wait n seconds for next check
 `
 
 func getStringArg(args map[string]interface{}, key string) string {
@@ -57,6 +63,21 @@ func getStringArg(args map[string]interface{}, key string) string {
 	} else {
 		return ""
 	}
+}
+
+func setIntArgFromOpt(dest *int, args map[string]interface{}, key string) {
+	v := getStringArg(args, key)
+	if len(v) == 0 {
+		return
+	}
+
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		log.Fatalf("parse int arg err %v", err)
+		return
+	}
+
+	*dest = n
 }
 
 func setStringFromOpt(dest *string, args map[string]interface{}, key string) {
@@ -114,6 +135,9 @@ func main() {
 		fatal(err)
 	}
 
+	// set addr
+	setStringFromOpt(&addr, args, "--addr")
+
 	agentID = genProcID()
 
 	if err := addAgent(&agentInfo{
@@ -137,6 +161,7 @@ func main() {
 
 	// set output log file
 	if v := getStringArg(args, "-L"); len(v) > 0 {
+		log.SetHighlighting(false)
 		log.SetOutputByName(v)
 	}
 
@@ -152,9 +177,6 @@ func main() {
 			fatal(err)
 		}
 	}
-
-	// set addr
-	setStringFromOpt(&addr, args, "--addr")
 
 	// set data dir
 	setStringFromOpt(&dataDir, args, "--data-dir")
@@ -181,6 +203,13 @@ func main() {
 
 		fatal("ctrl-c or SIGTERM found, exit")
 	}()
+
+	if args["--ha"].(bool) {
+		setIntArgFromOpt(&haMaxRetryNum, args, "--ha-max-retry-num")
+		setIntArgFromOpt(&haRetryDelay, args, "--ha-retry-delay")
+
+		go startHA()
+	}
 
 	if err := loadSavedProcs(); err != nil {
 		log.Fatalf("restart agent using last saved processes err: %v", err)

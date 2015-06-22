@@ -278,6 +278,16 @@ func (sg *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
 var ErrNodeExists = errors.New("node already exists")
 
 func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, auth string) error {
+	// if type is offline, the server may be down, so we cannot use store function
+	if s.Type != SERVER_TYPE_OFFLINE {
+		// we only support reborn-server and qdb-server
+		// origin redis has no slot_info command
+		// atm, we can use this command to check whether server is alive or not.
+		if _, err := utils.SlotsInfo(s.Addr, 0, 0, auth); err != nil {
+			return errors.Trace(err)
+		}
+	}
+
 	s.GroupId = sg.Id
 
 	servers, err := sg.GetServers(coordConn)
@@ -296,8 +306,9 @@ func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, auth string
 		return errors.Trace(ErrNodeExists)
 	}
 
-	// if this group has no server. auto promote this server to master
-	if len(servers) == 0 {
+	// if this group has no server.
+	// promote this server to master automatically if type is not offline
+	if len(servers) == 0 && s.Type != SERVER_TYPE_OFFLINE {
 		s.Type = SERVER_TYPE_MASTER
 	}
 

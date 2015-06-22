@@ -6,6 +6,8 @@ Reborn supports multiple stateless proxy with multiple redis instances.
 
 Reborn is engineered to elastically scale, Easily add or remove redis or proxy instances on-demand/dynamicly.
 
+[![Build Status](https://travis-ci.org/reborndb/reborn.svg)](https://travis-ci.org/reborndb/reborn)
+
 ##Features
 * Auto rebalance
 * Extremely simple to use 

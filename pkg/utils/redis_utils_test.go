@@ -43,7 +43,7 @@ func (s *testServer) Close() {
 
 func (s *testUtilsSuite) SetUpSuite(c *C) {
 	s.auth = "abc"
-	s.s = s.testCreateServer(c, 16380, s.auth)
+	s.s = s.testCreateServer(c, 36380, s.auth)
 }
 
 func (s *testUtilsSuite) testCreateServer(c *C, port int, auth string) *testServer {

@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -36,11 +37,14 @@ func startRedis(args *redisArgs) (*process, error) {
 
 	p.Ctx["addr"] = args.Addr
 
+	storeDataPath := p.storeDataDir(args.Addr)
+	os.MkdirAll(storeDataPath, 0755)
+
 	p.addCmdArgs("--bind", seps[0])
 	p.addCmdArgs("--port", seps[1])
 	p.addCmdArgs("--daemonize", "yes")
 	p.addCmdArgs("--logfile", path.Join(p.baseLogDir(), "redis.log"))
-	p.addCmdArgs("--dir", p.baseDataDir())
+	p.addCmdArgs("--dir", storeDataPath)
 	p.addCmdArgs("--pidfile", p.pidPath())
 	p.addCmdArgs("--dbfilename", "dump.rdb")
 	p.addCmdArgs("--appendfilename", "appendonly.aof")

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -25,6 +26,7 @@ var (
 	addr            = "127.0.0.1:39000"
 	dataDir         = "./var/data"
 	logDir          = "./var/log"
+	logTrashDir     = "./var/log/trash"
 	configFile      = "config.ini"
 	qdbConfigFile   = "" // like "qdb.toml"
 	redisConfigFile = "" // like "redis.conf"
@@ -165,6 +167,10 @@ func main() {
 	resetAbsPath(&logDir)
 
 	os.MkdirAll(logDir, 0755)
+
+	logTrashDir = path.Join(logDir, "trash")
+
+	os.MkdirAll(logTrashDir, 0755)
 
 	runtime.GOMAXPROCS(cpus)
 

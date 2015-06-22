@@ -206,8 +206,8 @@ func (p *process) baseLogDir() string {
 	return path.Join(logDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
 }
 
-func (p *process) storeDataDir(addr string) string {
-	return path.Join(dataDir, fmt.Sprintf("%s_%s", p.Type, addr))
+func (p *process) storeDataDir(id string) string {
+	return path.Join(dataDir, fmt.Sprintf("%s_%s", p.Type, id))
 }
 
 func (p *process) checkAlive() (bool, error) {
@@ -270,7 +270,7 @@ func (p *process) clear() {
 	// 2 if newLogDir exists, there will be an error
 	// all erroros we ignore
 	newLogDir := fmt.Sprintf("%s_%d", p.baseLogDir(), time.Now().Nanosecond())
-	os.Rename(p.baseLogDir(), newLogDir)
+	os.Rename(p.baseLogDir(), path.Join(logTrashDir, newLogDir))
 }
 
 func (p *process) stop() error {

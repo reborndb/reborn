@@ -312,6 +312,14 @@ func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, auth string
 		s.Type = SERVER_TYPE_MASTER
 	}
 
+	if s.Type == SERVER_TYPE_MASTER {
+		if role, err := utils.GetRole(s.Addr, auth); err != nil {
+			return errors.Trace(err)
+		} else if role != "master" {
+			return errors.Errorf("we need master, but server %s is %s", s.Addr, role)
+		}
+	}
+
 	val, err := json.Marshal(s)
 	if err != nil {
 		return errors.Trace(err)

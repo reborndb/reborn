@@ -7,8 +7,9 @@ RUN apt-get update -y
 Add . /go/src/github.com/reborndb/reborn/
 WORKDIR /go/src/github.com/reborndb/reborn/
 
-# Install dependency
-RUN ./bootstrap.sh
+# Install 
+RUN go get github.com/tools/godep
+
 WORKDIR /go/src/github.com/reborndb/reborn/sample
 
 # Expose ports

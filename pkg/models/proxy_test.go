@@ -14,7 +14,7 @@ import (
 	"github.com/reborndb/qdb/pkg/service"
 	"github.com/reborndb/qdb/pkg/store"
 
-	log "github.com/ngaut/logging"
+	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 	. "gopkg.in/check.v1"
 )

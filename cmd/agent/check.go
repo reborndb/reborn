@@ -224,7 +224,3 @@ func getPathType(path string) (string, string, string) {
 
 	return s[0], s[1], idPathType
 }
-
-func getLogTrashPath(logDir string) string {
-	return path.Join(logDir, "trash")
-}

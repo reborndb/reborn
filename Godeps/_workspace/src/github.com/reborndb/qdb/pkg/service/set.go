@@ -7,10 +7,6 @@ import redis "github.com/reborndb/go/redis/resp"
 
 // SADD key member [member ...]
 func SAddCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().SAdd(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -20,10 +16,6 @@ func SAddCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SCARD key
 func SCardCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if n, err := s.Store().SCard(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -33,10 +25,6 @@ func SCardCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SISMEMBER key member
 func SIsMemberCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if x, err := s.Store().SIsMember(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -46,10 +34,6 @@ func SIsMemberCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SMEMBERS key
 func SMembersCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if a, err := s.Store().SMembers(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -63,10 +47,6 @@ func SMembersCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SPOP key
 func SPopCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if v, err := s.Store().SPop(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -76,10 +56,6 @@ func SPopCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SRANDMEMBER key [count]
 func SRandMemberCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 && len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 1 or 2", len(args))
-	}
-
 	if a, err := s.Store().SRandMember(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -93,10 +69,6 @@ func SRandMemberCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SREM key member [member ...]
 func SRemCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().SRem(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {

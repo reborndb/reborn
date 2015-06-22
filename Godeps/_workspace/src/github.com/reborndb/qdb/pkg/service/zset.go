@@ -10,10 +10,6 @@ import (
 
 // ZGETALL key
 func ZGetAllCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if a, err := s.Store().ZGetAll(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -27,10 +23,6 @@ func ZGetAllCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZCARD key
 func ZCardCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if n, err := s.Store().ZCard(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -40,10 +32,6 @@ func ZCardCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZADD key score member [score member ...]
 func ZAddCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) == 1 || len(args)%2 != 1 {
-		return toRespErrorf("len(args) = %d, expect != 1 && mod 2 = 1", len(args))
-	}
-
 	if n, err := s.Store().ZAdd(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -53,10 +41,6 @@ func ZAddCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREM key member [member ...]
 func ZRemCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().ZRem(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -66,10 +50,6 @@ func ZRemCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZSCORE key member
 func ZScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if v, ok, err := s.Store().ZScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if !ok {
@@ -81,10 +61,6 @@ func ZScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZINCRBY key delta member
 func ZIncrByCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if v, err := s.Store().ZIncrBy(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -94,10 +70,6 @@ func ZIncrByCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZCOUNT key min max
 func ZCountCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if v, err := s.Store().ZCount(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -107,10 +79,6 @@ func ZCountCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZLEXCOUNT key min max
 func ZLexCountCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if v, err := s.Store().ZLexCount(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -120,10 +88,6 @@ func ZLexCountCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZRANGE key start stop [WITHSCORES]
 func ZRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 && len(args) != 4 {
-		return toRespErrorf("len(args) = %d, expect = 3 or 4", len(args))
-	}
-
 	if ay, err := s.Store().ZRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -137,10 +101,6 @@ func ZRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREVRANGE key start stop [WITHSCORES]
 func ZRevRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 && len(args) != 4 {
-		return toRespErrorf("len(args) = %d, expect = 3 or 4", len(args))
-	}
-
 	if ay, err := s.Store().ZRevRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -154,10 +114,6 @@ func ZRevRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZRANGEBYLEX key start stop [LIMIT offset count]
 func ZRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 && len(args) != 6 {
-		return toRespErrorf("len(args) = %d, expect = 3 or 6", len(args))
-	}
-
 	if ay, err := s.Store().ZRangeByLex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -171,10 +127,6 @@ func ZRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREVRANGEBYLEX key start stop [LIMIT offset count]
 func ZRevRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 && len(args) != 6 {
-		return toRespErrorf("len(args) = %d, expect = 3 or 6", len(args))
-	}
-
 	if ay, err := s.Store().ZRevRangeByLex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -188,10 +140,6 @@ func ZRevRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
 func ZRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 3 {
-		return toRespErrorf("len(args) = %d, expect >= 3", len(args))
-	}
-
 	if ay, err := s.Store().ZRangeByScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -205,10 +153,6 @@ func ZRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREVRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
 func ZRevRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 3 {
-		return toRespErrorf("len(args) = %d, expect >= 3", len(args))
-	}
-
 	if ay, err := s.Store().ZRevRangeByScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -222,10 +166,6 @@ func ZRevRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZRANK key member
 func ZRankCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect 2", len(args))
-	}
-
 	if v, err := s.Store().ZRank(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if v >= 0 {
@@ -237,10 +177,6 @@ func ZRankCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREVRANK key member
 func ZRevRankCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect 2", len(args))
-	}
-
 	if v, err := s.Store().ZRevRank(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if v >= 0 {
@@ -252,10 +188,6 @@ func ZRevRankCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREMRANGEBYLEX key min max
 func ZRemRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect 3", len(args))
-	}
-
 	if v, err := s.Store().ZRemRangeByLex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -265,10 +197,6 @@ func ZRemRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREMRANGEBYRANK key start stop
 func ZRemRangeByRankCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect 3", len(args))
-	}
-
 	if v, err := s.Store().ZRemRangeByRank(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -278,10 +206,6 @@ func ZRemRangeByRankCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // ZREMRANGEBYSCORE key min max
 func ZRemRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect 3", len(args))
-	}
-
 	if v, err := s.Store().ZRemRangeByScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {

@@ -10,10 +10,6 @@ import (
 
 // SLOTSRESTORE key ttlms value [key ttlms value ...]
 func SlotsRestoreCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) == 0 || len(args)%3 != 0 {
-		return toRespErrorf("len(args) = %d, expect != 0 && mod 3 == 0", len(args))
-	}
-
 	if err := s.Store().SlotsRestore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -23,10 +19,6 @@ func SlotsRestoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SLOTSMGRTSLOT host port timeout slot
 func SlotsMgrtSlotCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 4 {
-		return toRespErrorf("len(args) = %d, expect = 4", len(args))
-	}
-
 	if n, err := s.Store().SlotsMgrtSlot(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -43,10 +35,6 @@ func SlotsMgrtSlotCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SLOTSMGRTTAGSLOT host port timeout slot
 func SlotsMgrtTagSlotCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 4 {
-		return toRespErrorf("len(args) = %d, expect = 4", len(args))
-	}
-
 	if n, err := s.Store().SlotsMgrtTagSlot(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -63,10 +51,6 @@ func SlotsMgrtTagSlotCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SLOTSMGRTONE host port timeout key
 func SlotsMgrtOneCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 4 {
-		return toRespErrorf("len(args) = %d, expect = 4", len(args))
-	}
-
 	if n, err := s.Store().SlotsMgrtOne(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -76,10 +60,6 @@ func SlotsMgrtOneCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SLOTSMGRTTAGONE host port timeout key
 func SlotsMgrtTagOneCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 4 {
-		return toRespErrorf("len(args) = %d, expect = 4", len(args))
-	}
-
 	if n, err := s.Store().SlotsMgrtTagOne(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -89,10 +69,6 @@ func SlotsMgrtTagOneCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SLOTSINFO [start [count]]
 func SlotsInfoCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) > 2 {
-		return toRespErrorf("len(args) = %d, expect <= 2", len(args))
-	}
-
 	if m, err := s.Store().SlotsInfo(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -112,10 +88,6 @@ func SlotsInfoCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SLOTSHASHKEY key [key...]
 func SlotsHashKeyCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) == 0 {
-		return toRespErrorf("len(args) = %d, expect != 1", len(args))
-	}
-
 	resp := redis.NewArray()
 	for _, key := range args {
 		_, slot := store.HashKeyToSlot(key)

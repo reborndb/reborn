@@ -149,6 +149,7 @@ func SlaveOfCmd(s Session, args [][]byte) (redis.Resp, error) {
 			return toRespError(errors.Trace(err))
 		}
 	}
+
 	select {
 	case <-c.h.signal:
 		if cc != nil {
@@ -156,6 +157,7 @@ func SlaveOfCmd(s Session, args [][]byte) (redis.Resp, error) {
 		}
 		return toRespErrorf("sync master has been closed")
 	case c.h.master <- cc:
+		<-c.h.slaveofReply
 		return redis.NewString("OK"), nil
 	}
 }
@@ -213,6 +215,7 @@ func (h *Handler) daemonSyncMaster() {
 LOOP:
 	for exists := false; !exists; {
 		var c *conn
+		needSlaveofReply := false
 		select {
 		case <-lost:
 			h.masterConnState.Set(masterConnConnect)
@@ -226,6 +229,7 @@ LOOP:
 		case <-h.signal:
 			exists = true
 		case c = <-h.master:
+			needSlaveofReply = true
 		case <-retryTimer.C:
 			log.Infof("retry connect to master %s", h.masterAddr.Get())
 			c, err = h.replicationConnectMaster(h.masterAddr.Get())
@@ -276,6 +280,10 @@ LOOP:
 			h.masterRunID = "?"
 			h.syncSince.Set(0)
 			log.Infof("slaveof no one")
+		}
+
+		if needSlaveofReply {
+			h.slaveofReply <- struct{}{}
 		}
 	}
 }

@@ -1,5 +1,0 @@
-language: go
-
-install: go get -t
-
-script: make test

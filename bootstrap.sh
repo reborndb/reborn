@@ -5,8 +5,6 @@ echo "downloading dependencies, it may take a few minutes..."
 
 # the below import list is generated from Godeps.json
 go get -u github.com/BurntSushi/toml
-go get -u github.com/alicebob/miniredis
-go get -u github.com/bsm/redeo
 go get -u github.com/c4pt0r/cfg
 go get -u github.com/codegangsta/inject
 go get -u github.com/codegangsta/martini
@@ -28,7 +26,6 @@ go get -u github.com/ngaut/deadline
 go get -u github.com/ngaut/go-zookeeper/zk
 go get -u github.com/ngaut/gostats
 go get -u github.com/ngaut/log
-go get -u github.com/ngaut/logging
 go get -u github.com/ngaut/pools
 go get -u github.com/ngaut/resp
 go get -u github.com/ngaut/sync2

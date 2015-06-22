@@ -119,10 +119,6 @@
 			"Rev": "a370e11a897352d792b9a6cba4db829368271c41"
 		},
 		{
-			"ImportPath": "github.com/ngaut/logging",
-			"Rev": "f98f5f4cd523647678af6f1726c5b5a14c9193d0"
-		},
-		{
 			"ImportPath": "github.com/ngaut/pools",
 			"Rev": "6352e005618615ffaf1cb1c6622b8e91435751fe"
 		},

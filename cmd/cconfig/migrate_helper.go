@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/juju/errors"
@@ -21,6 +22,7 @@ const (
 var ErrGroupMasterNotFound = errors.New("group master not found")
 var ErrInvalidAddr = errors.New("invalid addr")
 var ErrStopMigrateByUser = errors.New("migration stopped by user")
+var ErrServerIsNotMaster = errors.New("server is not master")
 
 // return: success_count, remain_count, error
 // slotsmgrt host port timeout slotnum count
@@ -40,6 +42,16 @@ func sendRedisMigrateCmd(c redis.Conn, slotId int, toAddr string) (int, int, err
 		return -1, -1, err
 	}
 	return succ, remain, nil
+}
+
+func checkMaster(addr string) error {
+	if master, err := utils.GetRole(addr, ""); err != nil {
+		return err
+	} else if master != "master" {
+		return ErrServerIsNotMaster
+	} else {
+		return nil
+	}
 }
 
 // Migrator Implement
@@ -67,6 +79,14 @@ func (m *RebornSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, 
 
 	if fromMaster == nil || toMaster == nil {
 		return ErrGroupMasterNotFound
+	}
+
+	if err = checkMaster(fromMaster.Addr); err != nil {
+		return err
+	}
+
+	if err = checkMaster(toMaster.Addr); err != nil {
+		return err
 	}
 
 	c, err := redis.Dial("tcp", fromMaster.Addr)

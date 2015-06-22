@@ -1,13 +1,21 @@
+# if we install godep, we will use godep to build our application.
+GODEP_PATH:=$(shell godep path 2>/dev/null)
+
+GO=go 
+ifdef GODEP_PATH
+GO=godep go
+endif
+
 all: build
 	@tar -cf deploy.tar bin sample
 
 build: build-proxy build-config build-server build-agent build-daemon
 
 build-proxy:
-	go build -o bin/reborn-proxy ./cmd/proxy
+	$(GO) build -o bin/reborn-proxy ./cmd/proxy
 
 build-config:
-	go build -o bin/reborn-config ./cmd/cconfig
+	$(GO) build -o bin/reborn-config ./cmd/cconfig
 	@rm -rf bin/assets && cp -r cmd/cconfig/assets bin/
 
 build-server:
@@ -16,10 +24,10 @@ build-server:
 	@cp -f extern/redis-2.8.13/src/redis-server bin/reborn-server
 
 build-agent:
-	go build -o bin/reborn-agent ./cmd/agent
+	$(GO) build -o bin/reborn-agent ./cmd/agent
 
 build-daemon:
-	go build -o bin/reborn-daemon ./cmd/daemon
+	$(GO) build -o bin/reborn-daemon ./cmd/daemon
 
 clean:
 	@rm -rf bin
@@ -32,7 +40,7 @@ distclean: clean
 	@make --no-print-directory --quiet -C extern/redis-2.8.13 clean
 
 gotest:
-	go test -tags 'all' ./pkg/... -race -cover
+	$(GO) test -tags 'all' ./pkg/... -race -cover
 
 agent_test: build
-	go test -tags 'all' ./cmd/agent/... -race -cover
+	$(GO) test -tags 'all' ./cmd/agent/... -race -cover

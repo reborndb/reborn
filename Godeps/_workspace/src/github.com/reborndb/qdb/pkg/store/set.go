@@ -45,7 +45,7 @@ func (o *setRow) deleteObject(s *Store, bt *engine.Batch) error {
 	return it.Error()
 }
 
-func (o *setRow) storeObject(s *Store, bt *engine.Batch, expireat uint64, obj interface{}) error {
+func (o *setRow) storeObject(s *Store, bt *engine.Batch, expireat int64, obj interface{}) error {
 	set, ok := obj.(rdb.Set)
 	if !ok || len(set) == 0 {
 		return errors.Trace(ErrObjectValue)
@@ -140,21 +140,13 @@ func (s *Store) loadSetRow(db uint32, key []byte, deleteIfExpired bool) (*setRow
 }
 
 // SADD key member [member ...]
-func (s *Store) SAdd(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SAdd(db uint32, args [][]byte) (int64, error) {
 	if len(args) < 2 {
 		return 0, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var members = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(members); i++ {
-		if err := parseArgument(args[i+1], &members[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	members := args[1:]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -193,17 +185,12 @@ func (s *Store) SAdd(db uint32, args ...interface{}) (int64, error) {
 }
 
 // SCARD key
-func (s *Store) SCard(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SCard(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -218,17 +205,13 @@ func (s *Store) SCard(db uint32, args ...interface{}) (int64, error) {
 }
 
 // SISMEMBER key member
-func (s *Store) SIsMember(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SIsMember(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, member []byte
-	for i, ref := range []interface{}{&key, &member} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	member := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -250,17 +233,12 @@ func (s *Store) SIsMember(db uint32, args ...interface{}) (int64, error) {
 }
 
 // SMEMBERS key
-func (s *Store) SMembers(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) SMembers(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -276,17 +254,12 @@ func (s *Store) SMembers(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // SPOP key
-func (s *Store) SPop(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) SPop(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -311,24 +284,24 @@ func (s *Store) SPop(db uint32, args ...interface{}) ([]byte, error) {
 	} else {
 		bt.Del(o.MetaKey())
 	}
-	fw := &Forward{DB: db, Op: "SRem", Args: []interface{}{key, members[0]}}
+	fw := &Forward{DB: db, Op: "SRem", Args: [][]byte{key, members[0]}}
 	return o.Member, s.commit(bt, fw)
 }
 
 // SRANDMEMBER key [count]
-func (s *Store) SRandMember(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) SRandMember(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 1 && len(args) != 2 {
 		return nil, errArguments("len(args) = %d, expect = 1 or 2", len(args))
 	}
 
-	var key []byte
+	key := args[0]
+
 	var count int64 = 1
-	if err := parseArgument(args[0], &key); err != nil {
-		return nil, errArguments("parse args[%d] failed, %s", 0, err)
-	}
+	var err error
 	if len(args) == 2 {
-		if err := parseArgument(args[1], &count); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", 1, err)
+		count, err = ParseInt(args[1])
+		if err != nil {
+			return nil, errArguments("parse args failed - %s", err)
 		}
 	}
 
@@ -353,21 +326,13 @@ func (s *Store) SRandMember(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // SREM key member [member ...]
-func (s *Store) SRem(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SRem(db uint32, args [][]byte) (int64, error) {
 	if len(args) < 2 {
 		return 0, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var members = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(members); i++ {
-		if err := parseArgument(args[i+1], &members[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	members := args[1:]
 
 	if err := s.acquire(); err != nil {
 		return 0, err

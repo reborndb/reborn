@@ -138,7 +138,7 @@ func (o *zsetRow) deleteObject(s *Store, bt *engine.Batch) error {
 	return it.Error()
 }
 
-func (o *zsetRow) storeObject(s *Store, bt *engine.Batch, expireat uint64, obj interface{}) error {
+func (o *zsetRow) storeObject(s *Store, bt *engine.Batch, expireat int64, obj interface{}) error {
 	zset, ok := obj.(rdb.ZSet)
 	if !ok || len(zset) == 0 {
 		return errors.Trace(ErrObjectValue)
@@ -210,17 +210,12 @@ func (s *Store) loadZSetRow(db uint32, key []byte, deleteIfExpired bool) (*zsetR
 }
 
 // ZGETALL key
-func (s *Store) ZGetAll(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZGetAll(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -246,17 +241,12 @@ func (s *Store) ZGetAll(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // ZCARD key
-func (s *Store) ZCard(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZCard(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -271,28 +261,28 @@ func (s *Store) ZCard(db uint32, args ...interface{}) (int64, error) {
 }
 
 // ZADD key score member [score member ...]
-func (s *Store) ZAdd(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZAdd(db uint32, args [][]byte) (int64, error) {
 	if len(args) == 1 || len(args)%2 != 1 {
 		return 0, errArguments("len(args) = %d, expect != 1 && mod 2 = 1", len(args))
 	}
 
-	var key []byte
+	key := args[0]
+
 	var eles = make([]struct {
 		Member []byte
 		Score  float64
 	}, len(args)/2)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
+
+	var err error
 	for i := 0; i < len(eles); i++ {
 		e := &eles[i]
-		if err := parseArgument(args[i*2+1], &e.Score); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i*2+1, err)
+		e.Score, err = ParseFloat(args[i*2+1])
+		if err != nil {
+			return 0, errArguments("parse args failed - %s", err)
 		}
 
-		if err := parseArgument(args[i*2+2], &e.Member); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i*2+2, err)
-		} else if len(e.Member) == 0 {
+		e.Member = args[i*2+2]
+		if len(e.Member) == 0 {
 			return 0, errArguments("parse args[%d] failed, empty empty", i*2+2)
 		}
 	}
@@ -342,21 +332,13 @@ func (s *Store) ZAdd(db uint32, args ...interface{}) (int64, error) {
 }
 
 // ZREM key member [member ...]
-func (s *Store) ZRem(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZRem(db uint32, args [][]byte) (int64, error) {
 	if len(args) < 2 {
 		return 0, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var members = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(members); i++ {
-		if err := parseArgument(args[i+1], &members[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	members := args[1:]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -397,17 +379,13 @@ func (s *Store) ZRem(db uint32, args ...interface{}) (int64, error) {
 }
 
 // ZSCORE key member
-func (s *Store) ZScore(db uint32, args ...interface{}) (float64, bool, error) {
+func (s *Store) ZScore(db uint32, args [][]byte) (float64, bool, error) {
 	if len(args) != 2 {
 		return 0, false, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, member []byte
-	for i, ref := range []interface{}{&key, &member} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, false, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	member := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, false, err
@@ -429,18 +407,17 @@ func (s *Store) ZScore(db uint32, args ...interface{}) (float64, bool, error) {
 }
 
 // ZINCRBY key delta member
-func (s *Store) ZIncrBy(db uint32, args ...interface{}) (float64, error) {
+func (s *Store) ZIncrBy(db uint32, args [][]byte) (float64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key, member []byte
-	var delta float64
-	for i, ref := range []interface{}{&key, &delta, &member} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	delta, err := ParseFloat(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	member := args[2]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -654,19 +631,14 @@ func (o *zsetRow) reverseTravelInRange(s *Store, r *rangeSpec, f func(o *zsetRow
 }
 
 // ZCOUNT key min max
-func (s *Store) ZCount(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZCount(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key []byte
-	var min []byte
-	var max []byte
-	for i, ref := range []interface{}{&key, &min, &max} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	min := args[1]
+	max := args[2]
 
 	r, err := parseRangeSpec(min, max)
 	if err != nil {
@@ -916,19 +888,14 @@ func (o *zsetRow) reverseTravelInLexRange(s *Store, r *lexRangeSpec, f func(o *z
 }
 
 // ZLEXCOUNT key min max
-func (s *Store) ZLexCount(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZLexCount(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 3", len(args))
 	}
 
-	var key []byte
-	var min []byte
-	var max []byte
-	for i, ref := range []interface{}{&key, &min, &max} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	min := args[1]
+	max := args[2]
 
 	r, err := parseLexRangeSpec(min, max)
 	if err != nil {
@@ -958,18 +925,19 @@ func (s *Store) ZLexCount(db uint32, args ...interface{}) (int64, error) {
 	return count, nil
 }
 
-func (s *Store) genericZRange(db uint32, args []interface{}, reverse bool) ([][]byte, error) {
+func (s *Store) genericZRange(db uint32, args [][]byte, reverse bool) ([][]byte, error) {
 	if len(args) != 3 && len(args) != 4 {
 		return nil, errArguments("len(args) = %d, expect = 3/4", len(args))
 	}
 
-	var key []byte
-	var start int64
-	var stop int64
-	for i, ref := range []interface{}{&key, &start, &stop} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	start, err := ParseInt(args[1])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
+	}
+	stop, err := ParseInt(args[2])
+	if err != nil {
+		return nil, errArguments("parse args failed - %s", err)
 	}
 
 	withScore := 1
@@ -1028,12 +996,12 @@ func (s *Store) genericZRange(db uint32, args []interface{}, reverse bool) ([][]
 }
 
 // ZRANGE key start stop [WITHSCORES]
-func (s *Store) ZRange(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZRange(db uint32, args [][]byte) ([][]byte, error) {
 	return s.genericZRange(db, args, false)
 }
 
 // ZREVRANGE key start stop [WITHSCORES]
-func (s *Store) ZRevRange(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZRevRange(db uint32, args [][]byte) ([][]byte, error) {
 	return s.genericZRange(db, args, true)
 }
 
@@ -1061,19 +1029,14 @@ func sanitizeIndexes(start int64, stop int64, size int64) (int64, int64, int64) 
 	return start, stop, (stop - start) + 1
 }
 
-func (s *Store) genericZRangeBylex(db uint32, args []interface{}, reverse bool) ([][]byte, error) {
+func (s *Store) genericZRangeBylex(db uint32, args [][]byte, reverse bool) ([][]byte, error) {
 	if len(args) != 3 && len(args) != 6 {
 		return nil, errArguments("len(args) = %d, expect = 3 or 6", len(args))
 	}
 
-	var key []byte
-	var min []byte
-	var max []byte
-	for i, ref := range []interface{}{&key, &min, &max} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	min := args[1]
+	max := args[2]
 
 	if reverse {
 		min, max = max, min
@@ -1136,28 +1099,23 @@ func (s *Store) genericZRangeBylex(db uint32, args []interface{}, reverse bool) 
 }
 
 // ZRANGEBYLEX key min max [LIMIT offset count]
-func (s *Store) ZRangeByLex(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZRangeByLex(db uint32, args [][]byte) ([][]byte, error) {
 	return s.genericZRangeBylex(db, args, false)
 }
 
 // ZRevRANGEBYLEX key min max [LIMIT offset count]
-func (s *Store) ZRevRangeByLex(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZRevRangeByLex(db uint32, args [][]byte) ([][]byte, error) {
 	return s.genericZRangeBylex(db, args, true)
 }
 
-func (s *Store) genericZRangeByScore(db uint32, args []interface{}, reverse bool) ([][]byte, error) {
+func (s *Store) genericZRangeByScore(db uint32, args [][]byte, reverse bool) ([][]byte, error) {
 	if len(args) < 3 {
 		return nil, errArguments("len(args) = %d, expect >= 3", len(args))
 	}
 
-	var key []byte
-	var min []byte
-	var max []byte
-	for i, ref := range []interface{}{&key, &min, &max} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	min := args[1]
+	max := args[2]
 
 	if reverse {
 		min, max = max, min
@@ -1233,28 +1191,22 @@ func (s *Store) genericZRangeByScore(db uint32, args []interface{}, reverse bool
 }
 
 // ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
-func (s *Store) ZRangeByScore(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZRangeByScore(db uint32, args [][]byte) ([][]byte, error) {
 	return s.genericZRangeByScore(db, args, false)
 }
 
 // ZREVRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
-func (s *Store) ZRevRangeByScore(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) ZRevRangeByScore(db uint32, args [][]byte) ([][]byte, error) {
 	return s.genericZRangeByScore(db, args, true)
 }
 
-func (s *Store) genericZRank(db uint32, args []interface{}, reverse bool) (int64, error) {
+func (s *Store) genericZRank(db uint32, args [][]byte, reverse bool) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect 2", len(args))
 	}
 
-	var key []byte
-	var memeber []byte
-
-	for i, ref := range []interface{}{&key, &memeber} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	member := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -1268,7 +1220,7 @@ func (s *Store) genericZRank(db uint32, args []interface{}, reverse bool) (int64
 		return -1, nil
 	}
 
-	o.Member = memeber
+	o.Member = member
 	exists, err := o.LoadDataValue(s)
 	if err != nil {
 		return 0, errors.Trace(err)
@@ -1298,30 +1250,24 @@ func (s *Store) genericZRank(db uint32, args []interface{}, reverse bool) (int64
 }
 
 // ZRANK key member
-func (s *Store) ZRank(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZRank(db uint32, args [][]byte) (int64, error) {
 	return s.genericZRank(db, args, false)
 }
 
 // ZREVRANK key member
-func (s *Store) ZRevRank(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZRevRank(db uint32, args [][]byte) (int64, error) {
 	return s.genericZRank(db, args, true)
 }
 
 // ZREMRANGEBYLEX key min max
-func (s *Store) ZRemRangeByLex(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZRemRangeByLex(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect 3", len(args))
 	}
 
-	var key []byte
-	var min []byte
-	var max []byte
-
-	for i, ref := range []interface{}{&key, &min, &max} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	min := args[1]
+	max := args[2]
 
 	r, err := parseLexRangeSpec(min, max)
 	if err != nil {
@@ -1367,19 +1313,19 @@ func (s *Store) ZRemRangeByLex(db uint32, args ...interface{}) (int64, error) {
 }
 
 // ZREMRANGEBYRANK key start stop
-func (s *Store) ZRemRangeByRank(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZRemRangeByRank(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect 3", len(args))
 	}
 
-	var key []byte
-	var start int64
-	var stop int64
-
-	for i, ref := range []interface{}{&key, &start, &stop} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	start, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+	stop, err := ParseInt(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
 	r := &rangeSpec{Min: math.Inf(-1), Max: math.Inf(1), MinEx: true, MaxEx: true}
@@ -1440,20 +1386,14 @@ func (s *Store) ZRemRangeByRank(db uint32, args ...interface{}) (int64, error) {
 }
 
 // ZREMRANGEBYSCORE key min max
-func (s *Store) ZRemRangeByScore(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) ZRemRangeByScore(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect 3", len(args))
 	}
 
-	var key []byte
-	var min []byte
-	var max []byte
-
-	for i, ref := range []interface{}{&key, &min, &max} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	min := args[1]
+	max := args[2]
 
 	r, err := parseRangeSpec(min, max)
 	if err != nil {

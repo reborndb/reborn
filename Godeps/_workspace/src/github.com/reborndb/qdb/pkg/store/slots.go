@@ -42,21 +42,25 @@ func HashKeyToSlot(key []byte) ([]byte, uint32) {
 }
 
 // SLOTSINFO [start] [count]
-func (s *Store) SlotsInfo(db uint32, args ...interface{}) (map[uint32]int64, error) {
+func (s *Store) SlotsInfo(db uint32, args [][]byte) (map[uint32]int64, error) {
 	if len(args) > 2 {
 		return nil, errArguments("len(args) = %d, expect <= 2", len(args))
 	}
 
-	var start, count uint32 = 0, MaxSlotNum
+	var start, count int64 = 0, MaxSlotNum
+	var err error
 	switch len(args) {
 	case 2:
-		if err := parseArgument(args[1], &count); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", 1, err)
+		count, err = ParseInt(args[1])
+		if err != nil {
+			return nil, errArguments("parse args failed - %s", err)
 		}
+
 		fallthrough
 	case 1:
-		if err := parseArgument(args[0], &start); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", 0, err)
+		start, err = ParseInt(args[0])
+		if err != nil {
+			return nil, errArguments("parse args failed - %s", err)
 		}
 	}
 	limit := start + count
@@ -67,7 +71,7 @@ func (s *Store) SlotsInfo(db uint32, args ...interface{}) (map[uint32]int64, err
 	defer s.release()
 
 	m := make(map[uint32]int64)
-	for slot := start; slot < limit && slot < MaxSlotNum; slot++ {
+	for slot := uint32(start); slot < uint32(limit) && slot < MaxSlotNum; slot++ {
 		if key, err := firstKeyUnderSlot(s, db, slot); err != nil {
 			return nil, err
 		} else if key != nil {
@@ -80,21 +84,21 @@ func (s *Store) SlotsInfo(db uint32, args ...interface{}) (map[uint32]int64, err
 }
 
 // SLOTSRESTORE key ttlms value [key ttlms value ...]
-func (s *Store) SlotsRestore(db uint32, args ...interface{}) error {
+func (s *Store) SlotsRestore(db uint32, args [][]byte) error {
 	if len(args) == 0 || len(args)%3 != 0 {
 		return errArguments("len(args) = %d, expect != 0 && mod 3 = 0", len(args))
 	}
 
 	objs := make([]*rdb.ObjEntry, len(args)/3)
 	for i := 0; i < len(objs); i++ {
-		var key, value []byte
-		var ttlms int64
-		for j, ref := range []interface{}{&key, &ttlms, &value} {
-			if err := parseArgument(args[i*3+j], ref); err != nil {
-				return errArguments("parse args[%d] failed, %s", i*3+j, err)
-			}
+		key := args[i*3]
+		ttlms, err := ParseInt(args[i*3+1])
+		if err != nil {
+			return errArguments("parse args failed - %s", err)
 		}
-		expireat := uint64(0)
+		value := args[i*3+2]
+
+		expireat := int64(0)
 		if ttlms != 0 {
 			if v, ok := TTLmsToExpireAt(ttlms); ok && v > 0 {
 				expireat = v
@@ -102,14 +106,16 @@ func (s *Store) SlotsRestore(db uint32, args ...interface{}) error {
 				return errArguments("parse args[%d] ttlms = %d", i*3+1, ttlms)
 			}
 		}
+
 		obj, err := rdb.DecodeDump(value)
 		if err != nil {
 			return errArguments("decode args[%d] failed, %s", i*3+2, err)
 		}
+
 		objs[i] = &rdb.ObjEntry{
 			DB:       db,
 			Key:      key,
-			ExpireAt: expireat,
+			ExpireAt: uint64(expireat),
 			Value:    obj,
 		}
 	}
@@ -129,7 +135,7 @@ func (s *Store) SlotsRestore(db uint32, args ...interface{}) error {
 		} else {
 			log.Debugf("[%d] restore batch, db = %d, key = %v", i, e.DB, e.Key)
 		}
-		if err := s.restore(bt, e.DB, e.Key, e.ExpireAt, e.Value); err != nil {
+		if err := s.restore(bt, e.DB, e.Key, int64(e.ExpireAt), e.Value); err != nil {
 			log.Warningf("restore object failed, db = %d, key = %v, err = %s", e.DB, e.Key, err)
 			return err
 		}
@@ -140,20 +146,25 @@ func (s *Store) SlotsRestore(db uint32, args ...interface{}) error {
 }
 
 // SLOTSMGRTSLOT host port timeout slot
-func (s *Store) SlotsMgrtSlot(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SlotsMgrtSlot(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 4 {
 		return 0, errArguments("len(args) = %d, expect = 4", len(args))
 	}
 
-	var host string
-	var port int64
-	var ttlms uint64
-	var slot uint32
-	for i, ref := range []interface{}{&host, &port, &ttlms, &slot} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	host := string(args[0])
+	port, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	ttlms, err := ParseInt(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+	slot, err := ParseUint(args[3])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+
 	var timeout = time.Duration(ttlms) * time.Millisecond
 	if slot >= MaxSlotNum {
 		return 0, errArguments("slot = %d", slot)
@@ -170,7 +181,7 @@ func (s *Store) SlotsMgrtSlot(db uint32, args ...interface{}) (int64, error) {
 
 	log.Debugf("migrate slot, addr = %s, timeout = %d, db = %d, slot = %d", addr, timeout, db, slot)
 
-	key, err := firstKeyUnderSlot(s, db, slot)
+	key, err := firstKeyUnderSlot(s, db, uint32(slot))
 	if err != nil || key == nil {
 		return 0, err
 	}
@@ -178,20 +189,25 @@ func (s *Store) SlotsMgrtSlot(db uint32, args ...interface{}) (int64, error) {
 }
 
 // SLOTSMGRTTAGSLOT host port timeout slot
-func (s *Store) SlotsMgrtTagSlot(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SlotsMgrtTagSlot(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 4 {
 		return 0, errArguments("len(args) = %d, expect = 4", len(args))
 	}
 
-	var host string
-	var port int64
-	var ttlms uint64
-	var slot uint32
-	for i, ref := range []interface{}{&host, &port, &ttlms, &slot} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	host := string(args[0])
+	port, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	ttlms, err := ParseInt(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+	slot, err := ParseUint(args[3])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+
 	var timeout = time.Duration(ttlms) * time.Millisecond
 	if slot >= MaxSlotNum {
 		return 0, errArguments("slot = %d", slot)
@@ -208,7 +224,7 @@ func (s *Store) SlotsMgrtTagSlot(db uint32, args ...interface{}) (int64, error) 
 
 	log.Debugf("migrate slot with tag, addr = %s, timeout = %d, db = %d, slot = %d", addr, timeout, db, slot)
 
-	key, err := firstKeyUnderSlot(s, db, slot)
+	key, err := firstKeyUnderSlot(s, db, uint32(slot))
 	if err != nil || key == nil {
 		return 0, err
 	}
@@ -221,20 +237,22 @@ func (s *Store) SlotsMgrtTagSlot(db uint32, args ...interface{}) (int64, error) 
 }
 
 // SLOTSMGRTONE host port timeout key
-func (s *Store) SlotsMgrtOne(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SlotsMgrtOne(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 4 {
 		return 0, errArguments("len(args) = %d, expect = 4", len(args))
 	}
 
-	var host string
-	var port int64
-	var ttlms uint64
-	var key []byte
-	for i, ref := range []interface{}{&host, &port, &ttlms, &key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	host := string(args[0])
+	port, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	ttlms, err := ParseInt(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+	key := args[3]
+
 	var timeout = time.Duration(ttlms) * time.Millisecond
 	if timeout == 0 {
 		timeout = time.Second
@@ -252,20 +270,22 @@ func (s *Store) SlotsMgrtOne(db uint32, args ...interface{}) (int64, error) {
 }
 
 // SLOTSMGRTTAGONE host port timeout key
-func (s *Store) SlotsMgrtTagOne(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) SlotsMgrtTagOne(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 4 {
 		return 0, errArguments("len(args) = %d, expect = 4", len(args))
 	}
 
-	var host string
-	var port int64
-	var ttlms uint64
-	var key []byte
-	for i, ref := range []interface{}{&host, &port, &ttlms, &key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	host := string(args[0])
+	port, err := ParseInt(args[1])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
+	ttlms, err := ParseInt(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
+	}
+	key := args[3]
+
 	var timeout = time.Duration(ttlms) * time.Millisecond
 	if timeout == 0 {
 		timeout = time.Second

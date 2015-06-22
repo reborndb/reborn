@@ -138,12 +138,12 @@ func (s *testStoreSuite) xslotsrestore(c *C, db uint32, args ...interface{}) {
 		}
 	}
 
-	err := s.s.SlotsRestore(db, x...)
+	err := s.s.SlotsRestore(db, FormatBytes(x...))
 	c.Assert(err, IsNil)
 }
 
 func (s *testStoreSuite) slotsinfo(c *C, db uint32, sum int64) {
-	m, err := s.s.SlotsInfo(db)
+	m, err := s.s.SlotsInfo(db, [][]byte{})
 	c.Assert(err, IsNil)
 	c.Assert(m, NotNil)
 
@@ -158,7 +158,7 @@ func (s *testStoreSuite) slotsmgrtslot(addr *net.TCPAddr, db uint32, tag string,
 	c := make(chan error, 1)
 	go func() {
 		host, port := addr.IP.String(), addr.Port
-		n, err := s.s.SlotsMgrtSlot(db, host, port, 1000, HashTagToSlot([]byte(tag)))
+		n, err := s.s.SlotsMgrtSlot(db, FormatBytes(host, port, 1000, HashTagToSlot([]byte(tag))))
 		if err != nil {
 			c <- err
 		} else if n != expect {
@@ -174,7 +174,7 @@ func (s *testStoreSuite) slotsmgrttagslot(addr *net.TCPAddr, db uint32, tag stri
 	c := make(chan error, 1)
 	go func() {
 		host, port := addr.IP.String(), addr.Port
-		n, err := s.s.SlotsMgrtTagSlot(db, host, port, 1000, HashTagToSlot([]byte(tag)))
+		n, err := s.s.SlotsMgrtTagSlot(db, FormatBytes(host, port, 1000, HashTagToSlot([]byte(tag))))
 		if err != nil {
 			c <- err
 		} else if n != expect {
@@ -190,7 +190,7 @@ func (s *testStoreSuite) slotsmgrtone(addr *net.TCPAddr, db uint32, key string, 
 	c := make(chan error, 1)
 	go func() {
 		host, port := addr.IP.String(), addr.Port
-		n, err := s.s.SlotsMgrtOne(db, host, port, 1000, []byte(key))
+		n, err := s.s.SlotsMgrtOne(db, FormatBytes(host, port, 1000, []byte(key)))
 		if err != nil {
 			c <- err
 		} else if n != expect {
@@ -206,7 +206,7 @@ func (s *testStoreSuite) slotsmgrttagone(addr *net.TCPAddr, db uint32, key strin
 	c := make(chan error, 1)
 	go func() {
 		host, port := addr.IP.String(), addr.Port
-		n, err := s.s.SlotsMgrtTagOne(db, host, port, 1000, []byte(key))
+		n, err := s.s.SlotsMgrtTagOne(db, FormatBytes(host, port, 1000, []byte(key)))
 		if err != nil {
 			c <- err
 		} else if n != expect {

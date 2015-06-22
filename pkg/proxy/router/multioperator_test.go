@@ -6,6 +6,7 @@ package router
 import (
 	"strings"
 
+	"github.com/reborndb/qdb/pkg/store"
 	. "gopkg.in/check.v1"
 )
 
@@ -13,11 +14,11 @@ func (s *testProxyRouterSuite) TestMgetResults(c *C) {
 	moper := newMultiOperator(s.s.addr, storeAuth)
 
 	var err error
-	err = s.s.store.Set(0, "a", "a")
+	err = s.s.store.Set(0, store.FormatBytes("a", "a"))
 	c.Assert(err, IsNil)
-	err = s.s.store.Set(0, "b", "b")
+	err = s.s.store.Set(0, store.FormatBytes("b", "b"))
 	c.Assert(err, IsNil)
-	err = s.s.store.Set(0, "c", "c")
+	err = s.s.store.Set(0, store.FormatBytes("c", "c"))
 	c.Assert(err, IsNil)
 
 	buf, err := moper.mgetResults(&MulOp{
@@ -65,11 +66,11 @@ func (s *testProxyRouterSuite) TestDeltResults(c *C) {
 	moper := newMultiOperator(s.s.addr, storeAuth)
 
 	var err error
-	err = s.s.store.Set(0, "a", "a")
+	err = s.s.store.Set(0, store.FormatBytes("a", "a"))
 	c.Assert(err, IsNil)
-	err = s.s.store.Set(0, "b", "b")
+	err = s.s.store.Set(0, store.FormatBytes("b", "b"))
 	c.Assert(err, IsNil)
-	err = s.s.store.Set(0, "c", "c")
+	err = s.s.store.Set(0, store.FormatBytes("c", "c"))
 	c.Assert(err, IsNil)
 
 	buf, err := moper.delResults(&MulOp{

@@ -14,7 +14,7 @@ func ZGetAllCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if a, err := s.Store().ZGetAll(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().ZGetAll(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -31,7 +31,7 @@ func ZCardCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if n, err := s.Store().ZCard(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().ZCard(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -44,7 +44,7 @@ func ZAddCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect != 1 && mod 2 = 1", len(args))
 	}
 
-	if n, err := s.Store().ZAdd(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().ZAdd(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -57,7 +57,7 @@ func ZRemCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().ZRem(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().ZRem(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -70,7 +70,7 @@ func ZScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if v, ok, err := s.Store().ZScore(s.DB(), iconvert(args)...); err != nil {
+	if v, ok, err := s.Store().ZScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if !ok {
 		return redis.NewBulkBytes(nil), nil
@@ -85,7 +85,7 @@ func ZIncrByCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if v, err := s.Store().ZIncrBy(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZIncrBy(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytes(store.FormatFloat(v)), nil
@@ -98,7 +98,7 @@ func ZCountCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if v, err := s.Store().ZCount(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZCount(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(v), nil
@@ -111,7 +111,7 @@ func ZLexCountCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if v, err := s.Store().ZLexCount(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZLexCount(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(v), nil
@@ -124,7 +124,7 @@ func ZRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3 or 4", len(args))
 	}
 
-	if ay, err := s.Store().ZRange(s.DB(), iconvert(args)...); err != nil {
+	if ay, err := s.Store().ZRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -141,7 +141,7 @@ func ZRevRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3 or 4", len(args))
 	}
 
-	if ay, err := s.Store().ZRevRange(s.DB(), iconvert(args)...); err != nil {
+	if ay, err := s.Store().ZRevRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -158,7 +158,7 @@ func ZRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3 or 6", len(args))
 	}
 
-	if ay, err := s.Store().ZRangeByLex(s.DB(), iconvert(args)...); err != nil {
+	if ay, err := s.Store().ZRangeByLex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -175,7 +175,7 @@ func ZRevRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3 or 6", len(args))
 	}
 
-	if ay, err := s.Store().ZRevRangeByLex(s.DB(), iconvert(args)...); err != nil {
+	if ay, err := s.Store().ZRevRangeByLex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -192,7 +192,7 @@ func ZRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 3", len(args))
 	}
 
-	if ay, err := s.Store().ZRangeByScore(s.DB(), iconvert(args)...); err != nil {
+	if ay, err := s.Store().ZRangeByScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -209,7 +209,7 @@ func ZRevRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 3", len(args))
 	}
 
-	if ay, err := s.Store().ZRevRangeByScore(s.DB(), iconvert(args)...); err != nil {
+	if ay, err := s.Store().ZRevRangeByScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -226,7 +226,7 @@ func ZRankCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect 2", len(args))
 	}
 
-	if v, err := s.Store().ZRank(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZRank(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if v >= 0 {
 		return redis.NewInt(v), nil
@@ -241,7 +241,7 @@ func ZRevRankCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect 2", len(args))
 	}
 
-	if v, err := s.Store().ZRevRank(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZRevRank(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if v >= 0 {
 		return redis.NewInt(v), nil
@@ -256,7 +256,7 @@ func ZRemRangeByLexCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect 3", len(args))
 	}
 
-	if v, err := s.Store().ZRemRangeByLex(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZRemRangeByLex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(v), nil
@@ -269,7 +269,7 @@ func ZRemRangeByRankCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect 3", len(args))
 	}
 
-	if v, err := s.Store().ZRemRangeByRank(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZRemRangeByRank(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(v), nil
@@ -282,7 +282,7 @@ func ZRemRangeByScoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect 3", len(args))
 	}
 
-	if v, err := s.Store().ZRemRangeByScore(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().ZRemRangeByScore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(v), nil

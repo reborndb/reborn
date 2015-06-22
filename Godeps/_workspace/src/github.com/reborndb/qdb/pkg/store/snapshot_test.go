@@ -27,7 +27,7 @@ func (s *testStoreSuite) TestSnapshot(c *C) {
 			ss = append(ss, k, v)
 		}
 		s.hmset(c, db, "hash", ss...)
-		s.kpexpireat(c, db, "hash", now+1000*uint64(db+37), 1)
+		s.kpexpireat(c, db, "hash", now+1000*int64(db+37), 1)
 	}
 
 	sleepms(20)
@@ -51,7 +51,7 @@ func (s *testStoreSuite) TestSnapshot(c *C) {
 			}
 			ok = true
 			c.Assert(string(obj.Key), Equals, "hash")
-			c.Assert(obj.ExpireAt, Equals, now+uint64(db+37)*1000)
+			c.Assert(int64(obj.ExpireAt), Equals, now+int64(db+37)*1000)
 
 			x := obj.Value.(rdb.Hash)
 			c.Assert(err, IsNil)

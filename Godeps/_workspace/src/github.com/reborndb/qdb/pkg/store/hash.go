@@ -47,7 +47,7 @@ func (o *hashRow) deleteObject(s *Store, bt *engine.Batch) error {
 	return it.Error()
 }
 
-func (o *hashRow) storeObject(s *Store, bt *engine.Batch, expireat uint64, obj interface{}) error {
+func (o *hashRow) storeObject(s *Store, bt *engine.Batch, expireat int64, obj interface{}) error {
 	hash, ok := obj.(rdb.Hash)
 	if !ok || len(hash) == 0 {
 		return errors.Trace(ErrObjectValue)
@@ -167,17 +167,12 @@ func (s *Store) loadHashRow(db uint32, key []byte, deleteIfExpired bool) (*hashR
 }
 
 // HGETALL key
-func (s *Store) HGetAll(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) HGetAll(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -203,21 +198,13 @@ func (s *Store) HGetAll(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // HDEL key field [field ...]
-func (s *Store) HDel(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) HDel(db uint32, args [][]byte) (int64, error) {
 	if len(args) < 2 {
 		return 0, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var fields = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return 0, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(fields); i++ {
-		if err := parseArgument(args[i+1], &fields[i]); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	fields := args[1:]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -257,17 +244,13 @@ func (s *Store) HDel(db uint32, args ...interface{}) (int64, error) {
 }
 
 // HEXISTS key field
-func (s *Store) HExists(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) HExists(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 2 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, field []byte
-	for i, ref := range []interface{}{&key, &field} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	field := args[1]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -289,17 +272,13 @@ func (s *Store) HExists(db uint32, args ...interface{}) (int64, error) {
 }
 
 // HGET key field
-func (s *Store) HGet(db uint32, args ...interface{}) ([]byte, error) {
+func (s *Store) HGet(db uint32, args [][]byte) ([]byte, error) {
 	if len(args) != 2 {
 		return nil, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, field []byte
-	for i, ref := range []interface{}{&key, &field} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	field := args[1]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -321,17 +300,12 @@ func (s *Store) HGet(db uint32, args ...interface{}) ([]byte, error) {
 }
 
 // HLEN key
-func (s *Store) HLen(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) HLen(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 1 {
 		return 0, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -346,17 +320,16 @@ func (s *Store) HLen(db uint32, args ...interface{}) (int64, error) {
 }
 
 // HINCRBY key field delta
-func (s *Store) HIncrBy(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) HIncrBy(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, field []byte
-	var delta int64
-	for i, ref := range []interface{}{&key, &field, &delta} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	field := args[1]
+	delta, err := ParseInt(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -399,17 +372,16 @@ func (s *Store) HIncrBy(db uint32, args ...interface{}) (int64, error) {
 }
 
 // HINCRBYFLOAT key field delta
-func (s *Store) HIncrByFloat(db uint32, args ...interface{}) (float64, error) {
+func (s *Store) HIncrByFloat(db uint32, args [][]byte) (float64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, field []byte
-	var delta float64
-	for i, ref := range []interface{}{&key, &field, &delta} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
+	key := args[0]
+	field := args[1]
+	delta, err := ParseFloat(args[2])
+	if err != nil {
+		return 0, errArguments("parse args failed - %s", err)
 	}
 
 	if err := s.acquire(); err != nil {
@@ -457,17 +429,12 @@ func (s *Store) HIncrByFloat(db uint32, args ...interface{}) (float64, error) {
 }
 
 // HKEYS key
-func (s *Store) HKeys(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) HKeys(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -482,17 +449,12 @@ func (s *Store) HKeys(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // HVALS key
-func (s *Store) HVals(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) HVals(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) != 1 {
 		return nil, errArguments("len(args) = %d, expect = 1", len(args))
 	}
 
-	var key []byte
-	for i, ref := range []interface{}{&key} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
 
 	if err := s.acquire(); err != nil {
 		return nil, err
@@ -507,17 +469,14 @@ func (s *Store) HVals(db uint32, args ...interface{}) ([][]byte, error) {
 }
 
 // HSET key field value
-func (s *Store) HSet(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) HSet(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, field, value []byte
-	for i, ref := range []interface{}{&key, &field, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	field := args[1]
+	value := args[2]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -558,17 +517,14 @@ func (s *Store) HSet(db uint32, args ...interface{}) (int64, error) {
 }
 
 // HSETNX key field value
-func (s *Store) HSetNX(db uint32, args ...interface{}) (int64, error) {
+func (s *Store) HSetNX(db uint32, args [][]byte) (int64, error) {
 	if len(args) != 3 {
 		return 0, errArguments("len(args) = %d, expect = 2", len(args))
 	}
 
-	var key, field, value []byte
-	for i, ref := range []interface{}{&key, &field, &value} {
-		if err := parseArgument(args[i], ref); err != nil {
-			return 0, errArguments("parse args[%d] failed, %s", i, err)
-		}
-	}
+	key := args[0]
+	field := args[1]
+	value := args[2]
 
 	if err := s.acquire(); err != nil {
 		return 0, err
@@ -605,24 +561,18 @@ func (s *Store) HSetNX(db uint32, args ...interface{}) (int64, error) {
 }
 
 // HMSET key field value [field value ...]
-func (s *Store) HMSet(db uint32, args ...interface{}) error {
+func (s *Store) HMSet(db uint32, args [][]byte) error {
 	if len(args) == 1 || len(args)%2 != 1 {
 		return errArguments("len(args) = %d, expect != 1 && mod 2 = 1", len(args))
 	}
 
-	var key []byte
+	key := args[0]
+
 	var eles = make([]*rdb.HashElement, len(args)/2)
-	if err := parseArgument(args[0], &key); err != nil {
-		return errArguments("parse args[%d] failed, %s", 0, err)
-	}
 	for i := 0; i < len(eles); i++ {
 		e := &rdb.HashElement{}
-		if err := parseArgument(args[i*2+1], &e.Field); err != nil {
-			return errArguments("parse args[%d] failed, %s", i*2+1, err)
-		}
-		if err := parseArgument(args[i*2+2], &e.Value); err != nil {
-			return errArguments("parse args[%d] failed, %s", i*2+2, err)
-		}
+		e.Field = args[i*2+1]
+		e.Value = args[i*2+2]
 		eles[i] = e
 	}
 
@@ -664,21 +614,14 @@ func (s *Store) HMSet(db uint32, args ...interface{}) error {
 }
 
 // HMGET key field [field ...]
-func (s *Store) HMGet(db uint32, args ...interface{}) ([][]byte, error) {
+func (s *Store) HMGet(db uint32, args [][]byte) ([][]byte, error) {
 	if len(args) < 2 {
 		return nil, errArguments("len(args) = %d, expect >= 2", len(args))
 	}
 
-	var key []byte
-	var fields = make([][]byte, len(args)-1)
-	if err := parseArgument(args[0], &key); err != nil {
-		return nil, errArguments("parse args[%d] failed, %s", 0, err)
-	}
-	for i := 0; i < len(fields); i++ {
-		if err := parseArgument(args[i+1], &fields[i]); err != nil {
-			return nil, errArguments("parse args[%d] failed, %s", i+1, err)
-		}
-	}
+	key := args[0]
+	fields := args[1:]
+
 	var values = make([][]byte, len(fields))
 
 	if err := s.acquire(); err != nil {

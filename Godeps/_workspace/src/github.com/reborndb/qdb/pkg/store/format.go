@@ -216,3 +216,39 @@ func parseArgument(arg interface{}, ref interface{}) error {
 	}
 	return nil
 }
+
+func FormatByte(arg interface{}) []byte {
+	switch x := arg.(type) {
+	default:
+		return []byte{}
+	case int64:
+		return FormatInt(int64(x))
+	case int32:
+		return FormatInt(int64(x))
+	case int:
+		return FormatInt(int64(x))
+	case uint64:
+		return FormatUint(uint64(x))
+	case uint32:
+		return FormatUint(uint64(x))
+	case uint:
+		return FormatUint(uint64(x))
+	case float64:
+		return FormatFloat(float64(x))
+	case float32:
+		return FormatFloat(float64(x))
+	case []byte:
+		return x
+	case string:
+		return []byte(x)
+	}
+}
+
+func FormatBytes(args ...interface{}) [][]byte {
+	values := make([][]byte, len(args))
+	for i, arg := range args {
+		values[i] = FormatByte(arg)
+	}
+
+	return values
+}

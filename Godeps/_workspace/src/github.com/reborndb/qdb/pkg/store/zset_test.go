@@ -18,7 +18,7 @@ func (s *testStoreSuite) zdel(c *C, db uint32, key string, expect int64) {
 
 func (s *testStoreSuite) zdump(c *C, db uint32, key string, expect ...interface{}) {
 	s.kexists(c, db, key, 1)
-	v, err := s.s.Dump(db, key)
+	v, err := s.s.Dump(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(v, NotNil)
 
@@ -39,7 +39,7 @@ func (s *testStoreSuite) zdump(c *C, db uint32, key string, expect ...interface{
 	}
 
 	s.zcard(c, db, key, int64(len(m)))
-	p, err := s.s.ZGetAll(db, key)
+	p, err := s.s.ZGetAll(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(len(p), Equals, len(m)*2)
 
@@ -63,7 +63,7 @@ func (s *testStoreSuite) zrestore(c *C, db uint32, key string, ttlms int64, expe
 	dump, err := rdb.EncodeDump(x)
 	c.Assert(err, IsNil)
 
-	err = s.s.Restore(db, key, ttlms, dump)
+	err = s.s.Restore(db, FormatBytes(key, ttlms, dump))
 	c.Assert(err, IsNil)
 
 	s.zdump(c, db, key, expect...)
@@ -75,7 +75,7 @@ func (s *testStoreSuite) zrestore(c *C, db uint32, key string, ttlms int64, expe
 }
 
 func (s *testStoreSuite) zcard(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.ZCard(db, key)
+	x, err := s.s.ZCard(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -91,7 +91,7 @@ func (s *testStoreSuite) zrem(c *C, db uint32, key string, expect int64, members
 	for _, m := range members {
 		args = append(args, m)
 	}
-	x, err := s.s.ZRem(db, args...)
+	x, err := s.s.ZRem(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
@@ -102,7 +102,7 @@ func (s *testStoreSuite) zadd(c *C, db uint32, key string, expect int64, pairs .
 		args = append(args, pairs[i+1], pairs[i])
 	}
 
-	x, err := s.s.ZAdd(db, args...)
+	x, err := s.s.ZAdd(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -114,26 +114,26 @@ func (s *testStoreSuite) zadd(c *C, db uint32, key string, expect int64, pairs .
 }
 
 func (s *testStoreSuite) zscore(c *C, db uint32, key string, member string, expect float64) {
-	x, ok, err := s.s.ZScore(db, key, member)
+	x, ok, err := s.s.ZScore(db, FormatBytes(key, member))
 	c.Assert(err, IsNil)
 	c.Assert(ok, Equals, true)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) zincrby(c *C, db uint32, key string, member string, delta int64, expect float64) {
-	x, err := s.s.ZIncrBy(db, key, delta, member)
+	x, err := s.s.ZIncrBy(db, FormatBytes(key, delta, member))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) zcount(c *C, db uint32, key string, min string, max string, expect int64) {
-	x, err := s.s.ZCount(db, key, min, max)
+	x, err := s.s.ZCount(db, FormatBytes(key, min, max))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) zlexcount(c *C, db uint32, key string, min string, max string, expect int64) {
-	x, err := s.s.ZLexCount(db, key, min, max)
+	x, err := s.s.ZLexCount(db, FormatBytes(key, min, max))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
@@ -143,9 +143,9 @@ func (s *testStoreSuite) zrange(c *C, db uint32, key string, start int64, stop i
 	var err error
 
 	if !reverse {
-		x, err = s.s.ZRange(db, key, start, stop)
+		x, err = s.s.ZRange(db, FormatBytes(key, start, stop))
 	} else {
-		x, err = s.s.ZRevRange(db, key, start, stop)
+		x, err = s.s.ZRevRange(db, FormatBytes(key, start, stop))
 	}
 
 	c.Assert(err, IsNil)
@@ -160,9 +160,9 @@ func (s *testStoreSuite) zrangebylex(c *C, db uint32, key string, min string, ma
 	var x [][]byte
 	var err error
 	if !reverse {
-		x, err = s.s.ZRangeByLex(db, key, min, max, "LIMIT", offset, count)
+		x, err = s.s.ZRangeByLex(db, FormatBytes(key, min, max, "LIMIT", offset, count))
 	} else {
-		x, err = s.s.ZRevRangeByLex(db, key, min, max, "LIMIT", offset, count)
+		x, err = s.s.ZRevRangeByLex(db, FormatBytes(key, min, max, "LIMIT", offset, count))
 	}
 
 	c.Assert(err, IsNil)
@@ -177,9 +177,9 @@ func (s *testStoreSuite) zrangebyscore(c *C, db uint32, key string, min string, 
 	var x [][]byte
 	var err error
 	if !reverse {
-		x, err = s.s.ZRangeByScore(db, key, min, max, "LIMIT", offset, count)
+		x, err = s.s.ZRangeByScore(db, FormatBytes(key, min, max, "LIMIT", offset, count))
 	} else {
-		x, err = s.s.ZRevRangeByScore(db, key, min, max, "LIMIT", offset, count)
+		x, err = s.s.ZRevRangeByScore(db, FormatBytes(key, min, max, "LIMIT", offset, count))
 
 	}
 
@@ -195,9 +195,9 @@ func (s *testStoreSuite) zrank(c *C, db uint32, key string, member string, rever
 	var x int64
 	var err error
 	if !reverse {
-		x, err = s.s.ZRank(db, key, member)
+		x, err = s.s.ZRank(db, FormatBytes(key, member))
 	} else {
-		x, err = s.s.ZRevRank(db, key, member)
+		x, err = s.s.ZRevRank(db, FormatBytes(key, member))
 	}
 
 	c.Assert(err, IsNil)
@@ -205,19 +205,19 @@ func (s *testStoreSuite) zrank(c *C, db uint32, key string, member string, rever
 }
 
 func (s *testStoreSuite) zremrangebylex(c *C, db uint32, key string, min string, max string, expect int64) {
-	x, err := s.s.ZRemRangeByLex(db, key, min, max)
+	x, err := s.s.ZRemRangeByLex(db, FormatBytes(key, min, max))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) zremrangebyrank(c *C, db uint32, key string, start int64, stop int64, expect int64) {
-	x, err := s.s.ZRemRangeByRank(db, key, start, stop)
+	x, err := s.s.ZRemRangeByRank(db, FormatBytes(key, start, stop))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) zremrangebyscore(c *C, db uint32, key string, min string, max string, expect int64) {
-	x, err := s.s.ZRemRangeByScore(db, key, min, max)
+	x, err := s.s.ZRemRangeByScore(db, FormatBytes(key, min, max))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }

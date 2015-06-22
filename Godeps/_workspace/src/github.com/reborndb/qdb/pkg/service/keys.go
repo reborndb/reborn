@@ -33,7 +33,7 @@ func DelCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect != 1", len(args))
 	}
 
-	if n, err := s.Store().Del(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().Del(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -46,7 +46,7 @@ func DumpCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if x, err := s.Store().Dump(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().Dump(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else if dump, err := rdb.EncodeDump(x); err != nil {
 		return toRespError(err)
@@ -61,7 +61,7 @@ func TypeCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if c, err := s.Store().Type(s.DB(), iconvert(args)...); err != nil {
+	if c, err := s.Store().Type(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewString(c.String()), nil
@@ -74,7 +74,7 @@ func ExistsCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if x, err := s.Store().Exists(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().Exists(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -87,7 +87,7 @@ func TTLCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if x, err := s.Store().TTL(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().TTL(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -100,7 +100,7 @@ func PTTLCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if x, err := s.Store().PTTL(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().PTTL(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -113,7 +113,7 @@ func PersistCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if x, err := s.Store().Persist(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().Persist(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -126,7 +126,7 @@ func ExpireCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if x, err := s.Store().Expire(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().Expire(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -139,7 +139,7 @@ func PExpireCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if x, err := s.Store().PExpire(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().PExpire(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -152,7 +152,7 @@ func ExpireAtCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if x, err := s.Store().ExpireAt(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().ExpireAt(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -165,7 +165,7 @@ func PExpireAtCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if x, err := s.Store().PExpireAt(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().PExpireAt(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -178,7 +178,7 @@ func RestoreCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if err := s.Store().Restore(s.DB(), iconvert(args)...); err != nil {
+	if err := s.Store().Restore(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewString("OK"), nil

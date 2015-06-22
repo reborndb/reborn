@@ -133,22 +133,11 @@ func (h *Handler) respEncodeStoreForward(f *store.Forward) ([]byte, error) {
 	buf.WriteString(fmt.Sprintf("$%d\r\n%s\r\n", len(f.Op), f.Op))
 
 	for _, arg := range f.Args {
-		switch t := arg.(type) {
-		case []byte:
-			buf.WriteString(fmt.Sprintf("$%d\r\n", len(t)))
-			buf.Write(t)
-			buf.WriteString("\r\n")
-		case string:
-			buf.WriteString(fmt.Sprintf("$%d\r\n", len(t)))
-			buf.WriteString(t)
-			buf.WriteString("\r\n")
-		default:
-			str := fmt.Sprintf("%v", t)
-			buf.WriteString(fmt.Sprintf("$%d\r\n", len(str)))
-			buf.WriteString(str)
-			buf.WriteString("\r\n")
-		}
+		buf.WriteString(fmt.Sprintf("$%d\r\n", len(arg)))
+		buf.Write(arg)
+		buf.WriteString("\r\n")
 	}
+
 	return buf.Bytes(), nil
 }
 

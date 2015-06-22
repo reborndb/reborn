@@ -11,7 +11,7 @@ func LIndexCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if v, err := s.Store().LIndex(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().LIndex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytes(v), nil
@@ -24,7 +24,7 @@ func LLenCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if n, err := s.Store().LLen(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().LLen(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -37,7 +37,7 @@ func LRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if a, err := s.Store().LRange(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().LRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -54,7 +54,7 @@ func LSetCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if err := s.Store().LSet(s.DB(), iconvert(args)...); err != nil {
+	if err := s.Store().LSet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewString("OK"), nil
@@ -67,7 +67,7 @@ func LTrimCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if err := s.Store().LTrim(s.DB(), iconvert(args)...); err != nil {
+	if err := s.Store().LTrim(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewString("OK"), nil
@@ -80,7 +80,7 @@ func LPopCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if v, err := s.Store().LPop(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().LPop(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytes(v), nil
@@ -93,7 +93,7 @@ func RPopCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if v, err := s.Store().RPop(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().RPop(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytes(v), nil
@@ -106,7 +106,7 @@ func LPushCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().LPush(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().LPush(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -119,7 +119,7 @@ func LPushXCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().LPushX(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().LPushX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -132,7 +132,7 @@ func RPushCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().RPush(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().RPush(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -145,7 +145,7 @@ func RPushXCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().RPushX(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().RPushX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil

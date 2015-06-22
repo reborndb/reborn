@@ -94,12 +94,12 @@ type storeRow interface {
 	LoadDataValue(r storeReader) (bool, error)
 	TestDataValue(r storeReader) (bool, error)
 
-	GetExpireAt() uint64
-	SetExpireAt(expireat uint64)
+	GetExpireAt() int64
+	SetExpireAt(expireat int64)
 	IsExpired() bool
 
 	lazyInit(db uint32, key []byte, h *storeRowHelper)
-	storeObject(s *Store, bt *engine.Batch, expireat uint64, obj interface{}) error
+	storeObject(s *Store, bt *engine.Batch, expireat int64, obj interface{}) error
 	deleteObject(s *Store, bt *engine.Batch) error
 	loadObjectValue(r storeReader) (interface{}, error)
 }
@@ -109,7 +109,7 @@ type storeRowHelper struct {
 	metaKey       []byte
 	dataKeyPrefix []byte
 
-	ExpireAt uint64
+	ExpireAt int64
 
 	dataKeyRefs   []interface{}
 	metaValueRefs []interface{}
@@ -232,11 +232,11 @@ func (o *storeRowHelper) TestDataValue(r storeReader) (bool, error) {
 	return true, nil
 }
 
-func (o *storeRowHelper) GetExpireAt() uint64 {
+func (o *storeRowHelper) GetExpireAt() int64 {
 	return o.ExpireAt
 }
 
-func (o *storeRowHelper) SetExpireAt(expireat uint64) {
+func (o *storeRowHelper) SetExpireAt(expireat int64) {
 	o.ExpireAt = expireat
 }
 
@@ -244,7 +244,7 @@ func (o *storeRowHelper) IsExpired() bool {
 	return IsExpired(o.ExpireAt)
 }
 
-func IsExpired(expireat uint64) bool {
+func IsExpired(expireat int64) bool {
 	return expireat != 0 && expireat <= nowms()
 }
 

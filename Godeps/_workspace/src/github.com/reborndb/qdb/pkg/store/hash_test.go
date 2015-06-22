@@ -19,7 +19,7 @@ func (s *testStoreSuite) hdelall(c *C, db uint32, key string, expect int64) {
 func (s *testStoreSuite) hdump(c *C, db uint32, key string, expect ...string) {
 	s.kexists(c, db, key, 1)
 
-	v, err := s.s.Dump(db, key)
+	v, err := s.s.Dump(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(v, NotNil)
 
@@ -53,7 +53,7 @@ func (s *testStoreSuite) hrestore(c *C, db uint32, key string, ttlms int64, expe
 	dump, err := rdb.EncodeDump(x)
 	c.Assert(err, IsNil)
 
-	err = s.s.Restore(db, key, ttlms, dump)
+	err = s.s.Restore(db, FormatBytes(key, ttlms, dump))
 	c.Assert(err, IsNil)
 
 	s.hdump(c, db, key, expect...)
@@ -65,7 +65,7 @@ func (s *testStoreSuite) hrestore(c *C, db uint32, key string, ttlms int64, expe
 }
 
 func (s *testStoreSuite) hlen(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.HLen(db, key)
+	x, err := s.s.HLen(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -82,7 +82,7 @@ func (s *testStoreSuite) hdel(c *C, db uint32, key string, expect int64, fields 
 		args = append(args, f)
 	}
 
-	x, err := s.s.HDel(db, args...)
+	x, err := s.s.HDel(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -92,13 +92,13 @@ func (s *testStoreSuite) hdel(c *C, db uint32, key string, expect int64, fields 
 }
 
 func (s *testStoreSuite) hexists(c *C, db uint32, key, field string, expect int64) {
-	x, err := s.s.HExists(db, key, field)
+	x, err := s.s.HExists(db, FormatBytes(key, field))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) hgetall(c *C, db uint32, key string, expect ...string) {
-	x, err := s.s.HGetAll(db, key)
+	x, err := s.s.HGetAll(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 
 	if len(expect) == 0 {
@@ -128,7 +128,7 @@ func (s *testStoreSuite) hgetall(c *C, db uint32, key string, expect ...string) 
 }
 
 func (s *testStoreSuite) hget(c *C, db uint32, key, field string, expect string) {
-	x, err := s.s.HGet(db, key, field)
+	x, err := s.s.HGet(db, FormatBytes(key, field))
 	c.Assert(err, IsNil)
 
 	if expect == "" {
@@ -141,7 +141,7 @@ func (s *testStoreSuite) hget(c *C, db uint32, key, field string, expect string)
 }
 
 func (s *testStoreSuite) hkeys(c *C, db uint32, key string, expect ...string) {
-	x, err := s.s.HKeys(db, key)
+	x, err := s.s.HKeys(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(len(x), Equals, len(expect))
 
@@ -166,7 +166,7 @@ func (s *testStoreSuite) hkeys(c *C, db uint32, key string, expect ...string) {
 }
 
 func (s *testStoreSuite) hvals(c *C, db uint32, key string, expect ...string) {
-	x, err := s.s.HVals(db, key)
+	x, err := s.s.HVals(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(len(x), Equals, len(expect))
 
@@ -192,19 +192,19 @@ func (s *testStoreSuite) hvals(c *C, db uint32, key string, expect ...string) {
 }
 
 func (s *testStoreSuite) hincrby(c *C, db uint32, key, field string, delta int64, expect int64) {
-	x, err := s.s.HIncrBy(db, key, field, delta)
+	x, err := s.s.HIncrBy(db, FormatBytes(key, field, delta))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) hincrbyfloat(c *C, db uint32, key, field string, delta float64, expect float64) {
-	x, err := s.s.HIncrByFloat(db, key, field, delta)
+	x, err := s.s.HIncrByFloat(db, FormatBytes(key, field, delta))
 	c.Assert(err, IsNil)
 	c.Assert(math.Abs(x-expect) < 1e-9, Equals, true)
 }
 
 func (s *testStoreSuite) hset(c *C, db uint32, key, field, value string, expect int64) {
-	x, err := s.s.HSet(db, key, field, value)
+	x, err := s.s.HSet(db, FormatBytes(key, field, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -212,7 +212,7 @@ func (s *testStoreSuite) hset(c *C, db uint32, key, field, value string, expect 
 }
 
 func (s *testStoreSuite) hsetnx(c *C, db uint32, key, field, value string, expect int64) {
-	x, err := s.s.HSetNX(db, key, field, value)
+	x, err := s.s.HSetNX(db, FormatBytes(key, field, value))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -230,7 +230,7 @@ func (s *testStoreSuite) hmset(c *C, db uint32, key string, pairs ...string) {
 		args = append(args, pairs[i])
 	}
 
-	err := s.s.HMSet(db, args...)
+	err := s.s.HMSet(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 
 	for i := 0; i < len(pairs); i += 2 {
@@ -246,7 +246,7 @@ func (s *testStoreSuite) hmget(c *C, db uint32, key string, pairs ...string) {
 		args = append(args, pairs[i])
 	}
 
-	x, err := s.s.HMGet(db, args...)
+	x, err := s.s.HMGet(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(len(x), Equals, len(pairs)/2)
 
@@ -355,10 +355,10 @@ func (s *testStoreSuite) TestHIncrFloat(c *C) {
 	s.hincrbyfloat(c, 0, "hash", "a", 3.14, 303.14)
 	s.hincrbyfloat(c, 0, "hash", "a", -303.14, 0)
 
-	_, err := s.s.HIncrByFloat(0, "hash", "a", math.Inf(1))
+	_, err := s.s.HIncrByFloat(0, FormatBytes("hash", "a", math.Inf(1)))
 	c.Assert(err, NotNil)
 
-	_, err = s.s.HIncrByFloat(0, "hash", "a", math.Inf(-1))
+	_, err = s.s.HIncrByFloat(0, FormatBytes("hash", "a", math.Inf(-1)))
 	c.Assert(err, NotNil)
 
 	s.hdelall(c, 0, "hash", 1)

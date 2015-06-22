@@ -14,7 +14,7 @@ func HGetAllCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if a, err := s.Store().HGetAll(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().HGetAll(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -31,7 +31,7 @@ func HDelCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if n, err := s.Store().HDel(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().HDel(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -44,7 +44,7 @@ func HExistsCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if x, err := s.Store().HExists(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().HExists(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -57,7 +57,7 @@ func HGetCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 2", len(args))
 	}
 
-	if b, err := s.Store().HGet(s.DB(), iconvert(args)...); err != nil {
+	if b, err := s.Store().HGet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytes(b), nil
@@ -70,7 +70,7 @@ func HLenCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if n, err := s.Store().HLen(s.DB(), iconvert(args)...); err != nil {
+	if n, err := s.Store().HLen(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(n), nil
@@ -83,7 +83,7 @@ func HIncrByCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if v, err := s.Store().HIncrBy(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().HIncrBy(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(v), nil
@@ -96,7 +96,7 @@ func HIncrByFloatCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if v, err := s.Store().HIncrByFloat(s.DB(), iconvert(args)...); err != nil {
+	if v, err := s.Store().HIncrByFloat(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewBulkBytesWithString(store.FormatFloatString(v)), nil
@@ -109,7 +109,7 @@ func HKeysCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if a, err := s.Store().HKeys(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().HKeys(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -126,7 +126,7 @@ func HValsCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 1", len(args))
 	}
 
-	if a, err := s.Store().HVals(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().HVals(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()
@@ -143,7 +143,7 @@ func HSetCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if x, err := s.Store().HSet(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().HSet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -156,7 +156,7 @@ func HSetNXCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect = 3", len(args))
 	}
 
-	if x, err := s.Store().HSetNX(s.DB(), iconvert(args)...); err != nil {
+	if x, err := s.Store().HSetNX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewInt(x), nil
@@ -169,7 +169,7 @@ func HMSetCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect != 1 && mod 2 = 1", len(args))
 	}
 
-	if err := s.Store().HMSet(s.DB(), iconvert(args)...); err != nil {
+	if err := s.Store().HMSet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		return redis.NewString("OK"), nil
@@ -182,7 +182,7 @@ func HMGetCmd(s Session, args [][]byte) (redis.Resp, error) {
 		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
 	}
 
-	if a, err := s.Store().HMGet(s.DB(), iconvert(args)...); err != nil {
+	if a, err := s.Store().HMGet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
 		resp := redis.NewArray()

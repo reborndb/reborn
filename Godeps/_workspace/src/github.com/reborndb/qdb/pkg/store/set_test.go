@@ -17,7 +17,7 @@ func (s *testStoreSuite) sdel(c *C, db uint32, key string, expect int64) {
 func (s *testStoreSuite) sdump(c *C, db uint32, key string, expect ...string) {
 	s.kexists(c, db, key, 1)
 
-	v, err := s.s.Dump(db, key)
+	v, err := s.s.Dump(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(v, NotNil)
 
@@ -42,7 +42,7 @@ func (s *testStoreSuite) srestore(c *C, db uint32, key string, ttlms int64, expe
 	dump, err := rdb.EncodeDump(x)
 	c.Assert(err, IsNil)
 
-	err = s.s.Restore(db, key, ttlms, dump)
+	err = s.s.Restore(db, FormatBytes(key, ttlms, dump))
 	c.Assert(err, IsNil)
 
 	s.sdump(c, db, key, expect...)
@@ -59,7 +59,7 @@ func (s *testStoreSuite) sadd(c *C, db uint32, key string, expect int64, members
 		args = append(args, m)
 	}
 
-	x, err := s.s.SAdd(db, args...)
+	x, err := s.s.SAdd(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -69,7 +69,7 @@ func (s *testStoreSuite) sadd(c *C, db uint32, key string, expect int64, members
 }
 
 func (s *testStoreSuite) scard(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.SCard(db, key)
+	x, err := s.s.SCard(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 
@@ -81,7 +81,7 @@ func (s *testStoreSuite) scard(c *C, db uint32, key string, expect int64) {
 }
 
 func (s *testStoreSuite) smembers(c *C, db uint32, key string, expect ...string) {
-	x, err := s.s.SMembers(db, key)
+	x, err := s.s.SMembers(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 	c.Assert(len(x), Equals, len(expect))
 
@@ -102,13 +102,13 @@ func (s *testStoreSuite) smembers(c *C, db uint32, key string, expect ...string)
 }
 
 func (s *testStoreSuite) sismember(c *C, db uint32, key, member string, expect int64) {
-	x, err := s.s.SIsMember(db, key, member)
+	x, err := s.s.SIsMember(db, FormatBytes(key, member))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 }
 
 func (s *testStoreSuite) spop(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.SPop(db, key)
+	x, err := s.s.SPop(db, FormatBytes(key))
 	c.Assert(err, IsNil)
 
 	if expect == 0 {
@@ -120,7 +120,7 @@ func (s *testStoreSuite) spop(c *C, db uint32, key string, expect int64) {
 }
 
 func (s *testStoreSuite) srandpop(c *C, db uint32, key string, expect int64) {
-	x, err := s.s.SRandMember(db, key, 1)
+	x, err := s.s.SRandMember(db, FormatBytes(key, 1))
 	c.Assert(err, IsNil)
 
 	if expect == 0 {
@@ -140,7 +140,7 @@ func (s *testStoreSuite) srem(c *C, db uint32, key string, expect int64, members
 		args = append(args, m)
 	}
 
-	x, err := s.s.SRem(db, args...)
+	x, err := s.s.SRem(db, FormatBytes(args...))
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, expect)
 

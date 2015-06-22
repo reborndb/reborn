@@ -137,6 +137,16 @@ func (s *testReplSuite) doCmdMustOK(c *C, port int, cmd string, args ...interfac
 	nc.checkOK(c, cmd, args...)
 }
 
+func (s *testReplSuite) checkRole(c *C, port int, expect string) {
+	r := s.doCmd(c, port, "ROLE")
+	resp, ok := r.(*redis.Array)
+	c.Assert(ok, Equals, true)
+	c.Assert(resp.Value, Not(HasLen), 0)
+	role, ok := resp.Value[0].(*redis.BulkBytes)
+	c.Assert(ok, Equals, true)
+	c.Assert(string(role.Value), Equals, expect)
+}
+
 type testReplConn interface {
 	Close(c *C)
 }
@@ -214,6 +224,7 @@ func (n *testReplSrvNode) Slaveof(c *C, port int) testReplConn {
 	nc, err := n.s.h.replicationConnectMaster(fmt.Sprintf("127.0.0.1:%d", port))
 	c.Assert(err, IsNil)
 	n.s.h.master <- nc
+	<-n.s.h.slaveofReply
 	return &testReplSrvConn{nc}
 }
 
@@ -275,8 +286,14 @@ func (s *testReplSuite) testReplication(c *C, master testReplNode, slave testRep
 	resp = s.doCmd(c, slave.Port(), "GET", "c")
 	c.Assert(resp, DeepEquals, redis.NewBulkBytesWithString("123"))
 
-	s.doCmd(c, master.Port(), "ROLE")
-	s.doCmd(c, slave.Port(), "ROLE")
+	s.checkRole(c, master.Port(), "master")
+	s.checkRole(c, slave.Port(), "slave")
+
+	s.doCmdMustOK(c, slave.Port(), "SLAVEOF", "NO", "ONE")
+	s.doCmdMustOK(c, master.Port(), "SLAVEOF", "NO", "ONE")
+
+	s.checkRole(c, master.Port(), "master")
+	s.checkRole(c, slave.Port(), "master")
 }
 
 func (s *testReplSuite) TestRedisMaster(c *C) {

@@ -10,10 +10,6 @@ import (
 
 // GET key
 func GetCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if b, err := s.Store().Get(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -23,10 +19,6 @@ func GetCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // APPEND key value
 func AppendCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if n, err := s.Store().Append(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -36,10 +28,6 @@ func AppendCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SET key value
 func SetCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if err := s.Store().Set(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -49,10 +37,6 @@ func SetCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // PSETEX key milliseconds value
 func PSetEXCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if err := s.Store().PSetEX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -62,10 +46,6 @@ func PSetEXCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SETEX key seconds value
 func SetEXCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if err := s.Store().SetEX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -75,10 +55,6 @@ func SetEXCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SETNX key value
 func SetNXCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if n, err := s.Store().SetNX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -88,10 +64,6 @@ func SetNXCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // GETSET key value
 func GetSetCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if b, err := s.Store().GetSet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -101,10 +73,6 @@ func GetSetCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // INCR key
 func IncrCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if v, err := s.Store().Incr(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -114,10 +82,6 @@ func IncrCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // INCRBY key delta
 func IncrByCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if v, err := s.Store().IncrBy(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -127,10 +91,6 @@ func IncrByCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // DECR key
 func DecrCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if v, err := s.Store().Decr(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -140,10 +100,6 @@ func DecrCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // DECRBY key delta
 func DecrByCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if v, err := s.Store().DecrBy(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -153,10 +109,6 @@ func DecrByCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // INCRBYFLOAT key delta
 func IncrByFloatCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if v, err := s.Store().IncrByFloat(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -166,10 +118,6 @@ func IncrByFloatCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SETBIT key offset value
 func SetBitCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if x, err := s.Store().SetBit(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -179,10 +127,6 @@ func SetBitCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // SETRANGE key offset value
 func SetRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if x, err := s.Store().SetRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -192,10 +136,6 @@ func SetRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // MSET key value [key value ...]
 func MSetCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) == 0 || len(args)%2 != 0 {
-		return toRespErrorf("len(args) = %d, expect != 0 && mod 2 = 0", len(args))
-	}
-
 	if err := s.Store().MSet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -205,10 +145,6 @@ func MSetCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // MSETNX key value [key value ...]
 func MSetNXCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) == 0 || len(args)%2 != 0 {
-		return toRespErrorf("len(args) = %d, expect != 0 && mod 2 = 0", len(args))
-	}
-
 	if n, err := s.Store().MSetNX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -218,10 +154,6 @@ func MSetNXCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // MGET key [key ...]
 func MGetCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 1 {
-		return toRespErrorf("len(args) = %d, expect >= 1", len(args))
-	}
-
 	if a, err := s.Store().MGet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {

@@ -94,3 +94,9 @@ func (s *testUtilsSuite) TestGetInfo(c *C) {
 	_, err := GetRedisInfo(s.s.addr, "", s.auth)
 	c.Assert(err, IsNil)
 }
+
+func (s *testUtilsSuite) TestGetRole(c *C) {
+	role, err := GetRole(s.s.addr, s.auth)
+	c.Assert(err, IsNil)
+	c.Assert(role, Equals, "master")
+}

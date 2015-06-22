@@ -11,14 +11,6 @@
 			"Rev": "056c9bc7be7190eaa7715723883caffa5f8fa3e4"
 		},
 		{
-			"ImportPath": "github.com/alicebob/miniredis",
-			"Rev": "369a529586baa6b4da7675162a4eb066d4babfe3"
-		},
-		{
-			"ImportPath": "github.com/bsm/redeo",
-			"Rev": "436f4440f2ee191b0bfbdf9d12894fe0f1eedd9b"
-		},
-		{
 			"ImportPath": "github.com/c4pt0r/cfg",
 			"Rev": "429e6985f0b07bceaa33b57ee612fbca4797a9a6"
 		},
@@ -188,15 +180,15 @@
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/engine",
-			"Rev": "126eddb991be7ccf22f1c310f894f21b7a62f703"
+			"Rev": "9b70c556e99cbcd1bbe4252b5e444c77b674b4b5"
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/service",
-			"Rev": "126eddb991be7ccf22f1c310f894f21b7a62f703"
+			"Rev": "9b70c556e99cbcd1bbe4252b5e444c77b674b4b5"
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/store",
-			"Rev": "126eddb991be7ccf22f1c310f894f21b7a62f703"
+			"Rev": "9b70c556e99cbcd1bbe4252b5e444c77b674b4b5"
 		},
 		{
 			"ImportPath": "github.com/syndtr/goleveldb/leveldb",

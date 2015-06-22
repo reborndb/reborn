@@ -19,7 +19,9 @@ import (
 )
 
 type Server struct {
-	h *Handler
+	mu     sync.Mutex
+	h      *Handler
+	closed bool
 }
 
 func NewServer(c *Config, s *store.Store) (*Server, error) {
@@ -28,7 +30,7 @@ func NewServer(c *Config, s *store.Store) (*Server, error) {
 		return nil, errors.Trace(err)
 	}
 
-	server := &Server{h: h}
+	server := &Server{h: h, closed: false}
 	return server, nil
 }
 
@@ -42,9 +44,18 @@ func (s *Server) Serve() error {
 }
 
 func (s *Server) Close() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed {
+		return
+	}
+
 	if s.h != nil {
 		s.h.close()
 	}
+
+	s.closed = true
 }
 
 type Session interface {
@@ -71,6 +82,8 @@ type Handler struct {
 	masterRunID string
 	// replication master connection
 	master chan *conn
+	// replication slaveof reply channel
+	slaveofReply chan struct{}
 	// replication master connection state
 	masterConnState atomic2.String
 
@@ -121,12 +134,13 @@ type Handler struct {
 
 func newHandler(c *Config, s *store.Store) (*Handler, error) {
 	h := &Handler{
-		config:    c,
-		master:    make(chan *conn, 0),
-		signal:    make(chan int, 0),
-		store:     s,
-		bgSaveSem: sync2.NewSemaphore(1),
-		conns:     make(map[*conn]struct{}),
+		config:       c,
+		master:       make(chan *conn, 0),
+		slaveofReply: make(chan struct{}, 1),
+		signal:       make(chan int, 0),
+		store:        s,
+		bgSaveSem:    sync2.NewSemaphore(1),
+		conns:        make(map[*conn]struct{}),
 	}
 
 	h.runID = make([]byte, 40)

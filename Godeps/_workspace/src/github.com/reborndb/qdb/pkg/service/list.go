@@ -7,10 +7,6 @@ import redis "github.com/reborndb/go/redis/resp"
 
 // LINDEX key index
 func LIndexCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 2 {
-		return toRespErrorf("len(args) = %d, expect = 2", len(args))
-	}
-
 	if v, err := s.Store().LIndex(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -20,10 +16,6 @@ func LIndexCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LLEN key
 func LLenCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if n, err := s.Store().LLen(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -33,10 +25,6 @@ func LLenCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LRANGE key beg end
 func LRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if a, err := s.Store().LRange(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -50,10 +38,6 @@ func LRangeCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LSET key index value
 func LSetCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if err := s.Store().LSet(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -63,10 +47,6 @@ func LSetCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LTRIM key beg end
 func LTrimCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 3 {
-		return toRespErrorf("len(args) = %d, expect = 3", len(args))
-	}
-
 	if err := s.Store().LTrim(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -76,10 +56,6 @@ func LTrimCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LPOP key
 func LPopCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if v, err := s.Store().LPop(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -89,10 +65,6 @@ func LPopCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // RPOP key
 func RPopCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) != 1 {
-		return toRespErrorf("len(args) = %d, expect = 1", len(args))
-	}
-
 	if v, err := s.Store().RPop(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -102,10 +74,6 @@ func RPopCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LPUSH key value [value ...]
 func LPushCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().LPush(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -115,10 +83,6 @@ func LPushCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LPUSHX key value [value ...]
 func LPushXCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().LPushX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -128,10 +92,6 @@ func LPushXCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // RPUSH key value [value ...]
 func RPushCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().RPush(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {
@@ -141,10 +101,6 @@ func RPushCmd(s Session, args [][]byte) (redis.Resp, error) {
 
 // LPUSHX key value [value ...]
 func RPushXCmd(s Session, args [][]byte) (redis.Resp, error) {
-	if len(args) < 2 {
-		return toRespErrorf("len(args) = %d, expect >= 2", len(args))
-	}
-
 	if n, err := s.Store().RPushX(s.DB(), args); err != nil {
 		return toRespError(err)
 	} else {

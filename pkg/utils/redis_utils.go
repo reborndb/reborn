@@ -202,3 +202,25 @@ func GetRedisInfo(addr string, section string, auth string) (string, error) {
 		return redis.String(c.Do("INFO"))
 	}
 }
+
+func GetRole(addr string, auth string) (string, error) {
+	c, err := newRedisConn(addr, auth)
+	if err != nil {
+		return "", errors.Trace(err)
+	}
+	defer c.Close()
+
+	ay, err := redis.Values(c.Do("ROLE"))
+	if err != nil {
+		return "", errors.Trace(err)
+	} else if len(ay) == 0 {
+		return "", errors.Errorf("invalid reply for ROLE command")
+	}
+
+	// this first line is role type
+	role, ok := ay[0].([]byte)
+	if !ok {
+		return "", errors.Errorf("invalid reply in first element for ROLE command")
+	}
+	return string(role), nil
+}

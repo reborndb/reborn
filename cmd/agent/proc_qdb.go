@@ -39,7 +39,7 @@ func startQDB(args *qdbArgs) (*process, error) {
 	storeDataPath := p.storeDataDir(args.Addr)
 	os.MkdirAll(storeDataPath, 0755)
 
-	p.addCmdArgs("-L", path.Join(p.baseLogDir(), "qdb.log"))
+	p.addCmdArgs("-L", path.Join(p.procLogDir(), "qdb.log"))
 	p.addCmdArgs(fmt.Sprintf("--ncpu=%s", args.CPUNum))
 	p.addCmdArgs(fmt.Sprintf("--dbtype=%s", args.DBType))
 	p.addCmdArgs(fmt.Sprintf("--dbpath=%s", path.Join(storeDataPath, "db")))

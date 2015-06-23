@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -127,7 +128,7 @@ func (s *testAgentSuite) testStartAgent(c *C, addr string, ha bool) testAgentInf
 
 	args := []string{
 		"--addr", addr, "--data-dir", dataDir, "--log-dir",
-		logDir, "-L", fmt.Sprintf("./var/%s/agent.log", addr)}
+		logDir, "-L", path.Join(logDir, "agent.log")}
 
 	if ha {
 		args = append(args, "--ha", "--ha-max-retry-num", "1", "--ha-retry-delay", "1")
@@ -330,12 +331,17 @@ func (s *testAgentSuite) TestHA(c *C) {
 	time.Sleep(3 * time.Second)
 
 	// now agentStoreSlave restart and redis restart
-	err := utils.Ping("127.0.0.1:6382", globalEnv.StoreAuth())
+	role, err := utils.GetRole("127.0.0.1:6382", globalEnv.StoreAuth())
 	c.Assert(err, IsNil)
+	c.Assert(role, Equals, "master")
 
 	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE)
 
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_SLAVE)
+
+	role, err = utils.GetRole("127.0.0.1:6382", globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+	c.Assert(role, Equals, "slave")
 
 	// test master ha
 	procs = s.testGetProcs(c, s.agentStoreMaster)
@@ -347,6 +353,11 @@ func (s *testAgentSuite) TestHA(c *C) {
 
 	// now 6382 is slave, and 6381 is offline
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_MASTER)
+
+	role, err = utils.GetRole("127.0.0.1:6382", globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+	c.Assert(role, Equals, "master")
+
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_OFFLINE)
 
 	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003", false)
@@ -354,10 +365,15 @@ func (s *testAgentSuite) TestHA(c *C) {
 	time.Sleep(3 * time.Second)
 
 	// now agentStoreMaster restart and redis restart
-	err = utils.Ping("127.0.0.1:6382", globalEnv.StoreAuth())
+	role, err = utils.GetRole("127.0.0.1:6381", globalEnv.StoreAuth())
 	c.Assert(err, IsNil)
+	c.Assert(role, Equals, "master")
 
 	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_SLAVE)
 
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_SLAVE)
+
+	role, err = utils.GetRole("127.0.0.1:6381", globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+	c.Assert(role, Equals, "slave")
 }

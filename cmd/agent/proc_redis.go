@@ -44,7 +44,7 @@ func startRedis(args *redisArgs) (*process, error) {
 	p.addCmdArgs("--bind", seps[0])
 	p.addCmdArgs("--port", seps[1])
 	p.addCmdArgs("--daemonize", "yes")
-	p.addCmdArgs("--logfile", path.Join(p.baseLogDir(), "redis.log"))
+	p.addCmdArgs("--logfile", path.Join(p.procLogDir(), "redis.log"))
 	p.addCmdArgs("--dir", storeDataPath)
 	p.addCmdArgs("--pidfile", p.pidPath())
 	p.addCmdArgs("--dbfilename", "dump.rdb")

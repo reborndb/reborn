@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -26,7 +25,6 @@ var (
 	addr            = "127.0.0.1:39000"
 	dataDir         = "./var/data"
 	logDir          = "./var/log"
-	logTrashDir     = "./var/log/trash"
 	configFile      = "config.ini"
 	qdbConfigFile   = "" // like "qdb.toml"
 	redisConfigFile = "" // like "redis.conf"
@@ -163,17 +161,16 @@ func main() {
 	setStringFromOpt(&dataDir, args, "--data-dir")
 	resetAbsPath(&dataDir)
 
-	os.MkdirAll(dataDir, 0755)
+	os.MkdirAll(baseProcDataDir(), 0755)
 
 	// set app log dir
 	setStringFromOpt(&logDir, args, "--log-dir")
 	resetAbsPath(&logDir)
 
-	os.MkdirAll(logDir, 0755)
+	os.MkdirAll(baseProcLogDir(), 0755)
 
-	logTrashDir = path.Join(logDir, "trash")
-
-	os.MkdirAll(logTrashDir, 0755)
+	// set app trash log dir
+	os.MkdirAll(baseTrashLogDir(), 0755)
 
 	// set output log file
 	if v := getStringArg(args, "-L"); len(v) > 0 {
@@ -211,11 +208,14 @@ func main() {
 		go startHA()
 	}
 
-	if err := loadSavedProcs(); err != nil {
+	err = loadSavedProcs()
+	if err != nil {
 		log.Fatalf("restart agent using last saved processes err: %v", err)
-	} else {
-		go runCheckProcs()
 	}
+
+	clearProcFiles()
+
+	go runCheckProcs()
 
 	log.Infof("listening %s", addr)
 	runHTTPServer()

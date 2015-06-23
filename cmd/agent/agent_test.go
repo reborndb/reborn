@@ -194,7 +194,7 @@ func (s *testAgentSuite) testDashboard(c *C) {
 
 	agent.httpCall(c, nil, "start_dashboard", "", "POST")
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 	s.callDashboardAPI(c, nil, "/ping", "GET", nil)
 
 	// if we kill dashboard, the restart one will wait a coorindator session timeout time

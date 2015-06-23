@@ -25,6 +25,9 @@ var (
 	proxyID    = ""
 	configFile = "config.ini"
 	pidfile    = ""
+	netTimeout = 5
+	proto      = "tcp"
+	proxyAuth  = ""
 )
 
 var usage = `usage: reborn-proxy [options]
@@ -35,11 +38,13 @@ options:
    --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
    --cpu=<cpu_num>                num of cpu cores that proxy can use
    --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
+   --proto=<listen_proto>         proxy listen address proto, like tcp
    --id=<proxy_id>                proxy id, global unique, can not be empty 
    --http-addr=<debug_http_addr>  debug vars http server
    --dump-path=<path>             dump path to log crash error
    --pidfile=<path>               proxy pid file
    --proxy-auth=PASSWORD          proxy auth
+   --net-timeout=<timeout>        connection timeout
 `
 
 var banner string = `
@@ -64,6 +69,18 @@ func setStringFromOpt(dest *string, args map[string]interface{}, key string) {
 	}
 }
 
+func setIntArgFromOpt(dest *int, args map[string]interface{}, key string) {
+	if s, ok := args[key].(string); ok && len(s) != 0 {
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			log.Fatalf("parse int arg err %v", err)
+			return
+		}
+
+		*dest = n
+	}
+}
+
 func main() {
 	fmt.Print(banner)
 	log.SetLevelByString("info")
@@ -74,63 +91,59 @@ func main() {
 	}
 
 	// set config file
-	if args["-c"] != nil {
-		configFile = args["-c"].(string)
-	}
+	setStringFromOpt(&configFile, args, "-c")
 
 	// set output log file
-	if args["-L"] != nil {
+	if v := args["-L"]; v != nil {
 		log.SetHighlighting(false)
-		log.SetOutputByName(args["-L"].(string))
+		log.SetOutputByName(v.(string))
 	}
 
 	// set log level
-	if args["--log-level"] != nil {
-		log.SetLevelByString(args["--log-level"].(string))
+	if v := args["--log-level"]; v != nil {
+		log.SetLevelByString(v.(string))
 	}
 
 	// set cpu
-	if args["--cpu"] != nil {
-		cpus, err = strconv.Atoi(args["--cpu"].(string))
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	setIntArgFromOpt(&cpus, args, "--cpu")
 
 	// set addr
-	if args["--addr"] != nil {
-		addr = args["--addr"].(string)
-	}
+	setStringFromOpt(&addr, args, "--addr")
+
+	// set proto
+	setStringFromOpt(&proto, args, "--proto")
 
 	// set http addr
-	if args["--http-addr"] != nil {
-		httpAddr = args["--http-addr"].(string)
-	}
+	setStringFromOpt(&httpAddr, args, "--http-addr")
 
-	if args["--id"] != nil {
-		proxyID = args["--id"].(string)
-	} else {
+	// set proxy id
+	setStringFromOpt(&proxyID, args, "--id")
+	if len(proxyID) == 0 {
 		log.Fatalf("invalid empty proxy id")
 	}
 
+	// set log dump path
 	dumppath := utils.GetExecutorPath()
-	if args["--dump-path"] != nil {
-		dumppath = args["--dump-path"].(string)
-	}
-
-	if args["--pidfile"] != nil {
-		pidfile = args["--pidfile"].(string)
-	}
+	setStringFromOpt(&dumppath, args, "--dump-path")
 
 	log.Info("dump file path:", dumppath)
 	log.CrashLog(path.Join(dumppath, "reborn-proxy.dump"))
+
+	// set pidfile
+	setStringFromOpt(&pidfile, args, "--pidfile")
+
+	// set proxy auth
+	setStringFromOpt(&proxyAuth, args, "--proxy-auth")
+
+	// set net time
+	setIntArgFromOpt(&netTimeout, args, "--net-timeout")
 
 	router.CheckUlimit(1024)
 	runtime.GOMAXPROCS(cpus)
 
 	http.HandleFunc("/setloglevel", handleSetLogLevel)
 	go http.ListenAndServe(httpAddr, nil)
-	log.Info("running on ", addr)
+
 	conf, err := router.LoadConf(configFile)
 	if err != nil {
 		log.Fatal(err)
@@ -140,12 +153,15 @@ func main() {
 	conf.HTTPAddr = httpAddr
 	conf.ProxyID = proxyID
 	conf.PidFile = pidfile
-
-	setStringFromOpt(&conf.ProxyAuth, args, "--proxy-auth")
+	conf.NetTimeout = netTimeout
+	conf.Proto = proto
+	conf.ProxyAuth = proxyAuth
 
 	if err := utils.CreatePidFile(conf.PidFile); err != nil {
 		log.Fatal(err)
 	}
+
+	log.Info("running on ", addr)
 
 	s := router.NewServer(conf)
 	s.Run()

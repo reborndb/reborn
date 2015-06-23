@@ -60,10 +60,12 @@ func LoadConf(configFile string) (*Conf, error) {
 		log.Fatalf("invalid config: need coordinator addr entry is missing in %s", configFile)
 	}
 	srvConf.CoordinatorAddr = strings.TrimSpace(srvConf.CoordinatorAddr)
+	srvConf.Coordinator, _ = conf.ReadString("coordinator", "zookeeper")
+	srvConf.StoreAuth, _ = conf.ReadString("store_auth", "")
 
+	// below configs should be set from command flag. We will remove below code later.
 	srvConf.NetTimeout, _ = conf.ReadInt("net_timeout", 5)
 	srvConf.Proto, _ = conf.ReadString("proto", "tcp")
-	srvConf.Coordinator, _ = conf.ReadString("coordinator", "zookeeper")
 
 	srvConf.Addr, _ = conf.ReadString("addr", "")
 	srvConf.HTTPAddr, _ = conf.ReadString("http_addr", "")
@@ -71,7 +73,6 @@ func LoadConf(configFile string) (*Conf, error) {
 	srvConf.PidFile, _ = conf.ReadString("pidfile", "")
 
 	srvConf.ProxyAuth, _ = conf.ReadString("proxy_auth", "")
-	srvConf.StoreAuth, _ = conf.ReadString("store_auth", "")
 
 	return srvConf, nil
 }

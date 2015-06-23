@@ -61,6 +61,13 @@ type process struct {
 	Daemonize bool `json:"daemonize"`
 }
 
+func (p *process) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[process](%+v)", *p)
+}
+
 func newDefaultProcess(cmd string, tp string) *process {
 	id := genProcID()
 	p := new(process)
@@ -186,6 +193,10 @@ func (p *process) save() error {
 	return errors.Trace(err)
 }
 
+// agent path
+// log: logDir/type_id/xxx
+// data: dataDir/type_id/xxx or dataDir/type_addr/xxx
+
 func (p *process) pidPath() string {
 	return path.Join(p.baseDataDir(), fmt.Sprintf("%s.pid", p.Type))
 }
@@ -200,6 +211,10 @@ func (p *process) baseDataDir() string {
 
 func (p *process) baseLogDir() string {
 	return path.Join(logDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
+}
+
+func (p *process) storeDataDir(id string) string {
+	return path.Join(dataDir, fmt.Sprintf("%s_%s", p.Type, id))
 }
 
 func (p *process) checkAlive() (bool, error) {
@@ -220,8 +235,29 @@ func (p *process) checkAlive() (bool, error) {
 }
 
 func isFileExist(name string) bool {
-	_, err := os.Stat(name)
-	return !os.IsNotExist(err)
+	fi, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if fi.IsDir() {
+		return false
+	}
+
+	return true
+}
+
+func isDirExist(name string) bool {
+	fi, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if !fi.IsDir() {
+		return false
+	}
+
+	return true
 }
 
 func (p *process) needRestart() bool {
@@ -233,8 +269,23 @@ func (p *process) needRestart() bool {
 }
 
 func (p *process) clear() {
+	p.clearData()
+	p.clearLog()
+}
+
+func (p *process) clearData() {
+	// remove base dir
 	os.RemoveAll(p.baseDataDir())
-	os.RemoveAll(p.baseLogDir())
+}
+
+func (p *process) clearLog() {
+	// backup log dir
+	// 1 if log dir does not exist, there will be an error
+	// 2 if newLogDir exists, there will be an error
+	// all erroros we ignore
+
+	newLogDir := fmt.Sprintf("%s_%d", p.baseLogDir(), time.Now().UnixNano())
+	os.Rename(p.baseLogDir(), path.Join(logTrashDir, newLogDir))
 }
 
 func (p *process) stop() error {
@@ -243,7 +294,7 @@ func (p *process) stop() error {
 		return errors.Trace(err)
 	}
 
-	defer p.clear()
+	defer p.clearLog()
 
 	if !b {
 		return nil

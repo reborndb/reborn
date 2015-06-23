@@ -20,6 +20,13 @@ type agentInfo struct {
 	PID  int    `json:"pid"`
 }
 
+func (a *agentInfo) String() string {
+	if a == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[agentInfo](%+v)", *a)
+}
+
 func agentPath() string {
 	return fmt.Sprintf("/zk/reborn/db_%s/agent", globalEnv.ProductName())
 }

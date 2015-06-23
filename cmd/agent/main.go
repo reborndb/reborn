@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -25,6 +26,7 @@ var (
 	addr            = "127.0.0.1:39000"
 	dataDir         = "./var/data"
 	logDir          = "./var/log"
+	logTrashDir     = "./var/log/trash"
 	configFile      = "config.ini"
 	qdbConfigFile   = "" // like "qdb.toml"
 	redisConfigFile = "" // like "redis.conf"
@@ -157,6 +159,22 @@ func main() {
 		os.Setenv("PATH", path)
 	}
 
+	// set data dir
+	setStringFromOpt(&dataDir, args, "--data-dir")
+	resetAbsPath(&dataDir)
+
+	os.MkdirAll(dataDir, 0755)
+
+	// set app log dir
+	setStringFromOpt(&logDir, args, "--log-dir")
+	resetAbsPath(&logDir)
+
+	os.MkdirAll(logDir, 0755)
+
+	logTrashDir = path.Join(logDir, "trash")
+
+	os.MkdirAll(logTrashDir, 0755)
+
 	// set output log file
 	if v := getStringArg(args, "-L"); len(v) > 0 {
 		log.SetHighlighting(false)
@@ -175,18 +193,6 @@ func main() {
 			fatal(err)
 		}
 	}
-
-	// set data dir
-	setStringFromOpt(&dataDir, args, "--data-dir")
-	resetAbsPath(&dataDir)
-
-	os.MkdirAll(dataDir, 0755)
-
-	// set app log dir
-	setStringFromOpt(&logDir, args, "--log-dir")
-	resetAbsPath(&logDir)
-
-	os.MkdirAll(logDir, 0755)
 
 	runtime.GOMAXPROCS(cpus)
 

@@ -34,7 +34,10 @@ func checkProcs() {
 				restartProcs = append(restartProcs, p)
 			}
 
-			p.clear()
+			// clear old log
+			p.clearLog()
+
+			// remove from procs
 			delete(procs, p.ID)
 		}
 	}
@@ -48,8 +51,7 @@ func checkProcs() {
 			args := new(proxyArgs)
 			map2Args(args, p.Ctx)
 
-			// clear old log and data
-			p.clear()
+			p.clearData()
 
 			startProxy(args)
 		default:
@@ -89,28 +91,27 @@ func loadSavedProcs() error {
 			continue
 		}
 
+		// get path type and values
 		baseName := path.Base(f.Name())
-		var tp string
-		var id string
-		if seps := strings.Split(baseName, "_"); len(seps) != 2 {
+		tp, v, ptp := getPathType(baseName)
+		if ptp != idPathType {
 			continue
-		} else {
-			tp, id = seps[0], seps[1]
 		}
 
+		// path format is type_id
 		datFile := path.Join(dataDir, baseName, fmt.Sprintf("%s.dat", tp))
-
 		if p, err := loadProcess(datFile); err != nil {
 			log.Warningf("load process data %s err %v, skip", dataDir, err)
 			continue
 		} else if p == nil {
-			log.Infof("proc %s has no need to be reload, skip", id)
+			log.Infof("proc %s has no need to be reload, skip", v)
 			continue
 		} else {
-			if id != p.ID {
-				log.Warningf("we need proc %s, but got %s", id, p.ID)
+			if v != p.ID {
+				log.Warningf("we need proc %s, but got %s", v, p.ID)
 				continue
 			}
+
 			// TODO: bind after start func for different type
 			if err := bindProcHandler(p); err != nil {
 				log.Errorf("bind proc %s err %v, skip", p.Cmd, err)
@@ -120,14 +121,14 @@ func loadSavedProcs() error {
 		}
 	}
 
-	// TODO: remove unnecessary old logs
-	clearOldProcsFiles(dataDir)
-	clearOldProcsFiles(logDir)
+	// remove unnecessary files
+	clearOldProcsFiles(dataDir, dataType)
+	clearOldProcsFiles(logDir, logType)
 
 	return nil
 }
 
-func clearOldProcsFiles(baseDir string) {
+func clearOldProcsFiles(baseDir string, dtp string) {
 	files, err := ioutil.ReadDir(baseDir)
 	if err != nil {
 		log.Errorf("read %s err %v", logDir, err)
@@ -139,18 +140,29 @@ func clearOldProcsFiles(baseDir string) {
 			continue
 		}
 
+		// get path type and values
 		baseName := path.Base(f.Name())
-		var id string
-		if seps := strings.Split(baseName, "_"); len(seps) != 2 {
+		tp, v, ptp := getPathType(baseName)
+		if ptp != idPathType {
 			continue
-		} else {
-			id = seps[1]
 		}
 
-		if _, ok := procs[id]; !ok {
+		// if log type, then we just move dir to logDir/trash
+		if dtp == logType {
+			newName := fmt.Sprintf("%s_%s_%d", tp, v, time.Now().UnixNano())
+			os.Rename(path.Join(baseDir, baseName), path.Join(logTrashDir, newName))
+			continue
+		}
+
+		// path format is type_id
+		m.Lock()
+
+		if _, ok := procs[v]; !ok {
 			// we need remove unnecessary files
 			os.RemoveAll(path.Join(baseDir, baseName))
 		}
+
+		m.Unlock()
 	}
 }
 
@@ -181,6 +193,13 @@ const (
 	dashboardType = "dashboard"
 	redisType     = "redis"
 	qdbType       = "qdb"
+
+	addrPathType  = "addr"
+	idPathType    = "id"
+	otherPathType = "other"
+
+	logType  = "log"
+	dataType = "data"
 )
 
 func bindProcHandler(p *process) error {
@@ -196,4 +215,18 @@ func bindProcHandler(p *process) error {
 		return fmt.Errorf("unsupport proc type %s", p.Type)
 	}
 	return nil
+}
+
+func getPathType(path string) (string, string, string) {
+	s := strings.Split(path, "_")
+	if len(s) != 2 {
+		return "", "", otherPathType
+	}
+
+	ss := strings.Split(s[1], ":")
+	if len(ss) == 2 {
+		return s[0], s[1], addrPathType
+	}
+
+	return s[0], s[1], idPathType
 }

@@ -18,7 +18,6 @@ import (
 	"github.com/reborndb/reborn/pkg/env"
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/utils"
-
 	. "gopkg.in/check.v1"
 )
 
@@ -126,12 +125,6 @@ func (s *testAgentSuite) testStartAgent(c *C, addr string, ha bool) testAgentInf
 	dataDir := fmt.Sprintf("./var/%s/data", addr)
 	logDir := fmt.Sprintf("./var/%s/log", addr)
 
-	os.RemoveAll(dataDir)
-	os.RemoveAll(logDir)
-
-	os.MkdirAll(dataDir, 0755)
-	os.MkdirAll(logDir, 0755)
-
 	args := []string{
 		"--addr", addr, "--data-dir", dataDir, "--log-dir",
 		logDir, "-L", fmt.Sprintf("./var/%s/agent.log", addr)}
@@ -201,7 +194,7 @@ func (s *testAgentSuite) testDashboard(c *C) {
 
 	agent.httpCall(c, nil, "start_dashboard", "", "POST")
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	s.callDashboardAPI(c, nil, "/ping", "GET", nil)
 
 	// if we kill dashboard, the restart one will wait a coorindator session timeout time
@@ -322,19 +315,24 @@ func (s *testAgentSuite) TestHA(c *C) {
 
 	time.Sleep(3 * time.Second)
 
-	// first test slave ha
+	// test slave ha
 	procs := s.testGetProcs(c, s.agentStoreSlave)
-	// first stop agent then kill procs
 
 	s.testStopAgent(c, s.agentStoreSlave)
 	s.testKillProcs(c, procs)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_OFFLINE)
 
 	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004", false)
-	s.testStore(c, s.agentStoreSlave, 6382)
+
+	time.Sleep(3 * time.Second)
+
+	// now agentStoreSlave restart and redis restart
+	err := utils.Ping("127.0.0.1:6382", globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+
 	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE)
 
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_SLAVE)
@@ -345,15 +343,21 @@ func (s *testAgentSuite) TestHA(c *C) {
 	s.testStopAgent(c, s.agentStoreMaster)
 	s.testKillProcs(c, procs)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
+
 	// now 6382 is slave, and 6381 is offline
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_MASTER)
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_OFFLINE)
 
 	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003", false)
-	s.testStore(c, s.agentStoreMaster, 6381)
+
+	time.Sleep(3 * time.Second)
+
+	// now agentStoreMaster restart and redis restart
+	err = utils.Ping("127.0.0.1:6382", globalEnv.StoreAuth())
+	c.Assert(err, IsNil)
+
 	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_SLAVE)
 
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_SLAVE)
-
 }

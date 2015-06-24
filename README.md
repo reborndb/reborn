@@ -54,24 +54,26 @@ Disk: 256G SSD
 
 
 + twemproxy
-  - version 0.4.1
-  - config
-    ```
-    alpha:
-      listen: 127.0.0.1:22121
-      hash: crc32a
-      hash_tag: "{}"
-      distribution: ketama
-      auto_eject_hosts: false
-      timeout: 400
-      redis: true
-      servers:
-       - 127.0.0.1:6381:1
-       - 127.0.0.1:6382:1
-    ```
+
+```
+version 0.4.1
+
+alpha:
+  listen: 127.0.0.1:22121
+  hash: crc32a
+  hash_tag: "{}"
+  distribution: ketama
+  auto_eject_hosts: false
+  timeout: 400
+  redis: true
+  servers:
+   - 127.0.0.1:6381:1
+   - 127.0.0.1:6382:1
+```
 
 + qdb-server
-  - see [here](https://github.com/reborndb/qdb)
+
+    See [here](https://github.com/reborndb/qdb)
 
 ####1 twemproxy + 2 reborn-server  
   redis-benchmark -p 22121 -c 500 -n 5000000 -P 100 -r 10000 -t get,set -q

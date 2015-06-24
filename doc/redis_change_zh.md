@@ -26,10 +26,10 @@
 
 + 例如：
 
-		localhost:6379> slotinfo 0 128
-			1) 1) (integer) 23  
-			   2) (integer) 2
-			2) 1) (integer) 29
+		localhost:6379> slotsinfo 0 1024
+			1) 1) (integer) 579  
+			   2) (integer) 1
+			2) 1) (integer) 1017
 		       2) (integer) 1                 
 
 #####slotsdel slot1 [slot2 …]#####
@@ -42,10 +42,10 @@
 
 + 例如：
 
-		localhost:6379> slotsdel 1013 990
-			1) 1) (integer) 1013
+		localhost:6379> slotsdel 579 1017
+			1) 1) (integer) 579
 			   2) (integer) 0
-			2) 1) (integer) 990
+			2) 1) (integer) 1017
 			   2) (integer) 0
 
 ####数据迁移####
@@ -85,8 +85,10 @@
 	
 + 命令参数：
 
-	- host:port - 目标机
-	
+	- host
+	- port
+		目标机
+
 		redis 内部缓存到 host:port 的连接 30s，超时或错误则关闭
 	
 	- timeout - 操作超时，单位 ms
@@ -120,12 +122,14 @@
 		localhost:6379> slotsinfo            # slot 大小为 1
 			1) 1) (integer) 579
 			   2) (integer) 1
-		localhost:6379> slotsmgrt 127.0.0.1 6380 100 579
-			(integer) 1                      # 成功迁移 value
+		localhost:6379> slotsmgrtslot 127.0.0.1 6380 100 579
+			1) (integer) 1                   # 成功迁移 value
+			2) (integer) 0                   # slot 剩余的 value 数量
 		localhost:6379> slotsinfo
 			(empty list or set)
-		localhost:6379> slotsmgrt 127.0.0.1 6380 100 579 1
-			(integer) 0                      # 成功成功个数为 0；当前 slot 已经空了
+		localhost:6379> slotsmgrtslot 127.0.0.1 6380 100 579 1
+			1) (integer) 0                   # 成功成功个数为 0；当前 slot 已经空了
+			2) (integer) 0                   # slot 剩余的 value 数量
 
 
 #####slotsmgrtone host port timeout key#####
@@ -178,7 +182,7 @@
 			OK
 		localhost:6379> set b{tag} 100        # set <b{tag}, 100>
 			OK
-		localhost:6379> slotsmgrttag 127.0.0.1 6380 1000 {tag}
+		localhost:6379> slotsmgrttagone 127.0.0.1 6380 1000 {tag}
 			(integer) 2
 		localhost:6379> scan 0                # 迁移成功，本地不存在了
 			1) "0"

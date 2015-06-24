@@ -1,6 +1,6 @@
 # Reborn Tutorial
 
-Codes is a distributed Redis solution, there is no obvious difference between connecting to a Reborn proxy and an original Redis server, top layer application can connect to Reborn as normal standalone Redis, Reborn will forward low layer requests. Hot data migration and all things in the shadow are transparent to client. Simply treat Coids as a Redis service with unlimited RAM. 
+Codes is a distributed Redis solution, there is no obvious difference between connecting to a Reborn Proxy and an original Redis Server, top layer application can connect to Reborn as normal standalone Redis, Reborn will forward low layer requests. Hot data migration and all things in the shadow are transparent to client. Simply treat Reborn as a Redis service with unlimited RAM. 
 
 Reborn has five parts:
 * Reborn Proxy   (reborn-proxy)
@@ -11,7 +11,7 @@ Reborn has five parts:
 
 `reborn-proxy` is the proxy service of client connections, `reborn-proxy` is a Redis protocol implementation, perform as an original Redis(just like Twemproxy). You can deploy multiple `reborn-proxy` for one business, `reborn-proxy` is none-stateful.
 
-`reborn-config` is the configuration to for Reborn, support actions like add/remove `reborn-server` node, add/remove Proxy node and start data migaration, etc. `reborn-config` has a built-in http server which can start a dashboard for user to monitor the status of Reborn cluster in browser.
+`reborn-config` is the configuration to for Reborn, support actions like add/remove `reborn-server` node, add/remove `reborn-proxy` node and start data migaration, etc. `reborn-config` has a built-in http server which can start a dashboard for user to monitor the status of Reborn cluster in browser.
 
 `reborn-server` is a branch of Redis maintain by Reborn project, based on 2.8.13, add support for slot and atomic data migration. `reborn-proxy` and `reborn-config` can only work properly with this specific version of Redis.
 

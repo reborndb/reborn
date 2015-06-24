@@ -4,8 +4,7 @@ Reborn 是 RebornDB Team 开发的一个分布式 Redis 服务, 用户可以看�
 
 ###Reborn 弹性到什么程度？
 
-Reborn 支持水平扩容/缩容，扩容可以直使界面的 "Auto Rebalance" 按钮，缩容只需要将要下线的实例拥有的 slot 迁移到其它实例，
-然后在界面上删除下线的 group 即可
+Reborn 支持水平扩容/缩容, 扩容可以直接使用界面的 "Auto Rebalance" 按钮, 缩容只需要将要下线的实例拥有的 slot 迁移到其它实例, 然后在界面上删除下线的 group 即可.
 
 
 ###我的服务能直接迁移到 Reborn 上吗?
@@ -18,7 +17,7 @@ Reborn 支持水平扩容/缩容，扩容可以直使界面的 "Auto Rebalance" 
 2) 原来使用 Redis 的用户:
 看情况, 如果你使用以下命令
 
-KEYS, MOVE, OBJECT, RENAME, RENAMENX, SORT, SCAN, BITOP,MSETNX, BLPOP, BRPOP, BRPOPLPUSH, PSUBSCRIBE，PUBLISH, PUNSUBSCRIBE,  SUBSCRIBE,  UNSUBSCRIBE,  DISCARD, EXEC, MULTI,  UNWATCH,  WATCH, SCRIPT EXISTS, SCRIPT FLUSH, SCRIPT KILL, SCRIPT LOAD, AUTH, ECHO, SELECT, BGREWRITEAOF, BGSAVE, CLIENT KILL, CLIENT LIST, CONFIG GET, CONFIG SET, CONFIG RESETSTAT, DBSIZE, DEBUG OBJECT, DEBUG SEGFAULT, FLUSHALL, FLUSHDB, LASTSAVE, MONITOR, SAVE, SHUTDOWN, SLAVEOF, SLOWLOG, SYNC, TIME
+KEYS, MOVE, OBJECT, RENAME, RENAMENX, SORT, SCAN, BITOP,MSETNX, BLPOP, BRPOP, BRPOPLPUSH, PSUBSCRIBE, PUBLISH, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE, DISCARD, EXEC, MULTI, UNWATCH, WATCH, SCRIPT EXISTS, SCRIPT FLUSH, SCRIPT KILL, SCRIPT LOAD, AUTH, ECHO, SELECT, BGREWRITEAOF, BGSAVE, CLIENT KILL, CLIENT LIST, CONFIG GET, CONFIG SET, CONFIG RESETSTAT, DBSIZE, DEBUG OBJECT, DEBUG SEGFAULT, FLUSHALL, FLUSHDB, LASTSAVE, MONITOR, SAVE, SHUTDOWN, SLAVEOF, SLOWLOG, SYNC, TIME
 
 是无法直接迁移到 Reborn 上的, 你需要修改你的代码, 用其他的方式实现.
 
@@ -49,7 +48,7 @@ Reborn 是会把 KEYS 指令屏蔽的, 即使你在使用 Raw Redis, 我也不�
 
 ###Reborn 支持 CAS 吗? 支持 Lua 脚本吗?
 
-CAS 暂时不支持, 目前只支持 eval 的方式来跑 lua 脚本，需要配合 TAG 使用. 
+CAS 暂时不支持, 目前只支持 eval 的方式来跑 lua 脚本, 需要配合 TAG 使用. 
 
 ###有没有 zookeeper 的教程？
 
@@ -79,19 +78,19 @@ CAS 暂时不支持, 目前只支持 eval 的方式来跑 lua 脚本，需要配
 
 ###Reborn 支持 etcd 吗 ? 
 
-支持，请参考使用教程
+支持, 请参考使用教程
 
-###现有 Redis 集群上有上T的数据，如何迁移到 Reborn 上来？
+###现有 Redis 集群上有上T的数据, 如何迁移到 Reborn 上来？
 
-为了提高 Reborn 推广和部署上的效率，我们为数据迁移提供了一个叫做 [redis-port](https://github.com/reborndb/redis-port) 的命令行工具，它能够：
+为了提高 Reborn 推广和部署上的效率, 我们为数据迁移提供了一个叫做 [redis-port](https://github.com/reborndb/redis-port) 的命令行工具, 它能够：
 
-+ 静态分析 RDB 文件，包括解析以及恢复 RDB 数据到 redis
++ 静态分析 RDB 文件, 包括解析以及恢复 RDB 数据到 Redis
 + 从 Redis 上 dump RDB 文件以及从 Redis 和 Reborn 之间动态同步数据
 
-###如果需要迁移现有 Redis 数据到 Reborn，该如何操作？
+###如果需要迁移现有 Redis 数据到 Reborn, 该如何操作？
 
 + 先搭建好 Reborn 集群并让 reborn-proxy 正确运行起来
-+ 对线上每一个 Redis 实例运行一个 redis-port 来向 reborn 导入数据，例如：
++ 对线上每一个 Redis 实例运行一个 redis-port 来向 Reborn 导入数据, 例如：
 
 		for port in {6379,6380,6479,6480}; do
 			nohup redis-port sync --ncpu=4 --from=redis-server:${port} \
@@ -100,32 +99,32 @@ CAS 暂时不支持, 目前只支持 eval 的方式来跑 lua 脚本，需要配
 		done
 		tail -f *.log
 		
-	- 每个 redis-port 负责将对应的 Redis 数据导入到 reborn
-	- 多个 redis-port 之间不互相干扰，除非多个 Redis 上的 key 本身出现冲突
-	- 单个 redis-port 可以将负责的数据并行迁移以提高速度，通过 --ncpu 来指定并行数
+	- 每个 redis-port 负责将对应的 Redis 数据导入到 Reborn
+	- 多个 redis-port 之间不互相干扰, 除非多个 Redis 上的 key 本身出现冲突
+	- 单个 redis-port 可以将负责的数据并行迁移以提高速度, 通过 --ncpu 来指定并行数
 	- 导入速度受带宽以及 reborn-proxy 处理速度限制(本质是大量的 slotsrestore 操作)
 	
-+ 完成数据迁移，在适当的时候将服务指向 Reborn，并将原 Redis 下线
++ 完成数据迁移, 在适当的时候将服务指向 Reborn, 并将原 Redis 下线
 
-	- 旧 Redis 下线时，会导致 reids-port 链接断开，于是自动退出
+	- 旧 Redis 下线时, 会导致 reids-port 链接断开, 于是自动退出
 		
 ###redis-port 是如何在线迁移数据的？#####
 
 + redis-port 本质是以 slave 的形式挂载到现有 Redis 服务上去的
 
 	1. Redis 会生成 RDB DUMP 文件给作为 slave 的 redis-port
-	2. redis-port 分析 RDB 文件，并拆分成 key-value 对，通过 [slotsrestore](https://github.com/reborndb/reborn/blob/master/doc/redis_change_zh.md#slotsrestore-key1-ttl1-val1-key2-ttl2-val2-) 指令发给 Reborn
-	3. 迁移过程中发生的修改，Redis 会将这些指令在 RDB DUMP 发送完成后，再发给 redis-port，而 redis-port 收到这些指令后不作处理，而直接转发给 Reborn
+	2. redis-port 分析 RDB 文件, 并拆分成 key-value 对, 通过 [slotsrestore](https://github.com/reborndb/reborn/blob/master/doc/redis_change_zh.md#slotsrestore-key1-ttl1-val1-key2-ttl2-val2-) 指令发给 Reborn
+	3. 迁移过程中发生的修改, Redis 会将这些指令在 RDB DUMP 发送完成后, 再发给 redis-port, 而 redis-port 收到这些指令后不作处理, 而直接转发给 Reborn
 	
-+ redis-port 处理还是很快的，参考：
++ redis-port 处理还是很快的, 参考：
 	- https://github.com/sripathikrishnan/redis-rdb-tools
 	- https://github.com/cupcake/rdb
 
 #### Dashboard 中 Ops 一直是 0？
 
-检查你的启动 dashboard 进程的机器，看是否可以访问 reborn-proxy 的地址，对应的地址是 reborn-proxy 启动参数中的 http-addr 中填写的地址。
+检查你的启动 dashboard 进程的机器, 看是否可以访问 reborn-proxy 的地址, 对应的地址是 reborn-proxy 启动参数中的 http-addr 中填写的地址。
 
 #### 如果出现错误 "Some proxies may not stop cleanly ..." 如何处理？
 
-可能的原因是之前某个 reborn-proxy 并没有正常退出所致，我们并不能区分该 reborn-proxy 是 session expire 或者已经退出，为了安全起见，我们在这期间是禁止做集群拓扑结构变更的操作的。请确认这个 reborn-proxy 已经确实下线，或者确实进程已经被杀掉后，然后清除这个 reborn-proxy 留下的 fence，使用命令：
+可能的原因是之前某个 reborn-proxy 并没有正常退出所致, 我们并不能区分该 reborn-proxy 是 session expire 或者已经退出, 为了安全起见, 我们在这期间是禁止做集群拓扑结构变更的操作的。请确认这个 reborn-proxy 已经确实下线, 或者确实进程已经被杀掉后, 然后清除这个 reborn-proxy 留下的 fence, 使用命令：
 `reborn-config -c config.ini action remove-fence` 进行操作。

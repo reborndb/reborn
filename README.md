@@ -18,6 +18,7 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 * Safe and transparent data migration, Easily add or remove nodes on-demand.
 * Command-line interface is also provided
 * RESTful APIs
+* Minotor and Failover
 
 ## Build and Install
 
@@ -32,12 +33,14 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 
 ## Tutorial
 
-[简体中文](https://github.com/reborndb/reborn/blob/master/doc/tutorial_zh.md)  
+[简体中文](https://github.com/reborndb/reborn/blob/master/doc/tutorial_zh.md)
+
 [English](https://github.com/reborndb/reborn/blob/master/doc/tutorial_en.md)
 
 ## FAQ
 
-[简体中文](https://github.com/reborndb/reborn/blob/master/doc/FAQ_zh.md) 
+[简体中文](https://github.com/reborndb/reborn/blob/master/doc/FAQ_zh.md)
+
 [English (WIP) ](https://github.com/reborndb/reborn/blob/master/doc/FAQ_en.md)
 
 ## Performance (Benchmark)
@@ -85,6 +88,8 @@ Slots
 * [@goroutine](https://github.com/ngaut)
 * [@c4pt0r](https://github.com/c4pt0r)
 * [@spinlock9](https://github.com/spinlock)
+* [@siddontang](https://github.com/siddontang)
+* [@qiuyesuifeng](https://github.com/qiuyesuifeng)
 
 Thanks:
 

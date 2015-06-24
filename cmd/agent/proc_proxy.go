@@ -30,14 +30,14 @@ func startProxy(args *proxyArgs) (*process, error) {
 	}
 
 	p.addCmdArgs("-c", configFile)
-	p.addCmdArgs("-L", path.Join(p.baseLogDir(), "proxy.log"))
+	p.addCmdArgs("-L", path.Join(p.procLogDir(), "proxy.log"))
 	if len(args.CPUNum) == 0 {
 		args.CPUNum = "2"
 	}
 	p.addCmdArgs(fmt.Sprintf("--cpu=%s", args.CPUNum))
 	p.addCmdArgs(fmt.Sprintf("--addr=%s", args.Addr))
 	p.addCmdArgs(fmt.Sprintf("--http-addr=%s", args.HTTPAddr))
-	p.addCmdArgs(fmt.Sprintf("--dump-path=%s", p.baseLogDir()))
+	p.addCmdArgs(fmt.Sprintf("--dump-path=%s", p.procLogDir()))
 	p.addCmdArgs(fmt.Sprintf("--pidfile=%s", p.pidPath()))
 	p.addCmdArgs(fmt.Sprintf("--id=%s", p.ID))
 
@@ -59,7 +59,7 @@ func bindProxyProcHandler(p *process) error {
 	postStart := func(p *process) error {
 		//we will use reborn-config to set proxy online
 		//reborn-config -c config.ini proxy online proxy_1
-		cmd := exec.Command("reborn-config", "-c", configFile, "-L", path.Join(p.baseLogDir(), "dashboard.log"), "proxy", "online", p.ID)
+		cmd := exec.Command("reborn-config", "-c", configFile, "-L", path.Join(p.procLogDir(), "dashboard.log"), "proxy", "online", p.ID)
 		return cmd.Run()
 	}
 

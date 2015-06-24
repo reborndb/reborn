@@ -61,6 +61,13 @@ type process struct {
 	Daemonize bool `json:"daemonize"`
 }
 
+func (p *process) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("[process](%+v)", *p)
+}
+
 func newDefaultProcess(cmd string, tp string) *process {
 	id := genProcID()
 	p := new(process)
@@ -114,8 +121,8 @@ func (p *process) addCmdArgs(args ...string) {
 }
 
 func (p *process) start() error {
-	os.MkdirAll(p.baseLogDir(), 0755)
-	os.MkdirAll(p.baseDataDir(), 0755)
+	os.MkdirAll(p.procDataDir(), 0755)
+	os.MkdirAll(p.procLogDir(), 0755)
 
 	var c *exec.Cmd
 	if p.Daemonize {
@@ -186,20 +193,44 @@ func (p *process) save() error {
 	return errors.Trace(err)
 }
 
+// agent path
+// log: logDir/proc/type_id/xxx logDir/trash/xxx logDir/xxx.log
+// data: dataDir/proc/type_id/xxx or dataDir/store/type_addr/xxx
+
+func baseProcDataDir() string {
+	return path.Join(dataDir, "proc")
+}
+
+func baseStoreDataDir() string {
+	return path.Join(dataDir, "store")
+}
+
+func baseProcLogDir() string {
+	return path.Join(logDir, "proc")
+}
+
+func baseTrashLogDir() string {
+	return path.Join(logDir, "trash")
+}
+
+func (p *process) procDataDir() string {
+	return path.Join(baseProcDataDir(), fmt.Sprintf("%s_%s", p.Type, p.ID))
+}
+
+func (p *process) storeDataDir(id string) string {
+	return path.Join(baseStoreDataDir(), fmt.Sprintf("%s_%s", p.Type, id))
+}
+
 func (p *process) pidPath() string {
-	return path.Join(p.baseDataDir(), fmt.Sprintf("%s.pid", p.Type))
+	return path.Join(p.procDataDir(), fmt.Sprintf("%s.pid", p.Type))
 }
 
 func (p *process) dataPath() string {
-	return path.Join(p.baseDataDir(), fmt.Sprintf("%s.dat", p.Type))
+	return path.Join(p.procDataDir(), fmt.Sprintf("%s.dat", p.Type))
 }
 
-func (p *process) baseDataDir() string {
-	return path.Join(dataDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
-}
-
-func (p *process) baseLogDir() string {
-	return path.Join(logDir, fmt.Sprintf("%s_%s", p.Type, p.ID))
+func (p *process) procLogDir() string {
+	return path.Join(baseProcLogDir(), fmt.Sprintf("%s_%s", p.Type, p.ID))
 }
 
 func (p *process) checkAlive() (bool, error) {
@@ -220,8 +251,29 @@ func (p *process) checkAlive() (bool, error) {
 }
 
 func isFileExist(name string) bool {
-	_, err := os.Stat(name)
-	return !os.IsNotExist(err)
+	fi, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if fi.IsDir() {
+		return false
+	}
+
+	return true
+}
+
+func isDirExist(name string) bool {
+	fi, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	if !fi.IsDir() {
+		return false
+	}
+
+	return true
 }
 
 func (p *process) needRestart() bool {
@@ -233,8 +285,24 @@ func (p *process) needRestart() bool {
 }
 
 func (p *process) clear() {
-	os.RemoveAll(p.baseDataDir())
-	os.RemoveAll(p.baseLogDir())
+	p.clearData()
+	p.clearLog()
+}
+
+func (p *process) clearData() {
+	// remove base dir
+	os.RemoveAll(p.procDataDir())
+}
+
+func (p *process) clearLog() {
+	// backup log dir
+	// 1 if log dir does not exist, there will be an error
+	// 2 if newLogDir exists, there will be an error
+	// all erroros we ignore
+
+	baseName := path.Base(p.procLogDir())
+	newName := fmt.Sprintf("%s_%d", baseName, time.Now().UnixNano())
+	os.Rename(p.procLogDir(), path.Join(baseTrashLogDir(), newName))
 }
 
 func (p *process) stop() error {
@@ -243,7 +311,7 @@ func (p *process) stop() error {
 		return errors.Trace(err)
 	}
 
-	defer p.clear()
+	defer p.clearLog()
 
 	if !b {
 		return nil

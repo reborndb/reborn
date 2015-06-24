@@ -157,6 +157,21 @@ func main() {
 		os.Setenv("PATH", path)
 	}
 
+	// set data dir
+	setStringFromOpt(&dataDir, args, "--data-dir")
+	resetAbsPath(&dataDir)
+
+	os.MkdirAll(baseProcDataDir(), 0755)
+
+	// set app log dir
+	setStringFromOpt(&logDir, args, "--log-dir")
+	resetAbsPath(&logDir)
+
+	os.MkdirAll(baseProcLogDir(), 0755)
+
+	// set app trash log dir
+	os.MkdirAll(baseTrashLogDir(), 0755)
+
 	// set output log file
 	if v := getStringArg(args, "-L"); len(v) > 0 {
 		log.SetHighlighting(false)
@@ -176,18 +191,6 @@ func main() {
 		}
 	}
 
-	// set data dir
-	setStringFromOpt(&dataDir, args, "--data-dir")
-	resetAbsPath(&dataDir)
-
-	os.MkdirAll(dataDir, 0755)
-
-	// set app log dir
-	setStringFromOpt(&logDir, args, "--log-dir")
-	resetAbsPath(&logDir)
-
-	os.MkdirAll(logDir, 0755)
-
 	runtime.GOMAXPROCS(cpus)
 
 	c := make(chan os.Signal, 1)
@@ -205,11 +208,14 @@ func main() {
 		go startHA()
 	}
 
-	if err := loadSavedProcs(); err != nil {
+	err = loadSavedProcs()
+	if err != nil {
 		log.Fatalf("restart agent using last saved processes err: %v", err)
-	} else {
-		go runCheckProcs()
 	}
+
+	clearProcFiles()
+
+	go runCheckProcs()
 
 	log.Infof("listening %s", addr)
 	runHTTPServer()

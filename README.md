@@ -18,7 +18,7 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 * Safe and transparent data migration, Easily add or remove nodes on-demand.
 * Command-line interface is also provided
 * RESTful APIs
-* Minotor and Failover
+* Monitor and Failover
 
 ## Build and Install
 

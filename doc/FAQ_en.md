@@ -14,7 +14,7 @@ Two cases:
 Yes, reborn fully support twemproxy commands, further more, using redis-port tool, you can synchronization the data on twemproxy onto your Reborn cluster.
 
 2) Raw redis users:  
-That depends, if you use the following commands:  
+That depends, if you use the following commands
 
 KEYS, MOVE, OBJECT, RENAME, RENAMENX, SORT, SCAN, BITOP,MSETNX, BLPOP, BRPOP, BRPOPLPUSH, PSUBSCRIBE，PUBLISH, PUNSUBSCRIBE,  SUBSCRIBE,  UNSUBSCRIBE,  DISCARD, EXEC, MULTI,  UNWATCH,  WATCH, SCRIPT EXISTS, SCRIPT FLUSH, SCRIPT KILL, SCRIPT LOAD, AUTH, ECHO, SELECT, BGREWRITEAOF, BGSAVE, CLIENT KILL, CLIENT LIST, CONFIG GET, CONFIG SET, CONFIG RESETSTAT, DBSIZE, DEBUG OBJECT, DEBUG SEGFAULT, FLUSHALL, FLUSHDB, LASTSAVE, MONITOR, SAVE, SHUTDOWN, SLAVEOF, SLOWLOG, SYNC, TIME
 

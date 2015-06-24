@@ -5,8 +5,8 @@ Reborn 是一个分布式 Redis 解决方案, 对于上层的应用来说, 连�
 Reborn 由五部分组成:
 
 * Reborn Proxy   (reborn-proxy)
-* Reborn Manager (reborn-config)
-* Reborn Redis   (reborn-server)
+* Reborn Config  (reborn-config)
+* Reborn Server  (reborn-server)
 * Reborn Agent   (reborn-agent)
 * ZooKeeper
 
@@ -36,9 +36,9 @@ make gotest
 make agent_test (可选, reborn-agent 的集成测试)
 ```
 
-会在 reborn/bin 文件夹生成 reborn-config, reborn-proxy, reborn-server, reborn-agent 和 reborn-daemon 五个可执行文件, 其中, reborn-daemon 是让程序以 daemon 方式启动的工具, 而 bin/assets 文件夹是 reborn-config 的 dashboard http 服务需要的前端资源, 需要和 reborn-config 放置在同一文件夹下.
+会在 reborn/bin 文件夹生成 reborn-config, reborn-proxy, reborn-server, reborn-agent 和 reborn-daemon 五个可执行文件, 其中, reborn-daemon 是让程序以 daemon 方式启动的工具, bin/assets 文件夹是 reborn-config 的 dashboard http 服务需要的前端资源, 需要和 reborn-config 放置在同一文件夹下.
 
-reborn-server 的启动参数请参考 redis, 其他如下(统一在 reborn/sample 目录下进行操作)：
+reborn-server 的启动参数请参考 Redis, 其他如下(统一在 reborn/sample 目录下进行操作)：
 ```
 $ ../bin/reborn-config -h
 
@@ -105,7 +105,7 @@ options:
 
 ####配置文件
 
-reborn-config 和 reborn-proxy 在不加 -c 参数的时候, 默认会读取当前目录下的 config.ini 文件
+reborn-proxy, reborn-config 和 reborn-agent 在不加 -c 参数的时候, 默认会读取当前目录下的 config.ini 文件
 
 config.ini:
 
@@ -127,8 +127,8 @@ coordinator=zookeeper             <- 如果用 etcd, 则将 zookeeper 替换为 
 **2. 启动 Reborn Server**
 和官方的 Redis Server 参数一样
 
-**3. 添加 Redis Server Group**
-每一个 Server Group 作为一个 Redis 服务器组存在, 只允许有一个 master, 可以有多个 slave, ***group id 仅支持大于等于1的整数***
+**3. 添加 Reborn Server Group**
+每一个 Server Group 作为一个 Reborn Server 服务器组存在, 只允许有一个 master, 可以有多个 slave, ***group id 仅支持大于等于1的整数***
 
 ```
 $ ../bin/reborn-config server -h
@@ -232,7 +232,7 @@ $ ../bin/reborn-config slot rebalance
 
 ####Failover
 
-reborn-agent 是一个 Reborn 的监控和管理工具, 通过它可以实现动态控制 Reborn 各个组件的起停. 通过外部的 zookeeper 进行 leader 选举来解决 reborn-agent 自身的单点问题.
+reborn-agent 是一个 Reborn 的监控和 HA 工具, 通过它可以实现动态控制 Reborn 各个组件的起停. 通过外部的 zookeeper 进行 leader 选举来解决 reborn-agent 自身的单点问题.
 
 ```
 $ ../bin/reborn-agent -c config.ini -L ./log/agent.log --http-addr=0.0.0.0:39000 --ha

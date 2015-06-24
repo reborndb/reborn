@@ -111,9 +111,9 @@ config.ini:
 
 ```
 coordinator_addr=localhost:2181   <- zookeeper的地址, 如果是zookeeper集群, 可以这么写: coordinator_addr=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181, 如果是etcd, 则写成http://hostname1:port,http://hostname2:port,http://hostname3:port
-product=test                      <- 产品名称, 这个reborn集群的名字, 可以认为是命名空间, 不同命名空间的reborn没有交集
+product=test                      <- 产品名称, 这个 reborn 集群的名字, 可以认为是命名空间, 不同命名空间的 reborn 没有交集
 dashboard_addr=localhost:18087    <- dashboard 服务的地址, CLI 的所有命令都依赖于 dashboard 的 RESTful API, 所以必须启动
-coordinator=zookeeper             <- 如果用etcd, 则将zookeeper替换为etcd
+coordinator=zookeeper             <- 如果用 etcd, 则将 zookeeper 替换为 etcd
 ```
 
 ####流程
@@ -122,10 +122,10 @@ coordinator=zookeeper             <- 如果用etcd, 则将zookeeper替换为etcd
 执行 `../bin/reborn-config dashboard`, 该命令会启动 dashboard
 
 **1. 初始化 slots**
-执行 `../bin/reborn-config slot init`, 该命令会在zookeeper上创建slot相关信息
+执行 `../bin/reborn-config slot init`, 该命令会在 zookeeper 上创建 slot 相关信息
 
 **2. 启动 Reborn Server**
-和官方的Redis Server参数一样
+和官方的 Redis Server 参数一样
 
 **3. 添加 Redis Server Group**
 每一个 Server Group 作为一个 Redis 服务器组存在, 只允许有一个 master, 可以有多个 slave, ***group id 仅支持大于等于1的整数***
@@ -141,10 +141,10 @@ usage:
     reborn-config server add-group <group_id>
     reborn-config server remove-group <group_id>
 ```
-如: 添加两个 server group, 每个 group 有两个 redis 实例, group的id分别为1和2, 
+如: 添加两个 server group, 每个 group 有两个 redis 实例, group 的 id 分别为1和2, 
 redis 实例为一主一从.
 
-添加一个group, group的id为1, 并添加一个 redis master 到该group
+添加一个 group, group 的 id 为1, 并添加一个 redis master 到该group
 ```
 $ ../bin/reborn-config server add 1 localhost:6379 master
 ```
@@ -152,7 +152,7 @@ $ ../bin/reborn-config server add 1 localhost:6379 master
 ```
 $ ../bin/reborn-config server add 1 localhost:6380 slave
 ```
-类似的, 再添加group, group的id为2
+类似的, 再添加 group, group 的 id 为2
 ```
 $ ../bin/reborn-config server add 2 localhost:6479 master
 $ ../bin/reborn-config server add 2 localhost:6480 slave
@@ -201,11 +201,11 @@ $ ../bin/reborn-config -c config.ini proxy online <proxy_name>  <---- proxy的id
 
 安全和透明的数据迁移是 Reborn 提供的一个重要的服务, 也是 Reborn 区别于 Twemproxy 等静态的分布式 Redis 解决方案的地方.
 
-数据迁移的最小单位是 key, 我们在 reborn-server 中添加了一些指令, 实现基于 key 的迁移, 如 SLOTSMGRT等 (命令列表), 每次会将特定 slot 一个随机的 key 发送给另外一个 reborn-server 实例, 这个命令会确认对方已经接收, 同时删除本地的这个 k-v 键值, 返回这个 slot 的剩余 key 的数量, 整个操作是原子的.
+数据迁移的最小单位是 key, 我们在 reborn-server 中添加了一些指令, 实现基于 key 的迁移, 如 SLOTSMGRT 等 (命令列表), 每次会将特定 slot 一个随机的 key 发送给另外一个 reborn-server 实例, 这个命令会确认对方已经接收, 同时删除本地的这个 k-v 键值, 返回这个 slot 的剩余 key 的数量, 整个操作是原子的.
 
 在 reborn-config 管理工具中, 每次迁移任务的最小单位是 slot.
 
-如: 将slot id 为 [0-511] 的slot的数据, 迁移到 server group 2 上, --delay 参数表示每迁移一个 key 后 sleep 的毫秒数, 默认是 0, 用于限速.
+如: 将 slot id 为 [0-511] 的slot的数据, 迁移到 server group 2 上, --delay 参数表示每迁移一个 key 后 sleep 的毫秒数, 默认是 0, 用于限速.
 
 ```
 $ ../bin/reborn-config slot migrate 0 511 2 --delay=10
@@ -213,7 +213,7 @@ $ ../bin/reborn-config slot migrate 0 511 2 --delay=10
 
 迁移的过程对于上层业务来说是安全且透明的, 数据不会丢失, 上层不会中止服务.
 
-注意, 迁移的过程中打断是可以的, 但是如果中断了一个正在迁移某个slot的任务, 下次需要先迁移掉正处于迁移状态的 slot, 否则无法继续 (即迁移程序会检查同一时刻只能有一个 slot 处于迁移状态).
+注意, 迁移的过程中打断是可以的, 但是如果中断了一个正在迁移某个 slot 的任务, 下次需要先迁移掉正处于迁移状态的 slot, 否则无法继续 (即迁移程序会检查同一时刻只能有一个 slot 处于迁移状态).
 
 
 ####Auto Rebalance 
@@ -235,5 +235,5 @@ $ ../bin/reborn-config slot rebalance
 reborn-agent 是一个 Reborn 的监控和管理工具, 通过它可以实现动态控制 Reborn 各个组件的起停. 通过外部的 zookeeper 进行 leader 选举来解决 reborn-agent 自身的单点问题.
 
 ```
-$ ../bin/reborn-agent -c config.ini -L ./log/proxy.log --http-addr=0.0.0.0:39000 --ha
+$ ../bin/reborn-agent -c config.ini -L ./log/agent.log --http-addr=0.0.0.0:39000 --ha
 ```

@@ -111,7 +111,7 @@ config.ini:
 
 ```
 coordinator_addr=localhost:2181   <- zookeeper的地址, 如果是zookeeper集群, 可以这么写: coordinator_addr=hostname1:2181,hostname2:2181,hostname3:2181,hostname4:2181,hostname5:2181, 如果是etcd, 则写成http://hostname1:port,http://hostname2:port,http://hostname3:port
-product=test                      <- 产品名称, 这个 reborn 集群的名字, 可以认为是命名空间, 不同命名空间的 reborn 没有交集
+product=test                      <- 产品名称, 这个 Reborn 集群的名字, 可以认为是命名空间, 不同命名空间的 Reborn 没有交集
 dashboard_addr=localhost:18087    <- dashboard 服务的地址, CLI 的所有命令都依赖于 dashboard 的 RESTful API, 所以必须启动
 coordinator=zookeeper             <- 如果用 etcd, 则将 zookeeper 替换为 etcd
 ```
@@ -141,14 +141,14 @@ usage:
     reborn-config server add-group <group_id>
     reborn-config server remove-group <group_id>
 ```
-如: 添加两个 server group, 每个 group 有两个 redis 实例, group 的 id 分别为1和2, 
-redis 实例为一主一从.
+如: 添加两个 server group, 每个 group 有两个 reborn-server 实例, group 的 id 分别为1和2, 
+reborn-server 实例为一主一从.
 
-添加一个 group, group 的 id 为1, 并添加一个 redis master 到该group
+添加一个 group, group 的 id 为1, 并添加一个 reborn-server master 到该 group
 ```
 $ ../bin/reborn-config server add 1 localhost:6379 master
 ```
-添加一个redis slave到该group
+添加一个 reborn-server slave 到该 group
 ```
 $ ../bin/reborn-config server add 1 localhost:6380 slave
 ```

@@ -32,7 +32,7 @@ func cmdDashboard(argv []string) (err error) {
 	usage := `usage: reborn-config dashboard [--addr=<address>] [--http-log=<log_file>]
 
 options:
-	--addr	listen ip:port, e.g. localhost:12345, :8086, [default: :8086]
+	--addr		listen ip:port, e.g. localhost:12345, :8086, [default: :8086]
 	--http-log	http request log [default: request.log ]
 `
 

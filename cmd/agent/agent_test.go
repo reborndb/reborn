@@ -127,7 +127,7 @@ func (s *testAgentSuite) testStartAgent(c *C, addr string, ha bool) testAgentInf
 	logDir := fmt.Sprintf("./var/%s/log", addr)
 
 	args := []string{
-		"--addr", addr, "--data-dir", dataDir, "--log-dir",
+		"--http-addr", addr, "--data-dir", dataDir, "--log-dir",
 		logDir, "-L", path.Join(logDir, "agent.log")}
 
 	if ha {

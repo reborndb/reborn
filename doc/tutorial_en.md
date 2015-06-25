@@ -178,7 +178,7 @@ $ ../bin/reborn-config slot range-set 512 1023 2 online
 $ ../bin/reborn-proxy -c config.ini -L ./log/proxy.log  --cpu=8 --addr=0.0.0.0:19000 --http-addr=0.0.0.0:11000
 ```
 
-`codas-proxy`’s status are now `offline`, put it `online` to provide service:
+`reborn-proxy`’s status are now `offline`, put it `online` to provide service:
 
 ```
 $ ../bin/reborn-config -c config.ini proxy online <proxy_name>  <---- proxy id, e.g. proxy_1

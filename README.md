@@ -44,14 +44,12 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 [English](https://github.com/reborndb/reborn/blob/master/doc/FAQ_en.md)
 
 ## Performance (Benchmark)
+```
 OS:   Ubuntu SMP x86_64 GNU/Linux
-
 CPU:  Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz(8 cores)
-
 Mem:  16G
-
 Disk: 256G SSD
-
+```
 
 + twemproxy
 

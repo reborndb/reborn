@@ -1,6 +1,6 @@
 # Reborn Tutorial
 
-Codes is a distributed Redis solution, there is no obvious difference between connecting to a Reborn Proxy and an original Redis Server, top layer application can connect to Reborn as normal standalone Redis, Reborn will forward low layer requests. Hot data migration and all things in the shadow are transparent to client. Simply treat Reborn as a Redis service with unlimited RAM. 
+Reborn is a distributed Redis solution, there is no obvious difference between connecting to a Reborn Proxy and an original Redis Server, top layer application can connect to Reborn as normal standalone Redis, Reborn will forward low layer requests. Hot data migration and all things in the shadow are transparent to client. Simply treat Reborn as a Redis service with unlimited RAM. 
 
 Reborn has five parts:
 * Reborn Proxy   (reborn-proxy)
@@ -153,7 +153,7 @@ $ ../bin/reborn-config server add 2 localhost:6480 slave
 
 4. Config slot range of server group
 
-Codes implement data segmentation with Pre-sharding mechanism, 1024 slots will be segmented by default,a single key use following formula to determine which slot to resident, each slot has a server group id represents the server group which will provide service.
+Reborn implement data segmentation with Pre-sharding mechanism, 1024 slots will be segmented by default,a single key use following formula to determine which slot to resident, each slot has a server group id represents the server group which will provide service.
 
 ```
 $ ../bin/reborn-config slot -h                                                                                                                                                                                                                     

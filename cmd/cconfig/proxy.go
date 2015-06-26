@@ -6,10 +6,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/reborndb/reborn/pkg/models"
-
 	"github.com/docopt/docopt-go"
 	"github.com/ngaut/log"
+	"github.com/reborndb/reborn/pkg/models"
 )
 
 func cmdProxy(argv []string) (err error) {

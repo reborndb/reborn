@@ -40,19 +40,19 @@ var (
 var usage = `usage: reborn-agent [options]
 
 options:
-    --addr=<listen_addr>           agent http listen address, example: 127.0.0.1:39000
-    --data-dir=<data_dir>          directory to store important data
-    --log-dir=<app_log_dir>        directory to store log 
-    -L <log_file>                  set output log file, default is stdout
-    --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
-    --cpu=<cpu_num>                num of cpu cores that reborn can use
-    --exec-path=<exec_path>        execution path which we can find reborn-* cmds
     -c <config_file>               base environment config for reborn config and proxy
-    --qdb-config=<qdb_config>      base qdb config 
-    --redis-config=<redis_config>  base redis config for reborn-server
+    -L <log_file>                  set output log file, default is stdout
+    --cpu=<cpu_num>                num of cpu cores that reborn can use
+    --data-dir=<data_dir>          directory to store important data
+    --exec-path=<exec_path>        execution path which we can find reborn-* cmds
     --ha                           start HA for store monitor and failover
     --ha-max-retry-num=<num>       maximum retry number for checking store
     --ha-retry-delay=<n_seconds>   wait n seconds for next check
+    --http-addr=<http_addr>        agent http listen address, example: 127.0.0.1:39000
+    --log-dir=<app_log_dir>        directory to store log
+    --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
+    --qdb-config=<qdb_config>      base qdb config
+    --redis-config=<redis_config>  base redis config for reborn-server
 `
 
 func getStringArg(args map[string]interface{}, key string) string {
@@ -133,8 +133,7 @@ func main() {
 		fatal(err)
 	}
 
-	// set addr
-	setStringFromOpt(&addr, args, "--addr")
+	setStringFromOpt(&addr, args, "--http-addr")
 
 	agentID = genProcID()
 

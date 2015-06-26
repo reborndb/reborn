@@ -35,16 +35,16 @@ var usage = `usage: reborn-proxy [options]
 options:
    -c <config_file>               set config file
    -L <log_file>                  set output log file, default is stdout
-   --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
-   --cpu=<cpu_num>                num of cpu cores that proxy can use
    --addr=<proxy_listen_addr>     proxy listen address, example: 0.0.0.0:9000
-   --proto=<listen_proto>         proxy listen address proto, like tcp
-   --id=<proxy_id>                proxy id, global unique, can not be empty 
-   --http-addr=<debug_http_addr>  debug vars http server
+   --cpu=<cpu_num>                num of cpu cores that proxy can use
    --dump-path=<path>             dump path to log crash error
-   --pidfile=<path>               proxy pid file
-   --proxy-auth=PASSWORD          proxy auth
+   --http-addr=<debug_http_addr>  debug vars http server
+   --id=<proxy_id>                proxy id, global unique, can not be empty
+   --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
    --net-timeout=<timeout>        connection timeout
+   --pidfile=<path>               proxy pid file
+   --proto=<listen_proto>         proxy listen address proto, like tcp
+   --proxy-auth=PASSWORD          proxy auth
 `
 
 var banner string = `

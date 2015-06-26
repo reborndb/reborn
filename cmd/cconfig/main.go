@@ -43,8 +43,8 @@ var usage = `usage: reborn-config [options] <command> [<args>...]
 options:
    -c <config_file>               set config file
    -L <log_file>                  set output log file, default is stdout
+   --http-addr=<http_addr>        http address
    --log-level=<loglevel>         set log level: info, warn, error, debug [default: info]
-   --http-addr=<debug_http_addr>  debug http address
    --pidfile=<file>               program pidfile
 
 commands:
@@ -138,12 +138,12 @@ func main() {
 	cmd := args["<command>"].(string)
 	cmdArgs := args["<args>"].([]string)
 
-	debugHTTP := ":10086"
+	httpAddr := ":10086"
 	if v := args["--http-addr"]; v != nil {
-		debugHTTP = v.(string)
+		httpAddr = v.(string)
 	}
-	//debug var address
-	go http.ListenAndServe(debugHTTP, nil)
+
+	go http.ListenAndServe(httpAddr, nil)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, os.Interrupt, os.Kill)

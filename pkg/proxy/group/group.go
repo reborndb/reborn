@@ -4,9 +4,8 @@
 package group
 
 import (
-	"github.com/reborndb/reborn/pkg/models"
-
 	"github.com/ngaut/log"
+	"github.com/reborndb/reborn/pkg/models"
 )
 
 type Group struct {

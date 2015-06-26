@@ -16,12 +16,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/reborndb/go/io/ioutils"
-
 	"github.com/juju/errors"
 	"github.com/mitchellh/go-ps"
 	"github.com/ngaut/log"
 	"github.com/nu7hatch/gouuid"
+	"github.com/reborndb/go/io/ioutils"
 )
 
 func genProcID() string {

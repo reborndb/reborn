@@ -9,13 +9,12 @@ import (
 	"path"
 	"testing"
 
+	"github.com/ngaut/log"
+	"github.com/ngaut/zkhelper"
 	"github.com/reborndb/go/bytesize"
 	"github.com/reborndb/qdb/pkg/engine/goleveldb"
 	"github.com/reborndb/qdb/pkg/service"
 	"github.com/reborndb/qdb/pkg/store"
-
-	"github.com/ngaut/log"
-	"github.com/ngaut/zkhelper"
 	. "gopkg.in/check.v1"
 )
 

@@ -11,11 +11,10 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/reborndb/reborn/pkg/proxy/router"
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/docopt/docopt-go"
 	"github.com/ngaut/log"
+	"github.com/reborndb/reborn/pkg/proxy/router"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 var (

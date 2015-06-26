@@ -6,11 +6,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/reborndb/reborn/pkg/models"
-
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
+	"github.com/reborndb/reborn/pkg/models"
 )
 
 type MigrateTaskInfo struct {

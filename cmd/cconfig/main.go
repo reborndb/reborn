@@ -11,14 +11,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/reborndb/reborn/pkg/env"
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/c4pt0r/cfg"
 	docopt "github.com/docopt/docopt-go"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
+	"github.com/reborndb/reborn/pkg/env"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 // global objects

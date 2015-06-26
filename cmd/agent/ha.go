@@ -12,13 +12,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reborndb/go/atomic2"
-	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
+	"github.com/reborndb/go/atomic2"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 // HA mechanism

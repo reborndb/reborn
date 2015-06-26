@@ -5,10 +5,9 @@ package main
 
 import (
 	"bytes"
-	"net/http"
-
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/juju/errors"
 )

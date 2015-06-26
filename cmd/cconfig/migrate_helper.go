@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/juju/errors"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 const (

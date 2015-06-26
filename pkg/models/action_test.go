@@ -10,10 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
+	"github.com/reborndb/reborn/pkg/utils"
 	. "gopkg.in/check.v1"
 )
 

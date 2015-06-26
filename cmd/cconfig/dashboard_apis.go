@@ -11,15 +11,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/utils"
-
 	"github.com/go-martini/martini"
 	"github.com/juju/errors"
 	"github.com/ngaut/go-zookeeper/zk"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
 	"github.com/nu7hatch/gouuid"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/utils"
 )
 
 var globalMigrateManager *MigrateManager

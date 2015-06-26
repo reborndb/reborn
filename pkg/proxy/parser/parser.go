@@ -11,10 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/reborndb/go/io/ioutils"
-
 	"github.com/juju/errors"
 	respcoding "github.com/ngaut/resp"
+	"github.com/reborndb/go/io/ioutils"
 )
 
 /*

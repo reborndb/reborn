@@ -18,15 +18,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/juju/errors"
+	stats "github.com/ngaut/gostats"
+	"github.com/ngaut/log"
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
 	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 	topo "github.com/reborndb/reborn/pkg/proxy/router/topology"
-
-	"github.com/juju/errors"
-	stats "github.com/ngaut/gostats"
-	"github.com/ngaut/log"
 )
 
 const (

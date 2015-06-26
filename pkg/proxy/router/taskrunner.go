@@ -5,11 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/proxy/parser"
-	"github.com/reborndb/reborn/pkg/proxy/redisconn"
-
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
+	"github.com/reborndb/reborn/pkg/proxy/parser"
+	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 )
 
 const (

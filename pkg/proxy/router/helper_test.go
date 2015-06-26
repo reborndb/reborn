@@ -8,9 +8,8 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/proxy/parser"
-
 	stats "github.com/ngaut/gostats"
+	"github.com/reborndb/reborn/pkg/proxy/parser"
 	. "gopkg.in/check.v1"
 )
 

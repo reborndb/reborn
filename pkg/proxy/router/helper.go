@@ -14,16 +14,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reborndb/reborn/pkg/models"
-	"github.com/reborndb/reborn/pkg/proxy/group"
-	"github.com/reborndb/reborn/pkg/proxy/parser"
-	"github.com/reborndb/reborn/pkg/proxy/redisconn"
-
 	"github.com/juju/errors"
 	topo "github.com/ngaut/go-zookeeper/zk"
 	stats "github.com/ngaut/gostats"
 	"github.com/ngaut/log"
 	respcoding "github.com/ngaut/resp"
+	"github.com/reborndb/reborn/pkg/models"
+	"github.com/reborndb/reborn/pkg/proxy/group"
+	"github.com/reborndb/reborn/pkg/proxy/parser"
+	"github.com/reborndb/reborn/pkg/proxy/redisconn"
 )
 
 var blackList = []string{

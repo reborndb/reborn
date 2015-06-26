@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ngaut/log"
 	"github.com/reborndb/reborn/pkg/proxy/router/topology"
 	"github.com/reborndb/reborn/pkg/utils"
-
-	"github.com/ngaut/log"
 )
 
 type Conf struct {

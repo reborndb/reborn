@@ -20,8 +20,8 @@ build-config:
 
 build-server:
 	@mkdir -p bin
-	make -j4 -C extern/redis-2.8.13/
-	@cp -f extern/redis-2.8.13/src/redis-server bin/reborn-server
+	make -j4 -C extern/redis-2.8.21/
+	@cp -f extern/redis-2.8.21/src/redis-server bin/reborn-server
 
 build-agent:
 	$(GO) build -o bin/reborn-agent ./cmd/agent
@@ -31,13 +31,14 @@ build-daemon:
 
 clean:
 	@rm -rf bin
+	@rm -rf cmd/agent/var
 	@rm -f *.rdb *.out *.log *.dump deploy.tar
 	@rm -f extern/Dockerfile
 	@rm -f sample/log/*.log sample/nohup.out
 	@if [ -d test ]; then cd test && rm -f *.out *.log *.rdb; fi
 
 distclean: clean
-	@make --no-print-directory --quiet -C extern/redis-2.8.13 clean
+	@make --no-print-directory --quiet -C extern/redis-2.8.21 clean
 
 gotest:
 	$(GO) test -tags 'all' ./pkg/... -race -cover

@@ -95,7 +95,7 @@ func GetRedisStat(addr string, auth string) (map[string]string, error) {
 
 	var reply []string
 
-	reply, err = redis.Strings(c.Do("CONFIG", "GET", "MAXMEMORY"))
+	reply, err = redis.Strings(c.Do("CONFIG", "GET", "maxmemory"))
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +103,9 @@ func GetRedisStat(addr string, auth string) (map[string]string, error) {
 	// we got result
 	if len(reply) == 2 {
 		if reply[1] != "0" {
-			m["MAXMEMORY"] = reply[1]
+			m["maxmemory"] = reply[1]
 		} else {
-			m["MAXMEMORY"] = "∞"
+			m["maxmemory"] = "∞"
 		}
 	}
 

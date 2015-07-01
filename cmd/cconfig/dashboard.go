@@ -91,6 +91,7 @@ func jsonRetSucc() (int, string) {
 func getAllProxyOps() int64 {
 	conn := CreateCoordConn()
 	defer conn.Close()
+
 	proxies, err := models.ProxyList(conn, globalEnv.ProductName(), nil)
 	if err != nil {
 		log.Warning(err)
@@ -112,6 +113,7 @@ func getAllProxyOps() int64 {
 func getAllProxyDebugVars() map[string]map[string]interface{} {
 	conn := CreateCoordConn()
 	defer conn.Close()
+
 	proxies, err := models.ProxyList(conn, globalEnv.ProductName(), nil)
 	if err != nil {
 		log.Warning(err)

@@ -63,7 +63,7 @@ func (p *ProxyInfo) DebugVars() (map[string]interface{}, error) {
 	defer resp.Body.Close()
 
 	m := map[string]interface{}{}
-	if err = json.NewDecoder(resp.Body).Decode(m); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&m); err != nil {
 		return nil, errors.Trace(err)
 	}
 

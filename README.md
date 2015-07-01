@@ -118,7 +118,9 @@ Result:
 ## Snapshots
 
 Dashboard
-![main](doc/pictures/snapshot.png)
+![overview](doc/pictures/snapshot_overview.png)
+![server_group](doc/pictures/snapshot_server_group.png)
+![proxy_status](doc/pictures/snapshot_proxy_status.png)
 
 Migrate
 ![migrate](doc/pictures/snapshot_migrate.png)

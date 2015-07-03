@@ -9,7 +9,7 @@ endif
 all: build
 	@tar -cf deploy.tar bin sample
 
-build: build-proxy build-config build-server build-agent build-daemon
+build: build-proxy build-config build-server build-agent build-daemon build-qdb
 
 build-proxy:
 	$(GO) build -o bin/reborn-proxy ./cmd/proxy
@@ -28,6 +28,9 @@ build-agent:
 
 build-daemon:
 	$(GO) build -o bin/reborn-daemon ./cmd/daemon
+
+build-qdb:
+	$(GO) build -o bin/qdb-server github.com/reborndb/qdb/cmd/qdb-server
 
 clean:
 	@rm -rf bin

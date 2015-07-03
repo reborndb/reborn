@@ -20,6 +20,11 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 * RESTful APIs
 * Monitor and Failover
 
+## Design
+
+[RebornDB: the Next Generation Distributed Key-Value Store](https://docs.google.com/document/d/1hJXa0LjMaGYHgL3PeQQu3QMrstxof241OVxbdDKvSbY/edit?usp=sharing)
+
+
 ## Build and Install
 
 * Install go(we recommend go1.3.3, go1.4 has some performance issue) & ZooKeeper
@@ -31,21 +36,17 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 * cd sample
 * follow instructions in usage.md
 
-## Design
-
-[RebornDB: the Next Generation Distributed Key-Value Store](https://docs.google.com/document/d/1hJXa0LjMaGYHgL3PeQQu3QMrstxof241OVxbdDKvSbY/edit?usp=sharing)
-
 ## Tutorial
 
-[简体中文](https://github.com/reborndb/reborn/blob/master/doc/tutorial_zh.md)
+[English](doc/tutorial_en.md)
 
-[English](https://github.com/reborndb/reborn/blob/master/doc/tutorial_en.md)
+[简体中文](doc/tutorial_zh.md)
 
 ## FAQ
 
-[简体中文](https://github.com/reborndb/reborn/blob/master/doc/FAQ_zh.md)
+[English](doc/FAQ_en.md)
 
-[English](https://github.com/reborndb/reborn/blob/master/doc/FAQ_en.md)
+[简体中文](doc/FAQ_zh.md)
 
 ## Performance (Benchmark)
 ```
@@ -113,7 +114,7 @@ Result:
 
 ## For Java users who want to support HA
 
-[Jodis \(HA Reborn Connection Pool based on Jedis\)] (https://github.com/reborndb/reborn/tree/master/extern/jodis)
+[Jodis \(HA Reborn Connection Pool based on Jedis\)](extern/jodis)
 
 ## Architecture
 

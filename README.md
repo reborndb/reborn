@@ -31,6 +31,10 @@ Reborn is engineered to elastically scale, Easily add or remove redis or proxy i
 * cd sample
 * follow instructions in usage.md
 
+## Design
+
+[RebornDB: the Next Generation Distributed Key-Value Store](https://docs.google.com/document/d/1hJXa0LjMaGYHgL3PeQQu3QMrstxof241OVxbdDKvSbY/edit?usp=sharing)
+
 ## Tutorial
 
 [简体中文](https://github.com/reborndb/reborn/blob/master/doc/tutorial_zh.md)

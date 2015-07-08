@@ -114,7 +114,7 @@ Result:
 
 ## For Java users who want to support HA
 
-[Jodis \(HA Reborn Connection Pool based on Jedis\)](extern/jodis)
+[Reborn-java \(HA Reborn Connection Pool based on Jedis\)](https://github.com/reborndb/reborn-java)
 
 ## Architecture
 

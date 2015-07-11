@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/cupcake/rdb"
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 type objectEncoder interface {

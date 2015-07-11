@@ -1,3 +1,6 @@
+// Copyright 2015 Reborndb Org. All Rights Reserved.
+// Licensed under the MIT (MIT-LICENSE.txt) license.
+
 package gocheck2
 
 import (
@@ -36,4 +39,16 @@ func (s *CheckersSuite) TestHasKey(c *C) {
 	testHasKey(
 		c, false, "Second argument must be assignable to the map key type",
 		map[string]int{"foo": 1}, 10)
+}
+
+func (s *CheckersSuite) TestCompare(c *C) {
+	c.Assert(10, Less, 11)
+	c.Assert(10, LessEqual, 10)
+	c.Assert(10, Greater, 9)
+	c.Assert(10, GreaterEqual, 10)
+	c.Assert(10, Not(LessEqual), 9)
+	c.Assert(10, Not(Less), 9)
+	c.Assert("ABC", Less, "ABCD")
+	c.Assert([]byte("ABC"), Less, []byte("ABCD"))
+	c.Assert(3.14, Less, 3.145)
 }

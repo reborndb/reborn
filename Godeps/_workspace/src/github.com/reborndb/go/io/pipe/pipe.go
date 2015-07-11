@@ -9,8 +9,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/juju/errors"
 	"github.com/reborndb/go/bytesize"
-	"github.com/reborndb/go/errors"
 )
 
 type buffer interface {

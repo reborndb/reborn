@@ -9,6 +9,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
+	"github.com/reborndb/go/errors2"
 	"github.com/reborndb/reborn/pkg/models"
 )
 
@@ -139,7 +140,7 @@ func (t *MigrateTask) run() error {
 	t.Status = MIGRATE_TASK_MIGRATING
 	for slotId := t.FromSlot; slotId <= t.ToSlot; slotId++ {
 		err := t.migrateSingleSlot(slotId, to)
-		if err == ErrStopMigrateByUser {
+		if errors2.ErrorEqual(err, ErrStopMigrateByUser) {
 			log.Info("stop migration job by user")
 			break
 		} else if err != nil {

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/reborndb/go/errors"
-	"github.com/reborndb/go/log"
+	"github.com/juju/errors"
+	"github.com/ngaut/log"
 )
 
 const (
@@ -27,8 +27,8 @@ var (
 )
 
 var (
-	ErrBadBytesize     = errors.Static("invalid byte size")
-	ErrBadBytesizeUnit = errors.Static("invalid byte size unit")
+	ErrBadBytesize     = errors.New("invalid byte size")
+	ErrBadBytesizeUnit = errors.New("invalid byte size unit")
 )
 
 func Parse(s string) (int64, error) {
@@ -79,7 +79,7 @@ func Parse(s string) (int64, error) {
 func MustParse(s string) int64 {
 	v, err := Parse(s)
 	if err != nil {
-		log.PanicError(err, "parse bytesize failed")
+		log.Fatalf("parse bytesize failed - %s", err)
 	}
 	return v
 }

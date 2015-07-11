@@ -132,51 +132,47 @@
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/atomic2",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/bytesize",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
-			"ImportPath": "github.com/reborndb/go/errors",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"ImportPath": "github.com/reborndb/go/errors2",
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/gocheck2",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/io/ioutils",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/io/pipe",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
-		},
-		{
-			"ImportPath": "github.com/reborndb/go/log",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/redis/rdb",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/redis/resp",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/ring",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/sync2",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/go/trace",
-			"Rev": "9882aba23706750ccb7bb0207cb70491c2e4c7d8"
+			"Rev": "71fc4e683fc26da0078de20fbedb7c7795257f5d"
 		},
 		{
 			"ImportPath": "github.com/reborndb/qdb/pkg/engine",

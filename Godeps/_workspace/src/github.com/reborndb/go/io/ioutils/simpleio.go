@@ -6,7 +6,7 @@ package ioutils
 import (
 	"io"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 type simpleReader struct {

@@ -6,7 +6,7 @@ package pipe
 import (
 	"os"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 type rfileBuffer struct {

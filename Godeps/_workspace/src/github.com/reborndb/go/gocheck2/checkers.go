@@ -1,3 +1,6 @@
+// Copyright 2015 Reborndb Org. All Rights Reserved.
+// Licensed under the MIT (MIT-LICENSE.txt) license.
+
 // Extensions to the go-check unittest framework.
 //
 // NOTE: see https://github.com/go-check/check/pull/6 for reasons why these

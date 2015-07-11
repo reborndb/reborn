@@ -6,35 +6,47 @@ package sync2
 import (
 	"testing"
 	"time"
+
+	. "gopkg.in/check.v1"
 )
 
-func TestSemaNoTimeout(t *testing.T) {
-	s := NewSemaphore(1)
-	s.Acquire()
+func Test(t *testing.T) {
+	TestingT(t)
+}
+
+var _ = Suite(&testSync2Suite{})
+
+type testSync2Suite struct {
+}
+
+func (s *testSync2Suite) TestSemaNoTimeout(c *C) {
+	sp := NewSemaphore(1)
+	sp.Acquire()
 	released := false
+
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		released = true
-		s.Release()
+		sp.Release()
 	}()
-	s.Acquire()
-	if !released {
-		t.Errorf("want true, got false")
-	}
+
+	sp.Acquire()
+	c.Assert(released, Equals, true)
 }
 
-func TestSemaTimeout(t *testing.T) {
-	s := NewSemaphore(1)
-	s.Acquire()
+func (s *testSync2Suite) TestSemaTimeout(c *C) {
+	sp := NewSemaphore(1)
+	sp.Acquire()
+
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		s.Release()
+		sp.Release()
 	}()
-	if ok := s.AcquireTimeout(5 * time.Millisecond); ok {
-		t.Errorf("want false, got true")
-	}
+
+	ok := sp.AcquireTimeout(5 * time.Millisecond)
+	c.Assert(ok, Equals, false)
+
 	time.Sleep(10 * time.Millisecond)
-	if ok := s.AcquireTimeout(5 * time.Millisecond); !ok {
-		t.Errorf("want true, got false")
-	}
+	ok = sp.AcquireTimeout(5 * time.Millisecond)
+	c.Assert(ok, Equals, true)
 }

@@ -8,7 +8,7 @@ import (
 
 	"github.com/cupcake/rdb"
 	"github.com/cupcake/rdb/nopdecoder"
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 func DecodeDump(p []byte) (interface{}, error) {

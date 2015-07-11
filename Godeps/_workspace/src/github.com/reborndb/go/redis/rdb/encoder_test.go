@@ -9,31 +9,33 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
-	"testing"
 
 	"github.com/reborndb/go/atomic2"
 	"github.com/reborndb/go/io/ioutils"
-	"github.com/reborndb/go/testing/assert"
+	gocheck "gopkg.in/check.v1"
 )
 
-func toString(text string) String {
+func (s *testRedisRdbSuite) toString(text string) String {
 	return String([]byte(text))
 }
 
-func checkString(t *testing.T, o interface{}, text string) {
+func (s *testRedisRdbSuite) checkString(c *gocheck.C, o interface{}, text string) {
 	x, ok := o.(String)
-	assert.Must(t, ok)
-	assert.Must(t, string(x) == text)
+	c.Assert(ok, gocheck.Equals, true)
+	c.Assert(string(x), gocheck.Equals, text)
 }
 
-func TestEncodeString(t *testing.T) {
+func (s *testRedisRdbSuite) TestEncodeString(c *gocheck.C) {
 	docheck := func(text string) {
-		p, err := EncodeDump(toString(text))
-		assert.ErrorIsNil(t, err)
+		p, err := EncodeDump(s.toString(text))
+		c.Assert(err, gocheck.IsNil)
+
 		o, err := DecodeDump(p)
-		assert.ErrorIsNil(t, err)
-		checkString(t, o, text)
+		c.Assert(err, gocheck.IsNil)
+
+		s.checkString(c, o, text)
 	}
+
 	docheck("hello world!!")
 	docheck("2147483648")
 	docheck("4294967296")
@@ -45,7 +47,7 @@ func TestEncodeString(t *testing.T) {
 	docheck(b.String())
 }
 
-func toList(list ...string) List {
+func (s *testRedisRdbSuite) toList(list ...string) List {
 	o := List{}
 	for _, e := range list {
 		o = append(o, []byte(e))
@@ -53,23 +55,27 @@ func toList(list ...string) List {
 	return o
 }
 
-func checkList(t *testing.T, o interface{}, list []string) {
+func (s *testRedisRdbSuite) checkList(c *gocheck.C, o interface{}, list []string) {
 	x, ok := o.(List)
-	assert.Must(t, ok)
-	assert.Must(t, len(x) == len(list))
+	c.Assert(ok, gocheck.Equals, true)
+	c.Assert(len(x), gocheck.Equals, len(list))
+
 	for i, e := range x {
-		assert.Must(t, string(e) == list[i])
+		c.Assert(string(e), gocheck.Equals, list[i])
 	}
 }
 
-func TestEncodeList(t *testing.T) {
+func (s *testRedisRdbSuite) TestEncodeList(c *gocheck.C) {
 	docheck := func(list ...string) {
-		p, err := EncodeDump(toList(list...))
-		assert.ErrorIsNil(t, err)
+		p, err := EncodeDump(s.toList(list...))
+		c.Assert(err, gocheck.IsNil)
+
 		o, err := DecodeDump(p)
-		assert.ErrorIsNil(t, err)
-		checkList(t, o, list)
+		c.Assert(err, gocheck.IsNil)
+
+		s.checkList(c, o, list)
 	}
+
 	docheck("")
 	docheck("", "a", "b", "c", "d", "e")
 	list := []string{}
@@ -79,7 +85,7 @@ func TestEncodeList(t *testing.T) {
 	docheck(list...)
 }
 
-func toHash(m map[string]string) Hash {
+func (s *testRedisRdbSuite) toHash(m map[string]string) Hash {
 	o := Hash{}
 	for k, v := range m {
 		o = append(o, &HashElement{Field: []byte(k), Value: []byte(v)})
@@ -87,22 +93,25 @@ func toHash(m map[string]string) Hash {
 	return o
 }
 
-func checkHash(t *testing.T, o interface{}, m map[string]string) {
+func (s *testRedisRdbSuite) checkHash(c *gocheck.C, o interface{}, m map[string]string) {
 	x, ok := o.(Hash)
-	assert.Must(t, ok)
-	assert.Must(t, len(x) == len(m))
+	c.Assert(ok, gocheck.Equals, true)
+	c.Assert(len(x), gocheck.Equals, len(m))
+
 	for _, e := range x {
-		assert.Must(t, m[string(e.Field)] == string(e.Value))
+		c.Assert(m[string(e.Field)], gocheck.Equals, string(e.Value))
 	}
 }
 
-func TestEncodeHash(t *testing.T) {
+func (s *testRedisRdbSuite) TestEncodeHash(c *gocheck.C) {
 	docheck := func(m map[string]string) {
-		p, err := EncodeDump(toHash(m))
-		assert.ErrorIsNil(t, err)
+		p, err := EncodeDump(s.toHash(m))
+		c.Assert(err, gocheck.IsNil)
+
 		o, err := DecodeDump(p)
-		assert.ErrorIsNil(t, err)
-		checkHash(t, o, m)
+		c.Assert(err, gocheck.IsNil)
+
+		s.checkHash(c, o, m)
 	}
 	docheck(map[string]string{"": ""})
 	docheck(map[string]string{"": "", "a": "", "b": "a", "c": "b", "d": "c"})
@@ -113,7 +122,7 @@ func TestEncodeHash(t *testing.T) {
 	docheck(hash)
 }
 
-func toZSet(m map[string]float64) ZSet {
+func (s *testRedisRdbSuite) toZSet(m map[string]float64) ZSet {
 	o := ZSet{}
 	for k, v := range m {
 		o = append(o, &ZSetElement{Member: []byte(k), Score: v})
@@ -121,32 +130,35 @@ func toZSet(m map[string]float64) ZSet {
 	return o
 }
 
-func checkZSet(t *testing.T, o interface{}, m map[string]float64) {
+func (s *testRedisRdbSuite) checkZSet(c *gocheck.C, o interface{}, m map[string]float64) {
 	x, ok := o.(ZSet)
-	assert.Must(t, ok)
-	assert.Must(t, len(x) == len(m))
+	c.Assert(ok, gocheck.Equals, true)
+	c.Assert(len(x), gocheck.Equals, len(m))
+
 	for _, e := range x {
 		v := m[string(e.Member)]
 		switch {
 		case math.IsInf(v, 1):
-			assert.Must(t, math.IsInf(e.Score, 1))
+			c.Assert(math.IsInf(e.Score, 1), gocheck.Equals, true)
 		case math.IsInf(v, -1):
-			assert.Must(t, math.IsInf(e.Score, -1))
+			c.Assert(math.IsInf(e.Score, -1), gocheck.Equals, true)
 		case math.IsNaN(v):
-			assert.Must(t, math.IsNaN(e.Score))
+			c.Assert(math.IsNaN(e.Score), gocheck.Equals, true)
 		default:
-			assert.Must(t, math.Abs(e.Score-v) < 1e-10)
+			c.Assert(math.Abs(e.Score-v) < 1e-10, gocheck.Equals, true)
 		}
 	}
 }
 
-func TestEncodeZSet(t *testing.T) {
+func (s *testRedisRdbSuite) TestEncodeZSet(c *gocheck.C) {
 	docheck := func(m map[string]float64) {
-		p, err := EncodeDump(toZSet(m))
-		assert.ErrorIsNil(t, err)
+		p, err := EncodeDump(s.toZSet(m))
+		c.Assert(err, gocheck.IsNil)
+
 		o, err := DecodeDump(p)
-		assert.ErrorIsNil(t, err)
-		checkZSet(t, o, m)
+		c.Assert(err, gocheck.IsNil)
+
+		s.checkZSet(c, o, m)
 	}
 	docheck(map[string]float64{"": 0})
 	zset := make(map[string]float64)
@@ -160,7 +172,7 @@ func TestEncodeZSet(t *testing.T) {
 	docheck(zset)
 }
 
-func toSet(set ...string) Set {
+func (s *testRedisRdbSuite) toSet(set ...string) Set {
 	o := Set{}
 	for _, e := range set {
 		o = append(o, []byte(e))
@@ -168,22 +180,25 @@ func toSet(set ...string) Set {
 	return o
 }
 
-func checkSet(t *testing.T, o interface{}, set []string) {
+func (s *testRedisRdbSuite) checkSet(c *gocheck.C, o interface{}, set []string) {
 	x, ok := o.(Set)
-	assert.Must(t, ok)
-	assert.Must(t, len(x) == len(set))
+	c.Assert(ok, gocheck.Equals, true)
+	c.Assert(len(x), gocheck.Equals, len(set))
+
 	for i, e := range x {
-		assert.Must(t, string(e) == set[i])
+		c.Assert(string(e), gocheck.Equals, set[i])
 	}
 }
 
-func TestEncodeSet(t *testing.T) {
+func (s *testRedisRdbSuite) TestEncodeSet(c *gocheck.C) {
 	docheck := func(set ...string) {
-		p, err := EncodeDump(toSet(set...))
-		assert.ErrorIsNil(t, err)
+		p, err := EncodeDump(s.toSet(set...))
+		c.Assert(err, gocheck.IsNil)
+
 		o, err := DecodeDump(p)
-		assert.ErrorIsNil(t, err)
-		checkSet(t, o, set)
+		c.Assert(err, gocheck.IsNil)
+
+		s.checkSet(c, o, set)
 	}
 	docheck("")
 	docheck("", "a", "b", "c")
@@ -194,7 +209,7 @@ func TestEncodeSet(t *testing.T) {
 	docheck(set...)
 }
 
-func TestEncodeRdb(t *testing.T) {
+func (s *testRedisRdbSuite) TestEncodeRdb(c *gocheck.C) {
 	objs := make([]struct {
 		db       uint32
 		expireat uint64
@@ -204,7 +219,8 @@ func TestEncodeRdb(t *testing.T) {
 	}, 128)
 	var b bytes.Buffer
 	enc := NewEncoder(&b)
-	assert.ErrorIsNil(t, enc.EncodeHeader())
+	c.Assert(enc.EncodeHeader(), gocheck.IsNil)
+
 	for i := 0; i < len(objs); i++ {
 		db := uint32(i + 32)
 		expireat := uint64(i)
@@ -213,10 +229,10 @@ func TestEncodeRdb(t *testing.T) {
 		var typ string
 		switch i % 5 {
 		case 0:
-			s := strconv.Itoa(i)
-			obj = s
+			sss := strconv.Itoa(i)
+			obj = sss
 			typ = "string"
-			assert.ErrorIsNil(t, enc.EncodeObject(db, key, expireat, toString(s)))
+			c.Assert(enc.EncodeObject(db, key, expireat, s.toString(sss)), gocheck.IsNil)
 		case 1:
 			list := []string{}
 			for j := 0; j < 32; j++ {
@@ -224,7 +240,7 @@ func TestEncodeRdb(t *testing.T) {
 			}
 			obj = list
 			typ = "list"
-			assert.ErrorIsNil(t, enc.EncodeObject(db, key, expireat, toList(list...)))
+			c.Assert(enc.EncodeObject(db, key, expireat, s.toList(list...)), gocheck.IsNil)
 		case 2:
 			hash := make(map[string]string)
 			for j := 0; j < 32; j++ {
@@ -232,7 +248,7 @@ func TestEncodeRdb(t *testing.T) {
 			}
 			obj = hash
 			typ = "hash"
-			assert.ErrorIsNil(t, enc.EncodeObject(db, key, expireat, toHash(hash)))
+			c.Assert(enc.EncodeObject(db, key, expireat, s.toHash(hash)), gocheck.IsNil)
 		case 3:
 			zset := make(map[string]float64)
 			for j := 0; j < 32; j++ {
@@ -240,7 +256,7 @@ func TestEncodeRdb(t *testing.T) {
 			}
 			obj = zset
 			typ = "zset"
-			assert.ErrorIsNil(t, enc.EncodeObject(db, key, expireat, toZSet(zset)))
+			c.Assert(enc.EncodeObject(db, key, expireat, s.toZSet(zset)), gocheck.IsNil)
 		case 4:
 			set := []string{}
 			for j := 0; j < 32; j++ {
@@ -248,46 +264,54 @@ func TestEncodeRdb(t *testing.T) {
 			}
 			obj = set
 			typ = "set"
-			assert.ErrorIsNil(t, enc.EncodeObject(db, key, expireat, toSet(set...)))
+			c.Assert(enc.EncodeObject(db, key, expireat, s.toSet(set...)), gocheck.IsNil)
 		}
+
 		objs[i].db = db
 		objs[i].expireat = expireat
 		objs[i].key = key
 		objs[i].obj = obj
 		objs[i].typ = typ
 	}
-	assert.ErrorIsNil(t, enc.EncodeFooter())
+
+	c.Assert(enc.EncodeFooter(), gocheck.IsNil)
+
 	rdb := b.Bytes()
-	var c atomic2.Int64
-	l := NewLoader(ioutils.NewCountReader(bytes.NewReader(rdb), &c))
-	assert.ErrorIsNil(t, l.Header())
+	var cc atomic2.Int64
+	l := NewLoader(ioutils.NewCountReader(bytes.NewReader(rdb), &cc))
+	c.Assert(l.Header(), gocheck.IsNil)
+
 	var i int = 0
 	for {
 		e, err := l.NextBinEntry()
-		assert.ErrorIsNil(t, err)
+		c.Assert(err, gocheck.IsNil)
 		if e == nil {
 			break
 		}
-		assert.Must(t, objs[i].db == e.DB)
-		assert.Must(t, objs[i].expireat == e.ExpireAt)
-		assert.Must(t, bytes.Equal(objs[i].key, e.Key))
+
+		c.Assert(objs[i].db, gocheck.Equals, e.DB)
+		c.Assert(objs[i].expireat, gocheck.Equals, e.ExpireAt)
+		c.Assert(objs[i].key, gocheck.DeepEquals, e.Key)
+
 		o, err := DecodeDump(e.Value)
-		assert.ErrorIsNil(t, err)
+		c.Assert(err, gocheck.IsNil)
+
 		switch objs[i].typ {
 		case "string":
-			checkString(t, o, objs[i].obj.(string))
+			s.checkString(c, o, objs[i].obj.(string))
 		case "list":
-			checkList(t, o, objs[i].obj.([]string))
+			s.checkList(c, o, objs[i].obj.([]string))
 		case "hash":
-			checkHash(t, o, objs[i].obj.(map[string]string))
+			s.checkHash(c, o, objs[i].obj.(map[string]string))
 		case "zset":
-			checkZSet(t, o, objs[i].obj.(map[string]float64))
+			s.checkZSet(c, o, objs[i].obj.(map[string]float64))
 		case "set":
-			checkSet(t, o, objs[i].obj.([]string))
+			s.checkSet(c, o, objs[i].obj.([]string))
 		}
 		i++
 	}
-	assert.Must(t, i == len(objs))
-	assert.ErrorIsNil(t, l.Footer())
-	assert.Must(t, c.Get() == int64(len(rdb)))
+
+	c.Assert(i, gocheck.Equals, len(objs))
+	c.Assert(l.Footer(), gocheck.IsNil)
+	c.Assert(cc.Get(), gocheck.DeepEquals, int64(len(rdb)))
 }

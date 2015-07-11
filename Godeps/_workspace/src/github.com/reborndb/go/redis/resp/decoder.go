@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
+	"github.com/ngaut/log"
 	"github.com/reborndb/go/io/ioutils"
-	"github.com/reborndb/go/log"
 )
 
 type decoder struct {
@@ -32,7 +32,7 @@ func DecodeRequest(r *bufio.Reader) (Resp, error) {
 func MustDecode(r *bufio.Reader) Resp {
 	resp, err := Decode(r)
 	if err != nil {
-		log.PanicError(err, "decode redis resp failed")
+		log.Fatalf("decode redis resp failed - %s", err)
 	}
 	return resp
 }
@@ -50,7 +50,7 @@ func DecodeRequestFromBytes(p []byte) (Resp, error) {
 func MustDecodeFromBytes(p []byte) Resp {
 	resp, err := DecodeFromBytes(p)
 	if err != nil {
-		log.PanicError(err, "decode redis resp from bytes failed")
+		log.Fatalf("decode redis resp from bytes failed - %s", err)
 	}
 	return resp
 }

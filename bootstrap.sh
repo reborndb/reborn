@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "if you don't install godep, this script can help you install go dependencies"
 echo "downloading dependencies, it may take a few minutes..."

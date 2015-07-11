@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo "shut down proxy_1..."
 ../bin/reborn-config -c config.ini proxy offline proxy_1
 echo "done"

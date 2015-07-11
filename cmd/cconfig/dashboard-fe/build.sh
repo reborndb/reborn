@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 grunt build
 rm -rf ../assets/statics/admin

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo "add group 1 with a master(localhost:6381), Notice: do not use localhost when in produciton"
 ../bin/reborn-config -c config.ini -L ./log/cconfig.log server add 1 localhost:6381 master
 

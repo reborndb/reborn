@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo "slots initializing..."
 ../bin/reborn-config -c config.ini slot init -f
 echo "done"

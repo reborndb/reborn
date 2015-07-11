@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/reborndb/go/errors"
-	"github.com/reborndb/go/log"
+	"github.com/juju/errors"
+	"github.com/ngaut/log"
 )
 
 type encoder struct {
@@ -54,7 +54,7 @@ func encode(w *bufio.Writer, r Resp, needFlush bool) error {
 
 func MustEncode(w *bufio.Writer, r Resp) {
 	if err := Encode(w, r); err != nil {
-		log.PanicError(err, "encode redis resp failed")
+		log.Fatalf("encode redis resp failed - %s", err)
 	}
 }
 
@@ -75,7 +75,7 @@ func EncodeToString(r Resp) (string, error) {
 func MustEncodeToBytes(r Resp) []byte {
 	b, err := EncodeToBytes(r)
 	if err != nil {
-		log.PanicError(err, "encode redis resp to bytes failed")
+		log.Fatalf("encode redis resp to bytes failed - %s", err)
 	}
 	return b
 }

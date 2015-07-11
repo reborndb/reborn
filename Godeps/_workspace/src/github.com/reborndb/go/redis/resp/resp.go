@@ -6,15 +6,15 @@ package resp
 import (
 	"fmt"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 var (
-	ErrBadRespType     = errors.Static("bad resp type")
-	ErrBadRespEnd      = errors.Static("bad resp end")
-	ErrBadRespInt      = errors.Static("bad resp int")
-	ErrBadRespBytesLen = errors.Static("bad resp bytes len")
-	ErrBadRespArrayLen = errors.Static("bad resp array len")
+	ErrBadRespType     = errors.New("bad resp type")
+	ErrBadRespEnd      = errors.New("bad resp end")
+	ErrBadRespInt      = errors.New("bad resp int")
+	ErrBadRespBytesLen = errors.New("bad resp bytes len")
+	ErrBadRespArrayLen = errors.New("bad resp array len")
 )
 
 type RespType byte

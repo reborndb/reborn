@@ -6,7 +6,7 @@ package ioutils
 import (
 	"io"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 func ReadFull(r io.Reader, p []byte) (int, error) {

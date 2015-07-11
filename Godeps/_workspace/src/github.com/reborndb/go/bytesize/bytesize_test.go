@@ -6,41 +6,50 @@ package bytesize
 import (
 	"testing"
 
-	"github.com/reborndb/go/errors"
-	"github.com/reborndb/go/testing/assert"
+	"github.com/reborndb/go/errors2"
+	. "gopkg.in/check.v1"
 )
 
-func TestBytesize(t *testing.T) {
-	assert.Must(t, MustParse("1") == 1)
-	assert.Must(t, MustParse("1B") == 1)
-	assert.Must(t, MustParse("1K") == KB)
-	assert.Must(t, MustParse("1M") == MB)
-	assert.Must(t, MustParse("1G") == GB)
-	assert.Must(t, MustParse("1T") == TB)
-	assert.Must(t, MustParse("1P") == PB)
-
-	assert.Must(t, MustParse(" -1") == -1)
-	assert.Must(t, MustParse(" -1 b") == -1)
-	assert.Must(t, MustParse(" -1 kb ") == -1*KB)
-	assert.Must(t, MustParse(" -1 mb ") == -1*MB)
-	assert.Must(t, MustParse(" -1 gb ") == -1*GB)
-	assert.Must(t, MustParse(" -1 tb ") == -1*TB)
-	assert.Must(t, MustParse(" -1 pb ") == -1*PB)
-
-	assert.Must(t, MustParse(" 1.5") == 1)
-	assert.Must(t, MustParse(" 1.5 kb ") == 1.5*KB)
-	assert.Must(t, MustParse(" 1.5 mb ") == 1.5*MB)
-	assert.Must(t, MustParse(" 1.5 gb ") == 1.5*GB)
-	assert.Must(t, MustParse(" 1.5 tb ") == 1.5*TB)
-	assert.Must(t, MustParse(" 1.5 pb ") == 1.5*PB)
+func TestT(t *testing.T) {
+	TestingT(t)
 }
 
-func TestBytesizeError(t *testing.T) {
+var _ = Suite(&testBytesizeSuite{})
+
+type testBytesizeSuite struct {
+}
+
+func (s *testBytesizeSuite) TestBytesize(c *C) {
+	c.Assert(MustParse("1"), Equals, int64(1))
+	c.Assert(MustParse("1B"), Equals, int64(1))
+	c.Assert(MustParse("1K"), Equals, int64(KB))
+	c.Assert(MustParse("1M"), Equals, int64(MB))
+	c.Assert(MustParse("1G"), Equals, int64(GB))
+	c.Assert(MustParse("1T"), Equals, int64(TB))
+	c.Assert(MustParse("1P"), Equals, int64(PB))
+
+	c.Assert(MustParse(" -1"), Equals, int64(-1))
+	c.Assert(MustParse(" -1 b"), Equals, int64(-1))
+	c.Assert(MustParse(" -1 kb "), Equals, int64(-1*KB))
+	c.Assert(MustParse(" -1 mb "), Equals, int64(-1*MB))
+	c.Assert(MustParse(" -1 gb "), Equals, int64(-1*GB))
+	c.Assert(MustParse(" -1 tb "), Equals, int64(-1*TB))
+	c.Assert(MustParse(" -1 pb "), Equals, int64(-1*PB))
+
+	c.Assert(MustParse(" 1.5"), Equals, int64(1))
+	c.Assert(MustParse(" 1.5 kb "), Equals, int64(1.5*KB))
+	c.Assert(MustParse(" 1.5 mb "), Equals, int64(1.5*MB))
+	c.Assert(MustParse(" 1.5 gb "), Equals, int64(1.5*GB))
+	c.Assert(MustParse(" 1.5 tb "), Equals, int64(1.5*TB))
+	c.Assert(MustParse(" 1.5 pb "), Equals, int64(1.5*PB))
+}
+
+func (s *testBytesizeSuite) TestBytesizeError(c *C) {
 	var err error
 	_, err = Parse("--1")
-	assert.Must(t, errors.Equal(err, ErrBadBytesize))
+	c.Assert(errors2.ErrorEqual(err, ErrBadBytesize), Equals, true)
 	_, err = Parse("hello world")
-	assert.Must(t, errors.Equal(err, ErrBadBytesize))
+	c.Assert(errors2.ErrorEqual(err, ErrBadBytesize), Equals, true)
 	_, err = Parse("123.132.32")
-	assert.Must(t, errors.Equal(err, ErrBadBytesize))
+	c.Assert(errors2.ErrorEqual(err, ErrBadBytesize), Equals, true)
 }

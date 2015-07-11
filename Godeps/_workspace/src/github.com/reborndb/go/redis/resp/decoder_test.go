@@ -4,13 +4,21 @@
 package resp
 
 import (
-	"bytes"
 	"testing"
 
-	"github.com/reborndb/go/testing/assert"
+	. "gopkg.in/check.v1"
 )
 
-func TestDecodeInvalidRequests(t *testing.T) {
+func TestT(t *testing.T) {
+	TestingT(t)
+}
+
+var _ = Suite(&testRedisRespSuite{})
+
+type testRedisRespSuite struct {
+}
+
+func (s *testRedisRespSuite) TestDecodeInvalidRequests(c *C) {
 	test := []string{
 		"",
 		"*hello\r\n",
@@ -35,28 +43,31 @@ func TestDecodeInvalidRequests(t *testing.T) {
 		"+OK\n",
 		"-Error message\r",
 	}
-	for _, s := range test {
-		_, err := DecodeFromBytes([]byte(s))
-		assert.Must(t, err != nil)
+	for _, ss := range test {
+		_, err := DecodeFromBytes([]byte(ss))
+		c.Assert(err, NotNil)
 	}
 }
 
-func TestDecodeBulkBytes(t *testing.T) {
+func (s *testRedisRespSuite) TestDecodeBulkBytes(c *C) {
 	test := "*2\r\n$4\r\nLLEN\r\n$6\r\nmylist\r\n"
 	resp, err := DecodeFromBytes([]byte(test))
-	assert.ErrorIsNil(t, err)
+	c.Assert(err, IsNil)
+
 	x, ok := resp.(*Array)
-	assert.Must(t, ok)
-	assert.Must(t, len(x.Value) == 2)
+	c.Assert(ok, Equals, true)
+	c.Assert(len(x.Value), Equals, 2)
+
 	s1, ok := x.Value[0].(*BulkBytes)
-	assert.Must(t, ok)
-	assert.Must(t, bytes.Equal(s1.Value, []byte("LLEN")))
+	c.Assert(ok, Equals, true)
+	c.Assert(s1.Value, DeepEquals, []byte("LLEN"))
+
 	s2, ok := x.Value[1].(*BulkBytes)
-	assert.Must(t, ok)
-	assert.Must(t, bytes.Equal(s2.Value, []byte("mylist")))
+	c.Assert(ok, Equals, true)
+	c.Assert(s2.Value, DeepEquals, []byte("mylist"))
 }
 
-func TestDecoder(t *testing.T) {
+func (s *testRedisRespSuite) TestDecoder(c *C) {
 	test := []string{
 		"$6\r\nfoobar\r\n",
 		"$0\r\n\r\n",
@@ -71,29 +82,29 @@ func TestDecoder(t *testing.T) {
 		"*3\r\n$4\r\nEVAL\r\n$31\r\nreturn {1,2,{3,'Hello World!'}}\r\n$1\r\n0\r\n",
 		"\n",
 	}
-	for _, s := range test {
-		_, err := DecodeFromBytes([]byte(s))
-		assert.ErrorIsNil(t, err)
+	for _, ss := range test {
+		_, err := DecodeFromBytes([]byte(ss))
+		c.Assert(err, IsNil)
 	}
 }
 
-func TestDecodeRequest(t *testing.T) {
+func (s *testRedisRespSuite) TestDecodeRequest(c *C) {
 	test := []string{
 		"PING\r\n",
 		"ECHO   abc\r\n",
 		"*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n",
 		"\n",
 	}
-	for _, s := range test {
-		_, err := DecodeRequestFromBytes([]byte(s))
-		assert.ErrorIsNil(t, err)
+	for _, ss := range test {
+		_, err := DecodeRequestFromBytes([]byte(ss))
+		c.Assert(err, IsNil)
 	}
 
 	invalidTest := []string{
 		"+OK\r\n",
 	}
-	for _, s := range invalidTest {
-		_, err := DecodeRequestFromBytes([]byte(s))
-		assert.Must(t, err != nil)
+	for _, ss := range invalidTest {
+		_, err := DecodeRequestFromBytes([]byte(ss))
+		c.Assert(err, NotNil)
 	}
 }

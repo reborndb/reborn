@@ -10,40 +10,48 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"testing"
 
-	"github.com/reborndb/go/testing/assert"
+	gocheck "gopkg.in/check.v1"
 )
 
-func DecodeHexRdb(t *testing.T, s string, n int) map[string]*BinEntry {
-	p, err := hex.DecodeString(strings.NewReplacer("\t", "", "\r", "", "\n", "", " ", "").Replace(s))
-	assert.ErrorIsNil(t, err)
+func (s *testRedisRdbSuite) DecodeHexRdb(c *gocheck.C, ss string, n int) map[string]*BinEntry {
+	p, err := hex.DecodeString(strings.NewReplacer("\t", "", "\r", "", "\n", "", " ", "").Replace(ss))
+	c.Assert(err, gocheck.IsNil)
+
 	r := bytes.NewReader(p)
 	l := NewLoader(r)
-	assert.ErrorIsNil(t, l.Header())
+	c.Assert(l.Header(), gocheck.IsNil)
+
 	entries := make(map[string]*BinEntry)
 	var i int = 0
 	for {
 		e, err := l.NextBinEntry()
-		assert.ErrorIsNil(t, err)
+		c.Assert(err, gocheck.IsNil)
 		if e == nil {
 			break
 		}
-		assert.Must(t, e.DB == 0)
+
+		c.Assert(e.DB, gocheck.Equals, uint32(0))
+
 		entries[string(e.Key)] = e
 		i++
 	}
-	assert.ErrorIsNil(t, l.Footer())
-	assert.Must(t, r.Len() == 0)
-	assert.Must(t, len(entries) == i && i == n)
+
+	c.Assert(l.Footer(), gocheck.IsNil)
+	c.Assert(r.Len(), gocheck.Equals, 0)
+	c.Assert(len(entries), gocheck.Equals, i)
+	c.Assert(n, gocheck.Equals, i)
+
 	return entries
 }
 
-func getobj(t *testing.T, entries map[string]*BinEntry, key string) (*BinEntry, interface{}) {
+func (s *testRedisRdbSuite) getobj(c *gocheck.C, entries map[string]*BinEntry, key string) (*BinEntry, interface{}) {
 	e := entries[key]
-	assert.Must(t, e != nil)
+	c.Assert(e, gocheck.NotNil)
+
 	o, err := DecodeDump(e.Value)
-	assert.ErrorIsNil(t, err)
+	c.Assert(err, gocheck.IsNil)
+
 	return e, o
 }
 
@@ -55,8 +63,8 @@ for i in 1 255 256 65535 65536 2147483647 2147483648 4294967295 4294967296 -2147
 done
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadIntString(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadIntString(c *gocheck.C) {
+	ss := `
 		524544495330303036fe00000a737472696e675f323535c1ff00000873747269
 		6e675f31c0010011737472696e675f343239343936373239360a343239343936
 		373239360011737472696e675f343239343936373239350a3432393439363732
@@ -67,12 +75,12 @@ func TestLoadIntString(t *testing.T) {
 		37c2ffffff7fffe49d9f131fb5c3b5
 	`
 	values := []int{1, 255, 256, 65535, 65536, 2147483647, 2147483648, 4294967295, 4294967296, -2147483648}
-	entries := DecodeHexRdb(t, s, len(values))
+	entries := s.DecodeHexRdb(c, ss, len(values))
 	for _, value := range values {
 		key := fmt.Sprintf("string_%d", value)
-		_, obj := getobj(t, entries, key)
+		_, obj := s.getobj(c, entries, key)
 		val := obj.(String)
-		assert.Must(t, bytes.Equal([]byte(val), []byte(strconv.Itoa(value))))
+		c.Assert([]byte(val), gocheck.DeepEquals, []byte(strconv.Itoa(value)))
 	}
 }
 
@@ -85,20 +93,20 @@ func TestLoadIntString(t *testing.T) {
 ./redis-cli pexpireat string_ttlms 1500000000000
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadStringTTL(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadStringTTL(c *gocheck.C) {
+	ss := `
 		524544495330303036fe00fc0098f73e5d010000000c737472696e675f74746c
 		6d730c737472696e675f74746c6d73fc0098f73e5d010000000b737472696e67
 		5f74746c730b737472696e675f74746c73ffd15acd935a3fe949
 	`
 	expireat := uint64(1500000000000)
-	entries := DecodeHexRdb(t, s, 2)
+	entries := s.DecodeHexRdb(c, ss, 2)
 	keys := []string{"string_ttls", "string_ttlms"}
 	for _, key := range keys {
-		e, obj := getobj(t, entries, key)
+		e, obj := s.getobj(c, entries, key)
 		val := obj.(String)
-		assert.Must(t, bytes.Equal([]byte(val), []byte(key)))
-		assert.Must(t, e.ExpireAt == expireat)
+		c.Assert([]byte(val), gocheck.DeepEquals, []byte(key))
+		c.Assert(e.ExpireAt, gocheck.Equals, expireat)
 	}
 }
 
@@ -112,8 +120,8 @@ done
 ./redis-cli set string_long $s
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadLongString(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadLongString(c *gocheck.C) {
+	ss := `
 		524544495330303036fe00000b737472696e675f6c6f6e67c342f28000010000
 		02303130e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0
 		ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01
@@ -140,15 +148,15 @@ func TestLoadLongString(t *testing.T) {
 		ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01e0ff01
 		e0ff01e0ff01e0ff01e0ff01e03201013031ffdfdb02bd6d5da5e6
 	`
-	entries := DecodeHexRdb(t, s, 1)
-	_, obj := getobj(t, entries, "string_long")
+	entries := s.DecodeHexRdb(c, ss, 1)
+	_, obj := s.getobj(c, entries, "string_long")
 	val := []byte(obj.(String))
 	for i := 0; i < (1 << 15); i++ {
-		var c uint8 = '0'
+		var cc uint8 = '0'
 		if i%2 != 0 {
-			c = '1'
+			cc = '1'
 		}
-		assert.Must(t, val[i] == c)
+		c.Assert(val[i], gocheck.Equals, cc)
 	}
 }
 
@@ -161,22 +169,24 @@ for ((i=0;i<256;i++)); do
 done
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadListZipmap(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadListZipmap(c *gocheck.C) {
+	ss := `
 		524544495330303036fe000a086c6973745f6c7a66c31f440b040b0400000820
 		0306000200f102f202e0ff03e1ff07e1ff07e1d90701f2ffff6a1c2d51c02301
 		16
 	`
-	entries := DecodeHexRdb(t, s, 1)
-	_, obj := getobj(t, entries, "list_lzf")
+	entries := s.DecodeHexRdb(c, ss, 1)
+	_, obj := s.getobj(c, entries, "list_lzf")
 	val := obj.(List)
-	assert.Must(t, len(val) == 512)
+	c.Assert(len(val), gocheck.Equals, 512)
+
 	for i := 0; i < 256; i++ {
 		var s string = "0"
 		if i%2 != 0 {
 			s = "1"
 		}
-		assert.Must(t, string(val[i]) == s)
+
+		c.Assert(string(val[i]), gocheck.Equals, s)
 	}
 }
 
@@ -188,18 +198,19 @@ for ((i=0;i<32;i++)); do
 done
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadList(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadList(c *gocheck.C) {
+	ss := `
 		524544495330303036fe0001046c69737420c000c001c002c003c004c005c006
 		c007c008c009c00ac00bc00cc00dc00ec00fc010c011c012c013c014c015c016
 		c017c018c019c01ac01bc01cc01dc01ec01fff756ea1fa90adefe3
 	`
-	entries := DecodeHexRdb(t, s, 1)
-	_, obj := getobj(t, entries, "list")
+	entries := s.DecodeHexRdb(c, ss, 1)
+	_, obj := s.getobj(c, entries, "list")
 	val := obj.(List)
-	assert.Must(t, len(val) == 32)
+	c.Assert(len(val), gocheck.Equals, 32)
+
 	for i := 0; i < 32; i++ {
-		assert.Must(t, string(val[i]) == strconv.Itoa(i))
+		c.Assert(string(val[i]), gocheck.Equals, strconv.Itoa(i))
 	}
 }
 
@@ -214,40 +225,44 @@ for ((i=0;i<32;i++)); do
 done
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadSetAndSetIntset(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadSetAndSetIntset(c *gocheck.C) {
+	ss := `
 		524544495330303036fe0002047365743220c016c00dc01bc012c01ac004c014
 		c002c017c01dc01cc013c019c01ec008c006c000c001c007c00fc009c01fc00e
 		c003c00ac015c010c00bc018c011c00cc0050b04736574312802000000100000
 		0000000100020003000400050006000700080009000a000b000c000d000e000f
 		00ff3a0a9697324d19c3
 	`
-	entries := DecodeHexRdb(t, s, 2)
+	entries := s.DecodeHexRdb(c, ss, 2)
 
-	_, obj1 := getobj(t, entries, "set1")
+	_, obj1 := s.getobj(c, entries, "set1")
 	val1 := obj1.(Set)
 	set1 := make(map[string]bool)
 	for _, mem := range val1 {
 		set1[string(mem)] = true
 	}
-	assert.Must(t, len(set1) == 16)
-	assert.Must(t, len(set1) == len(val1))
+
+	c.Assert(len(set1), gocheck.Equals, 16)
+	c.Assert(len(set1), gocheck.Equals, len(val1))
+
 	for i := 0; i < 16; i++ {
 		_, ok := set1[strconv.Itoa(i)]
-		assert.Must(t, ok)
+		c.Assert(ok, gocheck.Equals, true)
 	}
 
-	_, obj2 := getobj(t, entries, "set2")
+	_, obj2 := s.getobj(c, entries, "set2")
 	val2 := obj2.(Set)
 	set2 := make(map[string]bool)
 	for _, mem := range val2 {
 		set2[string(mem)] = true
 	}
-	assert.Must(t, len(set2) == 32)
-	assert.Must(t, len(set2) == len(val2))
+
+	c.Assert(len(set2), gocheck.Equals, 32)
+	c.Assert(len(set2), gocheck.Equals, len(val2))
+
 	for i := 0; i < 32; i++ {
 		_, ok := set2[strconv.Itoa(i)]
-		assert.Must(t, ok)
+		c.Assert(ok, gocheck.Equals, true)
 	}
 }
 
@@ -262,8 +277,8 @@ for ((i=-16;i<16;i++)); do
 done
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadHashAndHashZiplist(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadHashAndHashZiplist(c *gocheck.C) {
+	ss := `
 		524544495330303036fe000405686173683220c00dc00dc0fcc0fcc0ffc0ffc0
 		04c004c002c002c0fbc0fbc0f0c0f0c0f9c0f9c008c008c0fac0fac006c006c0
 		00c000c001c001c0fec0fec007c007c0f6c0f6c00fc00fc009c009c0f7c0f7c0
@@ -273,32 +288,36 @@ func TestLoadHashAndHashZiplist(t *testing.T) {
 		02f702f802f802f902f902fa02fa02fb02fb02fc02fc02fd02fd02fe0d03fe0d
 		03fe0e03fe0e03fe0f03fe0fffffa423d3036c15e534
 	`
-	entries := DecodeHexRdb(t, s, 2)
+	entries := s.DecodeHexRdb(c, ss, 2)
 
-	_, obj1 := getobj(t, entries, "hash1")
+	_, obj1 := s.getobj(c, entries, "hash1")
 	val1 := obj1.(Hash)
 	hash1 := make(map[string]string)
 	for _, ent := range val1 {
 		hash1[string(ent.Field)] = string(ent.Value)
 	}
-	assert.Must(t, len(hash1) == 16)
-	assert.Must(t, len(hash1) == len(val1))
+
+	c.Assert(len(hash1), gocheck.Equals, 16)
+	c.Assert(len(hash1), gocheck.Equals, len(val1))
+
 	for i := 0; i < 16; i++ {
-		s := strconv.Itoa(i)
-		assert.Must(t, hash1[s] == s)
+		sss := strconv.Itoa(i)
+		c.Assert(hash1[sss], gocheck.Equals, sss)
 	}
 
-	_, obj2 := getobj(t, entries, "hash2")
+	_, obj2 := s.getobj(c, entries, "hash2")
 	val2 := obj2.(Hash)
 	hash2 := make(map[string]string)
 	for _, ent := range val2 {
 		hash2[string(ent.Field)] = string(ent.Value)
 	}
-	assert.Must(t, len(hash2) == 32)
-	assert.Must(t, len(hash2) == len(val2))
+
+	c.Assert(len(hash2), gocheck.Equals, 32)
+	c.Assert(len(hash2), gocheck.Equals, len(val2))
+
 	for i := -16; i < 16; i++ {
-		s := strconv.Itoa(i)
-		assert.Must(t, hash2[s] == s)
+		sss := strconv.Itoa(i)
+		c.Assert(hash2[sss], gocheck.Equals, sss)
 	}
 }
 
@@ -313,8 +332,8 @@ for ((i=0;i<32;i++)); do
 done
 ./redis-cli save && xxd -p -c 32 dump.rdb
 */
-func TestLoadZSetAndZSetZiplist(t *testing.T) {
-	s := `
+func (s *testRedisRdbSuite) TestLoadZSetAndZSetZiplist(c *gocheck.C) {
+	ss := `
 		524544495330303036fe0003057a7365743220c016032d3232c00d032d3133c0
 		1b032d3237c012032d3138c01a032d3236c004022d34c014032d3230c002022d
 		32c017032d3233c01d032d3239c01c032d3238c013032d3139c019032d3235c0
@@ -326,35 +345,39 @@ func TestLoadZSetAndZSetZiplist(t *testing.T) {
 		02fa02fa02fb02fb02fc02fc02fd02fd02fe0d03fe0d03fe0e03fe0e03fe0f03
 		fe0fffff2addedbf4f5a8f93
 	`
-	entries := DecodeHexRdb(t, s, 2)
+	entries := s.DecodeHexRdb(c, ss, 2)
 
-	_, obj1 := getobj(t, entries, "zset1")
+	_, obj1 := s.getobj(c, entries, "zset1")
 	val1 := obj1.(ZSet)
 	zset1 := make(map[string]float64)
 	for _, ent := range val1 {
 		zset1[string(ent.Member)] = ent.Score
 	}
-	assert.Must(t, len(zset1) == 16)
-	assert.Must(t, len(zset1) == len(val1))
+
+	c.Assert(len(zset1), gocheck.Equals, 16)
+	c.Assert(len(zset1), gocheck.Equals, len(val1))
+
 	for i := 0; i < 16; i++ {
-		s := strconv.Itoa(i)
-		score, ok := zset1[s]
-		assert.Must(t, ok)
-		assert.Must(t, math.Abs(score-float64(i)) < 1e-10)
+		sss := strconv.Itoa(i)
+		score, ok := zset1[sss]
+		c.Assert(ok, gocheck.Equals, true)
+		c.Assert(math.Abs(score-float64(i)) < 1e-10, gocheck.Equals, true)
 	}
 
-	_, obj2 := getobj(t, entries, "zset2")
+	_, obj2 := s.getobj(c, entries, "zset2")
 	val2 := obj2.(ZSet)
 	zset2 := make(map[string]float64)
 	for _, ent := range val2 {
 		zset2[string(ent.Member)] = ent.Score
 	}
-	assert.Must(t, len(zset2) == 32)
-	assert.Must(t, len(zset2) == len(val2))
+
+	c.Assert(len(zset2), gocheck.Equals, 32)
+	c.Assert(len(zset2), gocheck.Equals, len(val2))
+
 	for i := 0; i < 32; i++ {
-		s := strconv.Itoa(i)
-		score, ok := zset2[s]
-		assert.Must(t, ok)
-		assert.Must(t, math.Abs(score+float64(i)) < 1e-10)
+		sss := strconv.Itoa(i)
+		score, ok := zset2[sss]
+		c.Assert(ok, gocheck.Equals, true)
+		c.Assert(math.Abs(score+float64(i)) < 1e-10, gocheck.Equals, true)
 	}
 }

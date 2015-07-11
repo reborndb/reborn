@@ -6,7 +6,7 @@ package resp
 import (
 	"strings"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 )
 
 func ParseArgs(resp Resp) (cmd string, args [][]byte, err error) {

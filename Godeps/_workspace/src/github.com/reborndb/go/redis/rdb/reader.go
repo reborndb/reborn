@@ -10,7 +10,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/reborndb/go/errors"
+	"github.com/juju/errors"
 	"github.com/reborndb/go/io/ioutils"
 )
 

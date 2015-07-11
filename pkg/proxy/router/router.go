@@ -21,6 +21,7 @@ import (
 	"github.com/juju/errors"
 	stats "github.com/ngaut/gostats"
 	"github.com/ngaut/log"
+	"github.com/reborndb/go/errors2"
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/proxy/group"
 	"github.com/reborndb/reborn/pkg/proxy/parser"
@@ -331,7 +332,7 @@ func (s *Server) handleConn(c net.Conn) {
 	var err error
 	defer func() {
 		client.closeSignal.Wait() //waiting for writer goroutine
-		if errors.Cause(err) != io.EOF {
+		if errors2.ErrorNotEqual(err, io.EOF) {
 			log.Warningf("close connection %v, %v", client, errors.ErrorStack(err))
 		} else {
 			log.Infof("close connection %v", client)

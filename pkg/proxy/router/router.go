@@ -693,12 +693,12 @@ func (s *Server) RegisterAndWait(wait bool) {
 func newRedisConn(addr string, timeout int, readSize int, writeSize int, auth string) (*redisconn.Conn, error) {
 	c, err := redisconn.NewConnectionWithSize(addr, timeout, readSize, writeSize)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	if err = doAuth(c, auth); err != nil {
 		c.Close()
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return c, nil

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/docopt/docopt-go"
+	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/reborndb/reborn/pkg/models"
 )
@@ -26,7 +27,7 @@ func cmdServer(argv []string) (err error) {
 	args, err := docopt.Parse(usage, argv, true, "", false)
 	if err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 	log.Debug(args)
 
@@ -37,7 +38,7 @@ func cmdServer(argv []string) (err error) {
 	groupId, err := strconv.Atoi(args["<group_id>"].(string))
 	if err != nil {
 		log.Warning(err)
-		return err
+		return errors.Trace(err)
 	}
 
 	if args["remove-group"].(bool) {
@@ -67,7 +68,7 @@ func runAddServerGroup(groupId int) error {
 	var v interface{}
 	err := callApi(METHOD_PUT, "/api/server_groups", serverGroup, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -81,7 +82,7 @@ func runPromoteServerToMaster(groupId int, addr string) error {
 	var v interface{}
 	err := callApi(METHOD_POST, fmt.Sprintf("/api/server_group/%d/promote", groupId), s, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -92,7 +93,7 @@ func runAddServerToGroup(groupId int, addr string, role string) error {
 	var v interface{}
 	err := callApi(METHOD_PUT, fmt.Sprintf("/api/server_group/%d/addServer", groupId), server, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -102,7 +103,7 @@ func runListServerGroup() error {
 	var v interface{}
 	err := callApi(METHOD_GET, "/api/server_groups", nil, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -112,7 +113,7 @@ func runRemoveServerGroup(groupId int) error {
 	var v interface{}
 	err := callApi(METHOD_DELETE, fmt.Sprintf("/api/server_group/%d", groupId), nil, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -122,7 +123,7 @@ func runRemoveServerFromGroup(groupId int, addr string) error {
 	var v interface{}
 	err := callApi(METHOD_PUT, fmt.Sprintf("/api/server_group/%d/removeServer", groupId), models.Server{Addr: addr}, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil

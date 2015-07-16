@@ -41,7 +41,7 @@ options:
 			n, err := strconv.Atoi(args["<num>"].(string))
 			if err != nil {
 				log.Warning(err)
-				return err
+				return errors.Trace(err)
 			}
 			return runGCKeepN(n)
 		} else if args["-s"].(bool) {
@@ -60,7 +60,7 @@ options:
 func runRemoveFence() error {
 	var v interface{}
 	if err := callApi(METHOD_GET, "/api/remove_fence", nil, &v); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -69,7 +69,7 @@ func runRemoveFence() error {
 func runGCKeepN(keep int) error {
 	var v interface{}
 	if err := callApi(METHOD_GET, fmt.Sprintf("/api/action/gc?keep=%d", keep), nil, &v); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -78,7 +78,7 @@ func runGCKeepN(keep int) error {
 func runGCKeepNSec(secs int) error {
 	var v interface{}
 	if err := callApi(METHOD_GET, fmt.Sprintf("/api/action/gc?secs=%d", secs), nil, &v); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -87,9 +87,8 @@ func runGCKeepNSec(secs int) error {
 func runRemoveLock() error {
 	var v interface{}
 	if err := callApi(METHOD_GET, "/api/force_remove_locks", nil, &v); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
-
 }

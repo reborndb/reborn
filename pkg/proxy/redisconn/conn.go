@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/juju/errors"
 	"github.com/ngaut/deadline"
 )
 
@@ -29,7 +30,7 @@ func NewConnection(addr string, netTimeout int) (*Conn, error) {
 func NewConnectionWithSize(addr string, netTimeout int, readSize int, writeSize int) (*Conn, error) {
 	conn, err := net.DialTimeout("tcp", addr, time.Duration(netTimeout)*time.Second)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return &Conn{

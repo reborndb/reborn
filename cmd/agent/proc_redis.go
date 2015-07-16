@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/juju/errors"
 	"github.com/ngaut/log"
 )
 
@@ -32,7 +33,7 @@ func startRedis(args *redisArgs) (*process, error) {
 	seps := strings.Split(args.Addr, ":")
 
 	if len(seps) != 2 {
-		return nil, fmt.Errorf("redis addr must be ip:port format")
+		return nil, errors.Errorf("redis addr must be ip:port format")
 	}
 
 	p.Ctx["addr"] = args.Addr
@@ -54,7 +55,7 @@ func startRedis(args *redisArgs) (*process, error) {
 
 	if err := p.start(); err != nil {
 		log.Errorf("start redis err %v", err)
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	addCheckProc(p)
@@ -71,17 +72,17 @@ const (
 func newRedisConn(ctx map[string]string) (redis.Conn, error) {
 	c, err := redis.DialTimeout("tcp", ctx["addr"], connectTimeout, readTimeout, writeTimeout)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	auth := globalEnv.StoreAuth()
 	if len(auth) > 0 {
 		if ok, err := redis.String(c.Do("AUTH", auth)); err != nil {
 			c.Close()
-			return nil, err
+			return nil, errors.Trace(err)
 		} else if ok != "OK" {
 			c.Close()
-			return nil, fmt.Errorf("auth err, need OK but got %s", ok)
+			return nil, errors.Errorf("auth err, need OK but got %s", ok)
 		}
 	}
 
@@ -92,13 +93,13 @@ func bindRedisProcHandler(p *process) {
 	postStart := func(p *process) error {
 		c, err := newRedisConn(p.Ctx)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 
 		defer c.Close()
 
 		if _, err := c.Do("PING"); err != nil {
-			return err
+			return errors.Trace(err)
 		}
 		return nil
 	}
@@ -106,7 +107,7 @@ func bindRedisProcHandler(p *process) {
 	stop := func(p *process) error {
 		c, err := newRedisConn(p.Ctx)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 		defer c.Close()
 		c.Do("SHUTDOWN")

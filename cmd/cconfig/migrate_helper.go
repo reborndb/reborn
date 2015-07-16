@@ -4,12 +4,11 @@
 package main
 
 import (
-	"errors"
 	"strings"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	_ "github.com/juju/errors"
+	"github.com/juju/errors"
 	"github.com/reborndb/reborn/pkg/models"
 	"github.com/reborndb/reborn/pkg/utils"
 )
@@ -33,19 +32,19 @@ func sendRedisMigrateCmd(c redis.Conn, slotId int, toAddr string) (int, int, err
 
 	reply, err := redis.Values(c.Do("SLOTSMGRTTAGSLOT", addrParts[0], addrParts[1], MIGRATE_TIMEOUT, slotId))
 	if err != nil {
-		return -1, -1, err
+		return -1, -1, errors.Trace(err)
 	}
 
 	var succ, remain int
 	if _, err := redis.Scan(reply, &succ, &remain); err != nil {
-		return -1, -1, err
+		return -1, -1, errors.Trace(err)
 	}
 	return succ, remain, nil
 }
 
 func checkMaster(addr string) error {
 	if master, err := utils.GetRole(addr, ""); err != nil {
-		return err
+		return errors.Trace(err)
 	} else if master != "master" {
 		return ErrServerIsNotMaster
 	} else {
@@ -59,21 +58,21 @@ type RebornSlotMigrator struct{}
 func (m *RebornSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, task *MigrateTask, onProgress func(SlotMigrateProgress)) (err error) {
 	groupFrom, err := models.GetGroup(task.coordConn, task.productName, fromGroup)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	groupTo, err := models.GetGroup(task.coordConn, task.productName, toGroup)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	fromMaster, err := groupFrom.Master(task.coordConn)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	toMaster, err := groupTo.Master(task.coordConn)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	if fromMaster == nil || toMaster == nil {
@@ -81,23 +80,23 @@ func (m *RebornSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, 
 	}
 
 	if err = checkMaster(fromMaster.Addr); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	if err = checkMaster(toMaster.Addr); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	c, err := redis.Dial("tcp", fromMaster.Addr)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	defer c.Close()
 
 	_, remain, err := sendRedisMigrateCmd(c, slot.Id, toMaster.Addr)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	for remain > 0 {
@@ -121,7 +120,7 @@ func (m *RebornSlotMigrator) Migrate(slot *models.Slot, fromGroup, toGroup int, 
 			})
 		}
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 	}
 	return nil

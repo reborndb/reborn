@@ -169,7 +169,7 @@ func runSlotMigrate(fromSlotId, toSlotId int, newGroupId int, delay int) error {
 	var v interface{}
 	err := callApi(METHOD_POST, "/api/migrate", migrateInfo, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -179,7 +179,7 @@ func runRebalance(delay int) error {
 	var v interface{}
 	err := callApi(METHOD_POST, "/api/rebalance", nil, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil

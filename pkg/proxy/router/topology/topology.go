@@ -141,7 +141,7 @@ func (top *Topology) DoResponse(seq int, pi *models.ProxyInfo) error {
 	_, err = top.coordConn.Create(path.Join(actionPath, pi.ID), data,
 		0, zkhelper.DefaultFileACLs())
 
-	return err
+	return errors.Trace(err)
 }
 
 func (top *Topology) IsSessionExpiredEvent(event interface{}) bool {

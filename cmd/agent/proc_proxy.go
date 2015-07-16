@@ -8,7 +8,8 @@ import (
 	"os/exec"
 	"path"
 
-	"github.com/reborndb/go/log"
+	"github.com/juju/errors"
+	"github.com/ngaut/log"
 )
 
 type proxyArgs struct {
@@ -22,11 +23,11 @@ func startProxy(args *proxyArgs) (*process, error) {
 	p := newDefaultProcess("reborn-proxy", proxyType)
 
 	if len(args.Addr) == 0 {
-		return nil, fmt.Errorf("proxy must have an address, not empty")
+		return nil, errors.Errorf("proxy must have an address, not empty")
 	}
 
 	if len(args.HTTPAddr) == 0 {
-		return nil, fmt.Errorf("proxy must have a http address, not empty")
+		return nil, erros.Errorf("proxy must have a http address, not empty")
 	}
 
 	p.addCmdArgs("-c", configFile)
@@ -47,7 +48,7 @@ func startProxy(args *proxyArgs) (*process, error) {
 
 	if err := p.start(); err != nil {
 		log.Errorf("start proxy err %v", err)
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	addCheckProc(p)

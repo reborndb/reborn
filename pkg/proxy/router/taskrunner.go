@@ -57,7 +57,7 @@ func (tr *taskRunner) dowrite(r *PipelineRequest, flush bool) error {
 		err = tr.doFlush()
 	}
 
-	return err
+	return errors.Trace(err)
 }
 
 func (tr *taskRunner) handleTask(r *PipelineRequest, flush bool) error {
@@ -102,7 +102,7 @@ func (tr *taskRunner) tryRecover(err error) error {
 		tr.cleanupQueueTasks() //do not block dispatcher
 		log.Warning(err)
 		time.Sleep(1 * time.Second)
-		return err
+		return errors.Trace(err)
 	}
 
 	tr.c = c
@@ -215,7 +215,7 @@ func NewTaskRunner(addr string, netTimeout int, auth string) (*taskRunner, error
 
 	c, err := newRedisConn(addr, netTimeout, PipelineBufSize, PipelineBufSize, auth)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	tr.c = c

@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/c4pt0r/cfg"
+	"github.com/juju/errors"
 	"github.com/kardianos/osext"
 	"github.com/ngaut/log"
 	"github.com/ngaut/zkhelper"
@@ -22,7 +23,7 @@ func InitConfig() (*cfg.Cfg, error) {
 
 	ret := cfg.NewCfg(configFile)
 	if err := ret.Load(); err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return ret, nil
@@ -31,7 +32,7 @@ func InitConfig() (*cfg.Cfg, error) {
 func InitConfigFromFile(filename string) (*cfg.Cfg, error) {
 	ret := cfg.NewCfg(filename)
 	if err := ret.Load(); err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	return ret, nil
 }
@@ -73,17 +74,17 @@ func CreatePidFile(name string) error {
 
 	err := os.MkdirAll(path.Dir(name), 0755)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	f, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	defer f.Close()
 
 	if _, err = f.WriteString(fmt.Sprintf("%d", os.Getpid())); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	return nil
 }

@@ -122,7 +122,7 @@ func GetFenceProxyMap(coordConn zkhelper.Conn, productName string) (map[string]b
 		if err.Error() == zk.ErrNoNode.Error() {
 			return make(map[string]bool), nil
 		} else {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	}
 

@@ -25,7 +25,7 @@ func NewPool(addr string, capability int, f CreateConnFunc) *Pool {
 		if err == nil && r == nil {
 			return nil, errors.Errorf("cannot create nil connection")
 		}
-		return r, err
+		return r, errors.Trace(err)
 	}
 
 	p := new(Pool)

@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/reborndb/go/log"
+	"github.com/juju/errors"
+	"github.com/ngaut/log"
 )
 
 type dashboardArgs struct {
@@ -38,7 +39,7 @@ func startDashboard(args *dashboardArgs) (*process, error) {
 
 	if err := p.start(); err != nil {
 		log.Errorf("start dashboard err %v", err)
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	addCheckProc(p)

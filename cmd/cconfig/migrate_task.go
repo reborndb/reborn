@@ -58,7 +58,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	s, err := models.GetSlot(t.coordConn, t.productName, slotId)
 	if err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 	if s.State.Status != models.SLOT_STATUS_ONLINE && s.State.Status != models.SLOT_STATUS_MIGRATE {
 		log.Warning("status is not online && migrate", s)
@@ -97,7 +97,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	// modify slot status
 	if err := s.SetMigrateStatus(t.coordConn, from, to); err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 
 	err = t.slotMigrator.Migrate(s, from, to, t, func(p SlotMigrateProgress) {
@@ -108,7 +108,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	})
 	if err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 
 	// migrate done, change slot status back
@@ -117,7 +117,7 @@ func (t *MigrateTask) migrateSingleSlot(slotId int, to int) error {
 	s.State.MigrateStatus.To = models.INVALID_ID
 	if err := s.Update(t.coordConn); err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 
 	return nil
@@ -146,7 +146,7 @@ func (t *MigrateTask) run() error {
 		} else if err != nil {
 			log.Error(err)
 			t.Status = MIGRATE_TASK_ERR
-			return err
+			return errors.Trace(err)
 		}
 		t.Percent = (slotId - t.FromSlot + 1) * 100 / (t.ToSlot - t.FromSlot + 1)
 		log.Info("total percent:", t.Percent)

@@ -21,13 +21,13 @@ const (
 func newRedisConn(addr string, auth string) (redis.Conn, error) {
 	c, err := redis.DialTimeout("tcp", addr, RedisConnConnectTimeout, RedisConnReadTimeout, RedisConnWriteTimeout)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	if len(auth) > 0 {
 		if _, err = c.Do("AUTH", auth); err != nil {
 			c.Close()
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 	}
 
@@ -38,7 +38,7 @@ func newRedisConn(addr string, auth string) (redis.Conn, error) {
 func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int, error) {
 	c, err := newRedisConn(addr, auth)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	defer c.Close()
 
@@ -49,7 +49,7 @@ func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int,
 
 	reply, err = redis.Values(c.Do("SLOTSINFO", fromSlot, toSlot-fromSlot+1))
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	ret := map[int]int{}
@@ -58,12 +58,12 @@ func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int,
 			break
 		}
 		if reply, err = redis.Scan(reply, &val); err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 		var slot, keyCount int
 		_, err := redis.Scan(val, &slot, &keyCount)
 		if err != nil {
-			return nil, err
+			return nil, errors.Trace(err)
 		}
 		ret[slot] = keyCount
 	}
@@ -74,13 +74,13 @@ func SlotsInfo(addr string, fromSlot int, toSlot int, auth string) (map[int]int,
 func GetRedisStat(addr string, auth string) (map[string]string, error) {
 	c, err := newRedisConn(addr, auth)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 	defer c.Close()
 
 	ret, err := redis.String(c.Do("INFO"))
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	m := map[string]string{}
@@ -97,7 +97,7 @@ func GetRedisStat(addr string, auth string) (map[string]string, error) {
 
 	reply, err = redis.Strings(c.Do("CONFIG", "GET", "maxmemory"))
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	// we got result
@@ -115,13 +115,13 @@ func GetRedisStat(addr string, auth string) (map[string]string, error) {
 func GetRedisConfig(addr string, configName string, auth string) (string, error) {
 	c, err := newRedisConn(addr, auth)
 	if err != nil {
-		return "", err
+		return "", errors.Trace(err)
 	}
 	defer c.Close()
 
 	ret, err := redis.Strings(c.Do("CONFIG", "GET", configName))
 	if err != nil {
-		return "", err
+		return "", errors.Trace(err)
 	}
 
 	if len(ret) == 2 {

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/juju/errors"
 	"github.com/ngaut/log"
 )
 
@@ -22,7 +23,7 @@ func startQDB(args *qdbArgs) (*process, error) {
 	p := newDefaultProcess("qdb-server", qdbType)
 
 	if len(args.Addr) == 0 {
-		return nil, fmt.Errorf("qdb must have an address, not empty")
+		return nil, erros.Errorf("qdb must have an address, not empty")
 	}
 
 	if len(args.CPUNum) == 0 {
@@ -59,7 +60,7 @@ func startQDB(args *qdbArgs) (*process, error) {
 
 	if err := p.start(); err != nil {
 		log.Errorf("start redis err %v", err)
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	addCheckProc(p)

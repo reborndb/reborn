@@ -38,7 +38,7 @@ options:
 	args, err := docopt.Parse(usage, argv, true, "", false)
 	if err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 	log.Debug(args)
 

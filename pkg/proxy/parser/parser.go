@@ -278,7 +278,7 @@ func ReadBulk(r *bufio.Reader, size int, raw *[]byte) error {
 
 	// avoid copy
 	if _, err := io.ReadFull(r, (*raw)[n:n+size]); err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	*raw = (*raw)[0 : n+size : cap(*raw)]
 
@@ -334,7 +334,7 @@ func (r *Resp) WriteTo(w io.Writer) error {
 func (r *Resp) Bytes() ([]byte, error) {
 	b := &bytes.Buffer{}
 	err := r.WriteTo(b)
-	return b.Bytes(), err
+	return b.Bytes(), errors.Trace(err)
 }
 
 func formatCommandArg(arg interface{}) []byte {
@@ -357,7 +357,7 @@ func writeBulkArg(w io.Writer, arg []byte) error {
 	sw.Write(NEW_LINE)
 	sw.Write(arg)
 	_, err := sw.Write(NEW_LINE)
-	return err
+	return errors.Trace(err)
 }
 
 func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
@@ -373,5 +373,5 @@ func WriteCommand(w io.Writer, cmd string, args ...interface{}) error {
 		err = writeBulkArg(sw, formatCommandArg(arg))
 	}
 
-	return err
+	return errors.Trace(err)
 }

@@ -82,12 +82,12 @@ func GetSlot(coordConn zkhelper.Conn, productName string, id int) (*Slot, error)
 	coordPath := GetSlotPath(productName, id)
 	data, _, err := coordConn.Get(coordPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	var slot Slot
 	if err := json.Unmarshal(data, &slot); err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	return &slot, nil
@@ -97,7 +97,7 @@ func GetMigratingSlots(conn zkhelper.Conn, productName string) ([]*Slot, error) 
 	migrateSlots := make([]*Slot, 0)
 	slots, err := Slots(conn, productName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Trace(err)
 	}
 
 	for _, slot := range slots {

@@ -33,30 +33,30 @@ func callApi(method HttpMethod, apiPath string, params interface{}, retVal inter
 
 	b, err := json.Marshal(params)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	req, err := http.NewRequest(string(method), url, strings.NewReader(string(b)))
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error("can't connect to dashboard, please check 'dashboard_addr' is corrent in config file")
-		return err
+		return errors.Trace(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 
 	if resp.StatusCode == 200 {
 		err := json.Unmarshal(body, retVal)
 		if err != nil {
-			return err
+			return errors.Trace(err)
 		}
 		return nil
 	}

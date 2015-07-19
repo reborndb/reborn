@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/docopt/docopt-go"
+	"github.com/juju/errors"
 	"github.com/ngaut/log"
 	"github.com/reborndb/reborn/pkg/models"
 )
@@ -20,7 +21,7 @@ func cmdProxy(argv []string) (err error) {
 	args, err := docopt.Parse(usage, argv, true, "", false)
 	if err != nil {
 		log.Error(err)
-		return err
+		return errors.Trace(err)
 	}
 	log.Debug(args)
 
@@ -42,7 +43,7 @@ func runProxyList() error {
 	var v interface{}
 	err := callApi(METHOD_GET, "/api/proxy/list", nil, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil
@@ -56,7 +57,7 @@ func runSetProxyStatus(proxyName, status string) error {
 	var v interface{}
 	err := callApi(METHOD_POST, "/api/proxy", info, &v)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	fmt.Println(jsonify(v))
 	return nil

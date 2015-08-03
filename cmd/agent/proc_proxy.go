@@ -27,7 +27,7 @@ func startProxy(args *proxyArgs) (*process, error) {
 	}
 
 	if len(args.HTTPAddr) == 0 {
-		return nil, erros.Errorf("proxy must have a http address, not empty")
+		return nil, errors.Errorf("proxy must have a http address, not empty")
 	}
 
 	p.addCmdArgs("-c", configFile)

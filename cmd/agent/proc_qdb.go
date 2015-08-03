@@ -23,7 +23,7 @@ func startQDB(args *qdbArgs) (*process, error) {
 	p := newDefaultProcess("qdb-server", qdbType)
 
 	if len(args.Addr) == 0 {
-		return nil, erros.Errorf("qdb must have an address, not empty")
+		return nil, errors.Errorf("qdb must have an address, not empty")
 	}
 
 	if len(args.CPUNum) == 0 {

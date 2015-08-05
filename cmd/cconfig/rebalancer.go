@@ -42,7 +42,7 @@ func getLivingNodeInfos(coordConn zkhelper.Conn) ([]*NodeInfo, error) {
 		if master == nil {
 			return nil, errors.Errorf("group %d has no master", g.Id)
 		}
-		out, err := utils.GetRedisConfig(master.Addr, "MAXMEMORY", globalEnv.StoreAuth())
+		out, err := utils.GetRedisConfig(master.Addr, "maxmemory", globalEnv.StoreAuth())
 		if err != nil {
 			return nil, errors.Trace(err)
 		}

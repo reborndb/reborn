@@ -3,9 +3,17 @@
     "info": {
         "description": "",
         "version": "1.0.0",
-        "title": "RebornDB API"
+        "title": "RebornDB API",
+        "contact": {
+            "email": "support@pingcap.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
     },
     "schemes": [
+        "http",
         "https"
     ],
     "produces": [

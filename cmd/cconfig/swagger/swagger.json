@@ -433,9 +433,308 @@
                     }
                 }
             }
+        },
+        "/api/rebalance": {
+            "post": {
+                "description": "Server group keys rebalance.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/rebalance/status": {
+            "get": {
+                "description": "Status of server group keys rebalance.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An object of RebalanceStatus.",
+                        "schema": {
+                            "$ref": "#/definitions/RebalanceStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/slot/list": {
+            "get": {
+                "description": "Slots information.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An array of Slot.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Slot"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/slot/{slot_id}": {
+            "get": {
+                "description": "Slot information.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "slot_id",
+                        "description": "ID of slot.",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Slot.",
+                        "schema": {
+                            "$ref": "#/definitions/Slot"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/slot/init": {
+            "post": {
+                "description": "Init slot.",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "is_force",
+                        "description": "Force to init slot.",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/slots": {
+            "get": {
+                "description": "Slots information.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An array of Slot.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Slot"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/slot": {
+            "post": {
+                "description": "Set slot range information.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Range set task information.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/RangeSetTask"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/proxy/list": {
+            "get": {
+                "description": "Proxies information.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An array of ProxyInfo.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ProxyInfo"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/proxy/debug/vars": {
+            "get": {
+                "description": "Proxy debug information.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An object of DebugVars.",
+                        "schema": {
+                            "$ref": "#/definitions/DebugVars"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/proxy": {
+            "post": {
+                "description": "Set proxy status information.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Proxy information.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ProxyInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/action/gc": {
+            "get": {
+                "description": "Clean up actions infomation.",
+                "parameters": [
+                    {
+                        "in": "formData",
+                        "name": "keep",
+                        "description": "Actions number to keep.",
+                        "required": false,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "formData",
+                        "name": "secs",
+                        "description": "Actions in lastest seconds to keep.",
+                        "required": false,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of DebugVars.",
+                        "schema": {
+                            "$ref": "#/definitions/DebugVars"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/force_remove_locks": {
+            "get": {
+                "description": "Force to remove locks.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/remove_fence": {
+            "get": {
+                "description": "Remove fence.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "description": "Ping.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success."
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "DebugVars": {
+            "type": "object",
+            "properties": {}
+        },
         "GroupSlotKeysInfo": {
             "type": "object",
             "properties": {
@@ -538,6 +837,82 @@
                     "items": {
                         "$ref": "#/definitions/RedisInfo"
                     }
+                }
+            }
+        },
+        "ProxyInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of proxy."
+                },
+                "addr": {
+                    "type": "string",
+                    "description": "Addr of proxy."
+                },
+                "last_event": {
+                    "type": "string",
+                    "description": "Last event."
+                },
+                "last_event_ts": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Last event timestamp."
+                },
+                "state": {
+                    "type": "string",
+                    "description": "Status of proxy."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of proxy."
+                },
+                "debug_var_addr": {
+                    "type": "string",
+                    "description": "Debug addr of proxy."
+                },
+                "pid": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Pid of proxy."
+                },
+                "start_at": {
+                    "type": "string",
+                    "description": "Start time of proxy."
+                }
+            }
+        },
+        "RangeSetTask": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of migarate from slot."
+                },
+                "to": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of migarate to slot."
+                },
+                "new_group": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of new group."
+                },
+                "status": {
+                    "type": "string",
+                    "description": "Status of task."
+                }
+            }
+        },
+        "RebalanceStatus": {
+            "type": "object",
+            "properties": {
+                "is_rebalancing": {
+                    "type": "boolean",
+                    "description": "Whether is in rebalancing."
                 }
             }
         },

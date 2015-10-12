@@ -287,7 +287,7 @@
             }
         },
         "/api/server_group/{group_id}/promote": {
-            "put": {
+            "post": {
                 "description": "Promote server in group to master.",
                 "parameters": [
                     {
@@ -305,6 +305,119 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/Server"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/migrate/status": {
+            "get": {
+                "description": "Get migrate status.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An object of MigrateStatus.",
+                        "schema": {
+                            "$ref": "#/definitions/MigrateStatus"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/migrate/tasks": {
+            "get": {
+                "description": "Get migrate tasks information.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "An array of MigrateTaskInfo.",
+                        "schema": {
+                            "$ref": "#/definitions/MigrateTaskInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/migrate/pending_task/{task_id}/remove": {
+            "delete": {
+                "description": "Remove migrate pending task.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "task_id",
+                        "description": "ID of migrate task.",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/migrate/task/{task_id}/stop": {
+            "delete": {
+                "description": "Stop migrate task.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "task_id",
+                        "description": "ID of migrate task.",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An object of Result.",
+                        "schema": {
+                            "$ref": "#/definitions/Result"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected error"
+                    }
+                }
+            }
+        },
+        "/api/migrate": {
+            "post": {
+                "description": "Create new migrate task.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Migrate task information.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/MigrateTaskInfo"
                         }
                     }
                 ],
@@ -347,6 +460,66 @@
                 }
             }
         },
+        "MigrateStatus": {
+            "type": "object",
+            "properties": {
+                "migrate_slots": {
+                    "type": "array",
+                    "description": "Migrate slots information.",
+                    "items": {
+                        "$ref": "#/definitions/Slot"
+                    }
+                },
+                "migrate_task": {
+                    "type": "object",
+                    "description": "Migrate task information.",
+                    "$ref": "#/definitions/MigrateTaskInfo"
+                }
+            }
+        },
+        "MigrateTaskInfo": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of migarate from slot."
+                },
+                "to": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of migarate to slot."
+                },
+                "new_group": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of new group."
+                },
+                "delay": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Millisecond of delay to run task in future."
+                },
+                "create_at": {
+                    "type": "string",
+                    "description": "Create time of task."
+                },
+                "percent": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Percent of task completion."
+                },
+                "status": {
+                    "type": "string",
+                    "description": "Status of task."
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of task."
+                }
+            }
+        },
         "Overview": {
             "type": "object",
             "properties": {
@@ -361,7 +534,7 @@
                 },
                 "redis_infos": {
                     "type": "array",
-                    "description": "Information of RebornDB stores.",
+                    "description": "Information of stores.",
                     "items": {
                         "$ref": "#/definitions/RedisInfo"
                     }
@@ -422,6 +595,63 @@
                     "items": {
                         "$ref": "#/definitions/Server"
                     }
+                }
+            }
+        },
+        "Slot": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of slot."
+                },
+                "product_name": {
+                    "type": "string",
+                    "description": "Name of product."
+                },
+                "group_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of server group."
+                },
+                "state": {
+                    "type": "object",
+                    "description": "Servers of server group.",
+                    "$ref": "#/definitions/SlotState"
+                }
+            }
+        },
+        "SlotMigrateStatus": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of migarate from slot."
+                },
+                "to": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "ID of migarate to slot."
+                }
+            }
+        },
+        "SlotState": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "description": "Status of slot."
+                },
+                "migrate_status": {
+                    "type": "object",
+                    "description": "Migrate status of slot.",
+                    "$ref": "#/definitions/SlotMigrateStatus"
+                },
+                "last_op_ts": {
+                    "type": "string",
+                    "description": "Last operation timestamp."
                 }
             }
         },

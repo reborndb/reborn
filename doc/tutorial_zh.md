@@ -32,6 +32,7 @@ Reborn 支持按照 Namespace 区分不同的产品, 拥有不同的 product nam
 go get github.com/reborndb/reborn
 cd $GOPATH/src/github.com/reborndb/reborn
 ./bootstrap.sh
+make build
 make gotest
 make agent_test (可选, reborn-agent 的集成测试)
 ```

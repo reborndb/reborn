@@ -29,6 +29,7 @@ Install Go please check [this document](https://github.com/astaxie/build-web-app
 go get github.com/reborndb/reborn
 cd $GOPATH/src/github.com/reborndb/reborn
 ./bootstrap.sh
+make build
 make gotest
 make agent_test (optional, reborn-agent integration test)
 ```

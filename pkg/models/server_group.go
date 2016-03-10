@@ -277,6 +277,11 @@ func (sg *ServerGroup) Exists(coordConn zkhelper.Conn) (bool, error) {
 var ErrNodeExists = errors.New("node already exists")
 
 func (sg *ServerGroup) AddServer(coordConn zkhelper.Conn, s *Server, auth string) error {
+	switch s.Type {
+	case SERVER_TYPE_MASTER, SERVER_TYPE_SLAVE, SERVER_TYPE_OFFLINE:
+	default:
+		return errors.NotSupportedf("server type %q", s.Type)
+	}
 	// if type is offline, the server may be down, so we cannot use store function
 	if s.Type != SERVER_TYPE_OFFLINE {
 		// we only support reborn-server and qdb-server

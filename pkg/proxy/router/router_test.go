@@ -229,6 +229,20 @@ func (s *testProxyRouterSuite) testDialConn(c *C, addr string, auth string) redi
 	return cc
 }
 
+func (s *testProxyRouterSuite) TestAuthCmd(c *C) {
+	cc, err := redis.Dial("tcp", proxyAddr)
+	c.Assert(err, IsNil)
+
+	ok, err := redis.String(cc.Do("AUTH", proxyAuth))
+	c.Assert(err, IsNil)
+	c.Assert(ok, Equals, "OK")
+
+	ok, err = redis.String(cc.Do("AUTH", "Wrong-auth-key"))
+	c.Assert(err, NotNil)
+	c.Assert(err, ErrorMatches, "ERR invalid auth")
+	c.Assert(ok, Equals, "")
+}
+
 func (s *testProxyRouterSuite) TestSingleKeyRedisCmd(c *C) {
 	cc := s.testDialConn(c, proxyAddr, proxyAuth)
 	defer cc.Close()

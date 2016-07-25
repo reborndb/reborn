@@ -8,3 +8,4 @@ before_install:
 
 script:
   - godep go test  ./pkg/... -race -cover
+  - godep go test  ./cmd/agent -test.run TestDir

@@ -233,7 +233,7 @@ func (s *Server) sendBack(c *session, op []byte, keys [][]byte, resp *parser.Res
 
 func (s *Server) handleAuthCommand(opstr string, auth []byte) ([]byte, error) {
 	if string(auth) != s.conf.ProxyAuth {
-		return []byte("-ERR invalid auth"), errors.Errorf("invalid auth")
+		return []byte("-ERR invalid auth\r\n"), errors.Errorf("invalid auth")
 	}
 
 	return OK_BYTES, nil
@@ -254,7 +254,7 @@ func (s *Server) redisTunnel(c *session) error {
 		c.authenticated = (err == nil)
 		return errors.Trace(err)
 	} else if len(s.conf.ProxyAuth) > 0 && !c.authenticated {
-		buf := []byte("-ERR NOAUTH Authentication required")
+		buf := []byte("-ERR NOAUTH Authentication required\r\n")
 		s.sendBack(c, op, keys, resp, buf)
 		return errors.Errorf("NOAUTH Authentication required")
 	}

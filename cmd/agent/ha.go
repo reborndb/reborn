@@ -94,6 +94,7 @@ func (t *haTask) check() error {
 
 	var crashSlaves []*models.Server
 	var crashMasters []*models.Server
+	var rebirthOfflines []*models.Server
 	for i := 0; i < cnt; i++ {
 		v := <-ch
 		switch s := v.(type) {
@@ -103,6 +104,8 @@ func (t *haTask) check() error {
 				crashSlaves = append(crashSlaves, s)
 			} else if s.Type == models.SERVER_TYPE_MASTER {
 				crashMasters = append(crashMasters, s)
+			} else if s.Type == models.SERVER_TYPE_OFFLINE {
+				rebirthOfflines = append(rebirthOfflines, s)
 			}
 		case error:
 			err = errors.Trace(s)
@@ -111,6 +114,17 @@ func (t *haTask) check() error {
 
 	if err != nil {
 		return errors.Trace(err)
+	}
+
+	for _, s := range rebirthOfflines {
+		log.Infof("offline %s in group %d is up, set slave", s.Addr, s.GroupId)
+		group := models.NewServerGroup(globalEnv.ProductName(), s.GroupId)
+
+		s.Type = models.SERVER_TYPE_SLAVE
+
+		if err := group.AddServer(globalConn, s, globalEnv.StoreAuth()); err != nil {
+			return errors.Trace(err)
+		}
 	}
 
 	for _, s := range crashSlaves {
@@ -135,10 +149,103 @@ func (t *haTask) check() error {
 	return nil
 }
 
+func checkOfflineGroupServer(s *models.Server, ch chan<- interface{}) {
+	if s.Type != models.SERVER_TYPE_OFFLINE {
+		ch <- nil
+		return
+	}
+
+	var err error
+	for i := 0; i < haMaxRetryNum; i++ {
+		if err = utils.Ping(s.Addr, globalEnv.StoreAuth()); err == nil {
+			break
+		}
+
+		err = errors.Trace(err)
+		time.Sleep(time.Duration(haRetryDelay) * time.Second)
+	}
+
+	if err != nil {
+		ch <- nil
+		return
+	}
+
+	// here means we can ping offline server ok, so we think it is up
+	// let other help use to check
+	log.Infof("leader check server %s in group %d err %v, let other agents help check", s.Addr, s.GroupId, err)
+
+	// get all agents
+	agents, err := getAgents()
+	if err != nil {
+		log.Errorf("get agents err %v", err)
+		ch <- errors.Trace(err)
+		return
+	}
+
+	reply := make([]interface{}, len(agents))
+
+	var wg sync.WaitGroup
+	for i, agent := range agents {
+		if agent.ID == agentID {
+			// ignore itself
+			reply[i] = nil
+			continue
+		}
+
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			resp, err := http.Get(fmt.Sprintf("http://%s/api/check_store?addr=%s", agent.Addr, s.Addr))
+			if err != nil {
+				reply[i] = errors.Trace(err)
+				return
+			}
+			defer resp.Body.Close()
+			if _, err = ioutil.ReadAll(resp.Body); err != nil {
+				reply[i] = errors.Trace(err)
+				return
+			}
+
+			reply[i] = int(resp.StatusCode)
+		}(i)
+	}
+
+	wg.Wait()
+
+	for i, r := range reply {
+		switch v := r.(type) {
+		case nil:
+			// itself, ignore
+		case error:
+			log.Errorf("let agent %s check %s err %v", agents[i].Addr, s.Addr, v)
+			err = errors.Trace(v)
+		case int:
+			if v != http.StatusOK {
+				log.Infof("agent %s check %s not ok, maybe it is not alive", agents[i].Addr, s.Addr)
+				ch <- nil
+				return
+			}
+			// here mean agent check server failed
+		}
+	}
+
+	if err != nil {
+		// here mean let some agent check err, maybe we cann't connect the agent
+		// so return error to retry again
+		ch <- errors.Trace(err)
+		return
+	}
+
+	// if all nodes check the store server is up, we will think it is up
+	log.Infof("all agents check server %s is up", s.Addr)
+	ch <- s
+}
+
 func (t *haTask) checkGroupServer(s *models.Server, ch chan<- interface{}) {
 	// we don't check offline server
 	if s.Type == models.SERVER_TYPE_OFFLINE {
-		ch <- nil
+		checkOfflineGroupServer(s, ch)
 		return
 	}
 

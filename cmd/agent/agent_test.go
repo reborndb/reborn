@@ -312,7 +312,7 @@ func (s *testAgentSuite) checkStoreServerType(c *C, addr string, tp string) {
 
 func (s *testAgentSuite) TestHA(c *C) {
 	s.agentHA = s.testStartAgent(c, "127.0.0.1:39005", true)
-	defer s.testStopAgent(c, s.agentHA)
+	// defer s.testStopAgent(c, s.agentHA)
 
 	time.Sleep(3 * time.Second)
 
@@ -326,8 +326,10 @@ func (s *testAgentSuite) TestHA(c *C) {
 
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_OFFLINE)
 
-	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004", false)
+	// test offline rebirth, stop HA check first
+	s.testStopAgent(c, s.agentHA)
 
+	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004", false)
 	time.Sleep(3 * time.Second)
 
 	// now agentStoreSlave restart and redis restart
@@ -335,8 +337,11 @@ func (s *testAgentSuite) TestHA(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(role, Equals, "master")
 
-	s.testAddStoreToGroup(c, 6382, models.SERVER_TYPE_SLAVE)
+	// start HA check
+	s.agentHA = s.testStartAgent(c, "127.0.0.1:39005", true)
+	time.Sleep(3 * time.Second)
 
+	// when HA is working, offline server is up, automatic to slave
 	s.checkStoreServerType(c, "127.0.0.1:6382", models.SERVER_TYPE_SLAVE)
 
 	role, err = utils.GetRole("127.0.0.1:6382", globalEnv.StoreAuth())
@@ -360,6 +365,8 @@ func (s *testAgentSuite) TestHA(c *C) {
 
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_OFFLINE)
 
+	s.testStopAgent(c, s.agentHA)
+
 	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003", false)
 
 	time.Sleep(3 * time.Second)
@@ -369,8 +376,11 @@ func (s *testAgentSuite) TestHA(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(role, Equals, "master")
 
-	s.testAddStoreToGroup(c, 6381, models.SERVER_TYPE_SLAVE)
+	s.agentHA = s.testStartAgent(c, "127.0.0.1:39005", true)
+	defer s.testStopAgent(c, s.agentHA)
+	time.Sleep(3 * time.Second)
 
+	// when HA is working, offline server is up, automatic to slave
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_SLAVE)
 
 	role, err = utils.GetRole("127.0.0.1:6381", globalEnv.StoreAuth())

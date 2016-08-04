@@ -328,7 +328,6 @@ func (s *testAgentSuite) TestHA(c *C) {
 
 	// test offline rebirth, stop HA check first
 	s.testStopAgent(c, s.agentHA)
-	// time.Sleep(3 * time.Second)
 
 	s.agentStoreSlave = s.testStartAgent(c, "127.0.0.1:39004", false)
 	time.Sleep(3 * time.Second)
@@ -367,7 +366,6 @@ func (s *testAgentSuite) TestHA(c *C) {
 	s.checkStoreServerType(c, "127.0.0.1:6381", models.SERVER_TYPE_OFFLINE)
 
 	s.testStopAgent(c, s.agentHA)
-	time.Sleep(3 * time.Second)
 
 	s.agentStoreMaster = s.testStartAgent(c, "127.0.0.1:39003", false)
 

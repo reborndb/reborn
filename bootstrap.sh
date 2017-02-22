@@ -15,7 +15,7 @@ go get -u github.com/cupcake/rdb
 go get -u github.com/docopt/docopt-go
 go get -u github.com/garyburd/redigo/redis
 go get -u github.com/go-martini/martini
-go get -u github.com/google/go-snappy/snappy
+go get -u github.com/golang/snappy
 go get -u github.com/gorilla/context
 go get -u github.com/gorilla/mux
 go get -u github.com/juju/errors
